@@ -63,5 +63,8 @@ Unit Test
 Storage模块， 空间及缓冲区管理，顺序访问接口(Read/Write)    
 Common模块，公共utils/ADTs(Hash, List, Tree)，内存管理(可选)  
 
+### __编码风格__
 
 
+参考[Google Style Guide](http://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/)
+ 
