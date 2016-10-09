@@ -50,17 +50,18 @@
 
 ### __TODO__
 
-#### Deadline 2016.10.23 实验1完成
+#### Deadline 2016.10.23 实验1完成  
 
-部署开发环境;
+部署开发环境;  
 
-熟悉技术栈:
-Linux/C++/git/数据结构/数据库实现;
+熟悉技术栈: 
+Linux/C++/git/数据结构/数据库实现;  
 
-开发任务：
-Build Tool
-Unit Test
-Storage模块， 空间及缓冲区管理，顺序访问接口(Read/Write)
-Common模块，公共utils/ADTs(Hash, List, Tree)，内存管理(可选)
+开发任务: 
+Build Tool  
+Unit Test  
+Storage模块， 空间及缓冲区管理，顺序访问接口(Read/Write)    
+Common模块，公共utils/ADTs(Hash, List, Tree)，内存管理(可选)  
+
 
 
