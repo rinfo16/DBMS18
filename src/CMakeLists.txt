@@ -1,2 +1,12 @@
 cmake_minimum_required(VERSION 2.8)
+include_directories(include)
 add_subdirectory(unit_test)
+add_subdirectory(storage)
+if (ENABLE_GCOV)
+  if (NOT WIN32 AND NOT APPLE)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage -lgcov")
+  endif()
+endif()
+
