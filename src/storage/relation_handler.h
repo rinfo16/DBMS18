@@ -6,7 +6,7 @@
 namespace storage {
 
 class RelationHandler : public RelationHandlerInterface {
-public:
+ public:
   cursor_t BeginRead();
   void *ReadNext(cursor_t *cursor, uint32_t *length);
   void *ReadRrev(cursor_t *cursor, uint32_t *length);
@@ -15,6 +15,6 @@ public:
   bool Drop();
 };
 
-}
+}  // namespace storage
 
 #endif //RELATION_HANDLER_INTERFACE_H_

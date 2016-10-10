@@ -9,6 +9,6 @@ class BuffferManager {
   virtual ~BuffferManager();
 };
 
-} /* namespace storage */
+}  // namespace storage
 
-#endif /* BUFFFER_MANAGER_H_ */
+#endif // BUFFFER_MANAGER_H_

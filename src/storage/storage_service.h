@@ -13,6 +13,6 @@ class StorageService : public StorageServiceInterface {
   virtual void CloseHandler(RelationHandlerInterface* handler);
 };
 
-} // namespace storage
+}  // namespace storage
 
 #endif // STORAGE_STORAGE_SERVICE_H_

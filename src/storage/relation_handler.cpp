@@ -21,4 +21,4 @@ bool RelationHandler::Drop() {
   return false;
 }
 
-}
+}   // namespace storage
