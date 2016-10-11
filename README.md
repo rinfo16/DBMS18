@@ -82,7 +82,7 @@ Start开始计时，Stop停止计时，可以反复调用Start/Stop，计累计�
 
 ##### 3.hash
 hash函数实现，寻找几个不同的Hash实现方式  
-可以参考开源代码中的实现，如nginx, mysql,postgres,linux kernel
+可以参考开源代码中的实现，如nginx, mysql, postgres, linux kernel
 
 ##### 4.list
 双链表，支持从左端或右端链接，移除，根据情况扩展接口
