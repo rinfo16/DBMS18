@@ -24,9 +24,9 @@
 
 ##### __Executor__  
 - [ ] Scan
-- [ ] Sorter 
-- [ ] Aggregation
-- [ ] Merge 
+- [ ] Sort
+- [ ] Aggregate
+- [ ] Merge
 - [ ] Hash
 - [ ] Join
 
