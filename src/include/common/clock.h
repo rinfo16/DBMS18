@@ -1,6 +1,7 @@
 #ifndef CLOCK_H_
 #define CLOCK_H_
 
+#include "common/define.h"
 #include <string>
 
 namespace utils {
