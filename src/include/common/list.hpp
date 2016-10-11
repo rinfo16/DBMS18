@@ -20,10 +20,10 @@ class List : public T {
   bool IsLast() const {
     return false;
   }
-  void LinkToRight(List<T> *l) {
+  void LinkToRight(List<T> *right_node) {
   }
 
-  void LinkToLeft(List<T> *l) {
+  void LinkToLeft(List<T> *left_node) {
   }
 
   List<T>* First() {
