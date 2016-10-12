@@ -19,7 +19,7 @@ class File {
   bool Read(size_t offset, void *buff, int length);
   bool Write(size_t offset, const void *buff, int length);
 
-private:
+ private:
   std::string path_;
   int fd_;
 };

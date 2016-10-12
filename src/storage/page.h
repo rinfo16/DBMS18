@@ -5,13 +5,11 @@
 #include "storage_define.h"
 #include <memory>
 
-
 static const int kPageSize = 8192;
 
 namespace storage {
 
-enum PageType
-{
+enum PageType {
   kPageFileHeader = 0,
   kPageSegmentHeader,
   kPageExtentHeader,
@@ -26,9 +24,9 @@ typedef struct {
   PageID pageid_;
   PageID prev_page_;
   PageID next_page_;
-  uint32_t free_begin_;
-  uint32_t free_end_;
-  uint32_t tuple_count_;
+  //uint32_t free_begin_;
+  //uint32_t free_end_;
+  //uint32_t tuple_count_;
 } Page;
 
 typedef struct {
@@ -58,7 +56,5 @@ typedef struct {
 } ExtentHeader;
 
 }  // end namespace storage
-
-
 
 #endif // PAGE_H_
