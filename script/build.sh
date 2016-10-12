@@ -25,7 +25,10 @@ do
 done
 
 cur_dir=$(pwd)
-scrip_dir=$(cd `dirname $0`; pwd)
-mkdir -p $scrip_dir/../build
-cmake -H$scrip_dir/../src -B$scrip_dir/../build ${CMAKE_ARGS}
+script_dir=$(cd `dirname $0`; pwd)
+cd $script_dir
+cd ../
+project_path=$(pwd)
+cd $cur_dir
+cmake -H$project_path/src -B$project_path/build ${CMAKE_ARGS}
 
