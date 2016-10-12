@@ -59,8 +59,6 @@ frame_index_t BuffferManager::LocatePage(PageID id, bool is_new) {
   loaded_frames_.insert(std::make_pair(id, frame_index));
 
   return frame_index;
-
-  return true;
 }
 
 frame_index_t BuffferManager::GetFrame() {
