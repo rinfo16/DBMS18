@@ -3,10 +3,8 @@
 #include <iostream>
 #include "gtest/gtest.h"
 
-
-class FileTest : public testing::Test
-{
-protected:
+class FileTest : public testing::Test {
+ protected:
   virtual void SetUp() {
     std::string path;
     path = std::string() + kDataPath + "/" + "file.0";
@@ -15,15 +13,13 @@ protected:
     file2_ = new storage::File(path);
     path = std::string() + kDataPath + "/" + "file.2";
     file3_ = new storage::File(path);
-    }
+  }
   storage::File *file1_;
   storage::File *file2_;
   storage::File *file3_;
 };
 
-
-TEST_F(FileTest, file)
-{
+TEST_F(FileTest, file) {
   char buff1[32] = "test file data";
   char buff2[32];
 
@@ -38,9 +34,4 @@ int main(int argc, char* argv[]) {
   std::cout << "File unit test !!!" << std::endl;
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
-
-
-
-
-
 }

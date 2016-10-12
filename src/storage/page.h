@@ -10,9 +10,19 @@ static const int kPageSize = 8192;
 
 namespace storage {
 
+enum PageType
+{
+  kPageFileHeader = 0,
+  kPageSegmentHeader,
+  kPageExtentHeader,
+  kPageData,
+  kPageIndex
+
+};
 
 typedef struct {
   uint32_t flip_;
+  uint32_t page_type_;
   PageID pageid_;
   PageID prev_page_;
   PageID next_page_;
@@ -30,6 +40,22 @@ typedef struct {
   uint16_t offset_;
   uint16_t length_;
 } SlotInPage;
+
+typedef struct {
+  uint32_t page_count_;
+} FileHeader;
+
+typedef struct {
+  uint32_t extent_count_;
+  PageID first_data_page_;
+  PageID last_data_page_;
+  PageID extent_header_[0];
+} SegmentHeader;
+
+typedef struct {
+  uint32_t extent_count_;
+  uint8_t bits_[0];
+} ExtentHeader;
 
 }  // end namespace storage
 

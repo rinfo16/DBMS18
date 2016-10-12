@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <assert.h>
 #include "storage_define.h"
 #include "frame.h"
 #include "page.h"
@@ -10,8 +11,7 @@
 
 namespace storage {
 
-struct PageControl
-{
+struct PageControl {
   bool is_new_;
   Page *page_;
 };
@@ -20,10 +20,10 @@ typedef std::map<fileno_t, File *> FileMap;
 typedef std::map<PageID, frame_index_t> LoadedFrameMap;
 typedef std::vector<size_t> FreeFrameList;
 
-class BuffferManager {
+class BufferManager {
  public:
-  BuffferManager(size_t pool_size);
-  virtual ~BuffferManager();
+  BufferManager(size_t pool_size, size_t page_size);
+  virtual ~BufferManager();
 
   bool FixPage(PageID id, PageControl * param);
 
@@ -34,9 +34,16 @@ class BuffferManager {
   frame_index_t GetFrame();
 
  private:
+  void FlushPage(frame_index_t frame_index);
+
+  void FlushAll();
+
+  Frame *FrameAt(frame_index_t frame_index);
+
   Frame *buffer_pool_;
   size_t pool_size_;
-  FreeFrameList free_frames_; // TODO use hash table ...
+  size_t page_size_;
+  FreeFrameList free_frames_;  // TODO use hash table ...
   LoadedFrameMap loaded_frames_;
   FileMap files_;
 };

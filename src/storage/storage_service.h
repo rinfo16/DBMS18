@@ -9,6 +9,7 @@ class StorageService : public StorageServiceInterface {
  public:
   StorageService();
   virtual ~StorageService();
+  void InitDB();
   virtual RelationHandlerInterface * OpenHandler(relationid_t rel, int mode);
   virtual void CloseHandler(RelationHandlerInterface* handler);
 };
