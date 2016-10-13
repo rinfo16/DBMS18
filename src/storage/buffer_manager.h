@@ -6,8 +6,8 @@
 #include <assert.h>
 #include "storage_define.h"
 #include "frame.h"
-#include "page.h"
 #include "file.h"
+#include "page_layout.h"
 
 namespace storage {
 

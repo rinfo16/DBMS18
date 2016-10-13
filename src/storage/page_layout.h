@@ -9,13 +9,15 @@ static const int kPageSize = 8192;
 
 namespace storage {
 
+#define PAGE_HEADER_SIZE 64
+#define PAGE_TAILER_SIZE 32
+
 enum PageType {
   kPageFileHeader = 0,
   kPageSegmentHeader,
   kPageExtentHeader,
   kPageData,
   kPageIndex
-
 };
 
 typedef struct {
@@ -24,9 +26,6 @@ typedef struct {
   PageID pageid_;
   PageID prev_page_;
   PageID next_page_;
-  //uint32_t free_begin_;
-  //uint32_t free_end_;
-  //uint32_t tuple_count_;
 } Page;
 
 typedef struct {
@@ -37,7 +36,14 @@ typedef struct {
 typedef struct {
   uint16_t offset_;
   uint16_t length_;
-} SlotInPage;
+} Slot;
+
+typedef struct {
+  uint32_t free_begin_;
+  uint32_t free_end_;
+  uint32_t tuple_count_;
+  Slot slot_[0];
+} DataHeader;
 
 typedef struct {
   uint32_t page_count_;
@@ -54,6 +60,14 @@ typedef struct {
   uint32_t extent_count_;
   uint8_t bits_[0];
 } ExtentHeader;
+
+DataHeader *ToDataHeader(Page *page);
+SegmentHeader *ToSegmentHeader(Page *page);
+FileHeader *ToFileHeader(Page *page);
+ExtentHeader *ToExtentHeader(Page *page);
+
+bool Put(Page *data_page, void *tuple, uint32_t length, slotno_t *no = NULL);
+void *Get(Page *data_page, slotno_t no, uint16_t *length = NULL);
 
 }  // end namespace storage
 

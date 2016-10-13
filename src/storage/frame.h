@@ -2,7 +2,7 @@
 #define FRAME_H_
 
 #include "common/define.h"
-#include "page.h"
+#include "page_layout.h"
 namespace storage {
 
 class Frame {
