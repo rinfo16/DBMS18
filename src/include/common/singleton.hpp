@@ -6,8 +6,9 @@ namespace utils {
 template<class T>
 class Singleton {
  public:
+
   static inline T & instance() {
-    // TODO ...
+    // TODO ... aaa
   }
 
 };
