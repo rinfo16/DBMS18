@@ -1,5 +1,6 @@
 #include "space_manager.h"
-#include <string>
+#include <memory.h>
+#include <string.h>
 #include "file.h"
 #include "common/config.h"
 

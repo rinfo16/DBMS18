@@ -14,7 +14,7 @@ BufferManager::~BufferManager() {
 
 bool BufferManager::FixPage(PageID id, PageControl* param) {
   frame_index_t frame_index = 0;
-  auto iter = loaded_frames_.find(id);
+  LoadedFrameMap::iterator iter = loaded_frames_.find(id);
   if (iter == loaded_frames_.end()) {  // cannot find page, read from disk
     frame_index = LocatePage(id, param->is_new_);
   } else {
@@ -32,7 +32,7 @@ bool BufferManager::FixPage(PageID id, PageControl* param) {
 }
 
 bool BufferManager::UnfixPage(PageID id) {
-  auto iter = loaded_frames_.find(id);
+  LoadedFrameMap::iterator iter = loaded_frames_.find(id);
   if (iter != loaded_frames_.end()) {  // cannot find page, read from disk
     frame_index_t frame_index = GetFrame();
     Frame *frame = FrameAt(frame_index);
@@ -81,7 +81,7 @@ void BufferManager::FlushPage(frame_index_t frame_index) {
   assert(!frame->IsFree() && frame->IsDirty());
   Page *page = frame->GetPage();
   PageID page_id = page->pageid_;
-  auto iter = files_.find(page_id.fileno_);
+  FileMap::iterator iter = files_.find(page_id.fileno_);
   assert(iter != files_.end());
   File *file = iter->second;
   bool ok = file->Write(page_id.blockno_ * page_size_, page, page_size_);
