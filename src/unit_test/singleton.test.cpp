@@ -1,6 +1,6 @@
 #include "common/singleton.hpp"
 #include <iostream>
-
+#xxx
 class C {
 };
 
