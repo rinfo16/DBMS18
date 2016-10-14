@@ -6,6 +6,7 @@
 #include "common/config.h"
 #include "common/bitmap.h"
 #include "page_layout.h"
+#include "page_operation.h"
 
 namespace config {
 extern Setting gSetting;
@@ -112,7 +113,7 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   seg_header_pageid.fileno_ = file_header_pageid.fileno_;
   Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, true);
   if (segment_header_page) {
-    memset(seg_hdr_page, 0, config::gSetting.page_size_);
+    InitPage(seg_hdr_page, seg_header_pageid, kPageSegmentHeader);
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;
     if (!CreateExtent(page, seg_hdr_page, NULL)) {
@@ -173,7 +174,7 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
   // TODO find a 0 in bitmap ...
   utils::Bitmap *bitmap = (utils::Bitmap*) (data_file_header->bits);
   uint32_t nth = bitmap->FindZero(0, 1);
-  if (nth >= bitmap->Length()) {
+  if (nth >= bitmap->BitCount()) {
     buffer_manager_->UnfixPage(data_file_header_pageid);
     return false;
   }
@@ -188,12 +189,14 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
     buffer_manager_->UnfixPage(data_file_header_pageid);
     return false;
   }
+  InitPage(page, extent_header_pageid, kPageExtentHeader);
+
   memset(page, 0, config::gSetting.page_size_);
   page->pageid_ = extent_header_pageid;
   page->page_type_ = kPageExtentHeader;
   ExtentHeader *header = ToExtentHeader(page);
   header->page_count_ = 0;
-
+  InitExtentHeader(header, config::gSetting.page_number_per_extent_);
   SegmentHeader *segment_header = ToSegmentHeader(segment_page);
   if (!segment_header->first_extent_header_page_id_.Invalid()) {
     Page *first_page = buffer_manager_->FixPage(
@@ -207,8 +210,59 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
   return true;
 }
 
+bool SpaceManager::CreateDataPage(Page *seg_file_header_page,
+                                  Page *segment_header_page,
+                                  PageID *new_page_id) {
+  bool ret = false;
+  SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
+  Page *extent_header_page = buffer_manager_->FixPage(
+      segment_header->first_data_page_id_, false);
+  while (true) {
+    if (CreateDataPage(extent_header_page, new_page_id)) {
+      buffer_manager_->UnfixPage(extent_header_page->pageid_);
+      ret = true;
+      break;
+    }
+    if (extent_header_page->next_page_.Invalid()) {
+      buffer_manager_->UnfixPage(extent_header_page->pageid_);
+      break;
+    } else {
+      PageID next_id = extent_header_page->next_page_;
+      buffer_manager_->UnfixPage(extent_header_page->pageid_);
+      extent_header_page = buffer_manager_->FixPage(next_id, false);
+      if (extent_header_page == NULL) {
+        break;
+      }
+    }
+  }
+  return ret;
+}
+
+bool SpaceManager::CreateDataPage(Page *extent_header_page,
+                                  PageID *new_page_id) {
+  ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
+  utils::Bitmap *bitmap = (utils::Bitmap*) (extent_header->bits_);
+  uint32_t n = bitmap->FindZero(0, 1);
+  if (n >= bitmap->BitCount()) {
+    return false;
+  }
+  PageID new_data_page_id = extent_header_page->pageid_;
+  new_data_page_id.blockno_ = new_data_page_id.blockno_ + 1 + n;
+
+  Page* new_data_page = buffer_manager_->FixPage(new_data_page_id, true);
+  if (new_data_page == NULL) {
+    return false;
+  }
+  DataHeader *header = ToDataHeader(new_data_page);
+  InitPage(new_data_page, new_data_page_id, kPageData);
+  InitDataHeader(header, config::gSetting.page_size_);
+  buffer_manager_->UnfixPage(new_data_page_id);
+  *new_page_id = new_data_page_id;
+  return true;
+}
+
 bool SpaceManager::FindSpace(PageID segment_header_page, size_t length,
-                             PageID *data_page_) {
+                             PageID *data_page) {
   return true;
 }
 

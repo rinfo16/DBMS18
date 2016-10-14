@@ -19,6 +19,11 @@ class Bitmap {
   uint32_t Length() {
     return length_;
   }
+
+  uint32_t BitCount() {
+    return bitcount_;
+  }
+
   void Set(uint32_t start, uint32_t n = 1) {
   }
 
@@ -50,6 +55,7 @@ class Bitmap {
  private:
   // DO NOT CHANGE THIS ORDER !!!
   uint32_t length_;
+  uint32_t bitcount_;
   uint8_t bits_[0];  // offset bits begin ...
 };
 

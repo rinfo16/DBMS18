@@ -22,6 +22,11 @@ class SpaceManager {
   bool CreateExtent(Page*segment_header_file_page, Page* segment_header_page,
                     PageID *extent_header_page_id);
 
+  bool CreateDataPage(Page *seg_file_header_page, Page *segment_header_page,
+                      PageID *new_page_id /*OUT*/);
+
+  bool CreateDataPage(Page *extent_header_page, PageID *new_page_id);
+
   bool FindSpace(PageID segment_header_page, size_t length, PageID *data_page_);
 
  private:

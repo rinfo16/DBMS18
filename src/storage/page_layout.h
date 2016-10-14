@@ -42,7 +42,7 @@ typedef struct {
   uint32_t free_begin_;
   uint32_t free_end_;
   uint32_t tuple_count_;
-  Slot slot_[0];
+  //Slot slot_[0];
 } DataHeader;
 
 typedef struct {
@@ -69,16 +69,6 @@ typedef struct {
   uint8_t bits_[0];
 } ExtentHeader;
 
-DataHeader *ToDataHeader(Page *page);
-SegmentHeader *ToSegmentHeader(Page *page);
-SegFileHeader *ToSegFileHeader(Page *page);
-DataFileHeader *ToDataFileHeader(Page *page);
-ExtentHeader *ToExtentHeader(Page *page);
-
-bool Put(Page *data_page, void *tuple, uint32_t length, slotno_t *no = NULL);
-void *Get(Page *data_page, slotno_t no, uint16_t *length = NULL);
-
-void LinkPage(Page *left, Page *right);
 }  // end namespace storage
 
 #endif // PAGE_H_

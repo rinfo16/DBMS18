@@ -1,4 +1,5 @@
-#include "page_layout.h"
+#include "page_operation.h"
+#include "common/bitmap.h"
 #include <assert.h>
 namespace storage {
 
@@ -23,6 +24,27 @@ ExtentHeader *ToExtentHeader(Page *page) {
   return (ExtentHeader*) ((uint8_t*) page + PAGE_HEADER_SIZE);
 }
 
+Slot *ToFirstSlot(DataHeader *header) {
+  return (Slot *) ((uint8_t*) header + sizeof(DataHeader));
+}
+void InitPage(Page *page, PageID id, PageType page_type) {
+  page->flip_ = 2016;
+  page->pageid_ = id;
+  page->page_type_ = page_type;
+}
+
+void InitExtentHeader(ExtentHeader *header, uint32_t extent_count_per_page) {
+  header->page_count_ = 0;
+  utils::Bitmap* bitmap = new (header->bits_) utils::Bitmap(
+      extent_count_per_page);
+}
+
+void InitDataHeader(DataHeader *header, uint32_t page_size) {
+  header->free_begin_ = PAGE_HEADER_SIZE + sizeof(DataHeader);
+  header->free_end_ = page_size - PAGE_TAILER_SIZE;
+  header->tuple_count_ = 0;
+}
+
 bool Put(Page *data_page, void *tuple, uint32_t length, slotno_t *slotno) {
   DataHeader *header = ToDataHeader(data_page);
   if (header->free_end_ - header->free_end_ < length + sizeof(Slot)) {
@@ -31,13 +53,14 @@ bool Put(Page *data_page, void *tuple, uint32_t length, slotno_t *slotno) {
   if (slotno != NULL) {
     *slotno = header->tuple_count_;
   }
-  Slot & slot = header->slot_[header->tuple_count_];
+  Slot *slot = ToFirstSlot(header);
+  slot = slot + header->tuple_count_;
   header->free_begin_ += sizeof(slot);
   header->free_end_ -= length;
   header->tuple_count_++;
 
-  slot.length_ = length;
-  slot.offset_ = header->free_end_;
+  slot->length_ = length;
+  slot->offset_ = header->free_end_;
 
   memcpy(data_page, tuple, length);
 
@@ -49,11 +72,12 @@ void *Get(Page *data_page, slotno_t no, uint16_t *length) {
   if (no >= header->tuple_count_) {
     return NULL;
   } else {
-    const Slot & slot = header->slot_[no];
+    Slot *slot = ToFirstSlot(header);
+    slot = slot + no;
     if (length != NULL) {
-      *length = slot.length_;
+      *length = slot->length_;
     }
-    return (uint8_t*) (data_page) + slot.offset_;
+    return (uint8_t*) (data_page) + slot->offset_;
   }
 }
 
