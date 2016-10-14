@@ -7,14 +7,8 @@ namespace utils {
 /*
  * Bitmap layout
  * 4 byte: bitmap length (total length of the memory block)
- * 4 byte: bitmap type (0/1)
  * length_ - 8 byte: bits begin ...
  */
-
-enum BitmapType {
-  kBitmap1Bit = 0,
-  kBitmap2Bit = 1
-};
 
 class Bitmap {
  public:
@@ -22,24 +16,22 @@ class Bitmap {
   Bitmap(uint32_t length);
   ~Bitmap();
 
-  // return 0 or 1
-  uint8_t GetBit(uint32_t n) const {
+  uint32_t Length() {
+    return length_;
+  }
+  void Set(uint32_t start, uint32_t n = 1) {
+  }
+
+  void Clear(uint32_t start, uint32_t n = 1) {
+  }
+
+  uint32_t FindZero(uint32_t start, uint32_t n = 1) {
     return 0;
   }
 
-  // return 0, 1, 2 or 3
-  uint8_t Get2Bit(uint32_t n) const {
+  // return 0/1
+  uint8_t GetBit(uint32_t nth_bit) {
     return 0;
-  }
-
-  // bit1 is 0 or 1
-  // n: nth index of the bit (ONT bits as an unit)
-  void SetBit(uint8_t bit1, uint32_t n) {
-  }
-
-  // bit2: is 0, 1, 2 or 3
-  // n: nth index of the bits (TWO bits as an unit)
-  void Set2Bit(uint8_t bit2, uint32_t n) {
   }
 
   // TODO .. bitmap AND/OR/XOR
@@ -58,7 +50,6 @@ class Bitmap {
  private:
   // DO NOT CHANGE THIS ORDER !!!
   uint32_t length_;
-  uint32_t type_;
   uint8_t bits_[0];  // offset bits begin ...
 };
 

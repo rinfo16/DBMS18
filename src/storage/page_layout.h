@@ -47,28 +47,38 @@ typedef struct {
 
 typedef struct {
   uint32_t page_count_;
-} FileHeader;
+  uint32_t data_file_count_;
+  uint32_t segment_count_;
+  uint32_t fileno_[0];
+} SegFileHeader;
+
+typedef struct {
+  uint32_t page_count_;
+  uint32_t extent_count_;
+  uint8_t bits[0];
+} DataFileHeader;
 
 typedef struct {
   uint32_t extent_count_;
-  PageID first_data_page_;
-  PageID last_data_page_;
-  PageID extent_header_[0];
+  PageID first_extent_header_page_id_;
+  PageID first_data_page_id_;
 } SegmentHeader;
 
 typedef struct {
-  uint32_t extent_count_;
+  uint32_t page_count_;
   uint8_t bits_[0];
 } ExtentHeader;
 
 DataHeader *ToDataHeader(Page *page);
 SegmentHeader *ToSegmentHeader(Page *page);
-FileHeader *ToFileHeader(Page *page);
+SegFileHeader *ToSegFileHeader(Page *page);
+DataFileHeader *ToDataFileHeader(Page *page);
 ExtentHeader *ToExtentHeader(Page *page);
 
 bool Put(Page *data_page, void *tuple, uint32_t length, slotno_t *no = NULL);
 void *Get(Page *data_page, slotno_t no, uint16_t *length = NULL);
 
+void LinkPage(Page *left, Page *right);
 }  // end namespace storage
 
 #endif // PAGE_H_

@@ -12,23 +12,23 @@ BufferManager::~BufferManager() {
   delete[] buffer_pool_;
 }
 
-bool BufferManager::FixPage(PageID id, PageControl* param) {
+Page* BufferManager::FixPage(PageID id, bool is_new) {
   frame_index_t frame_index = 0;
   LoadedFrameMap::iterator iter = loaded_frames_.find(id);
   if (iter == loaded_frames_.end()) {  // cannot find page, read from disk
-    frame_index = LocatePage(id, param->is_new_);
+    frame_index = LocatePage(id, is_new);
   } else {
     frame_index = iter->second;
   }
   if (frame_index == 0) {
-    return false;
+    return NULL;
   }
   Frame* frame = FrameAt(frame_index);
   frame->FixPage();
 
-  param->page_ = (Page*) frame->GetPage();
   // TODO .. do something
-  return true;
+  return (Page*) frame->GetPage();
+
 }
 
 bool BufferManager::UnfixPage(PageID id) {

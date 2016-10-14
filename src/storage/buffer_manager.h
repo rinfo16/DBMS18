@@ -11,11 +11,6 @@
 
 namespace storage {
 
-struct PageControl {
-  bool is_new_;
-  Page *page_;
-};
-
 typedef std::map<fileno_t, File *> FileMap;
 typedef std::map<PageID, frame_index_t> LoadedFrameMap;
 typedef std::vector<size_t> FreeFrameList;
@@ -25,7 +20,7 @@ class BufferManager {
   BufferManager(size_t pool_size, size_t page_size);
   virtual ~BufferManager();
 
-  bool FixPage(PageID id, PageControl * param);
+  Page* FixPage(PageID id, bool is_new);
 
   bool UnfixPage(PageID id);
 
