@@ -12,7 +12,6 @@ namespace utils {
 
 class Bitmap {
  public:
-  Bitmap();
   Bitmap(uint32_t length);
   ~Bitmap();
 
@@ -24,20 +23,12 @@ class Bitmap {
     return bitcount_;
   }
 
-  void Set(uint32_t start, uint32_t n = 1) {
-  }
+  uint32_t FindFirstZeroBit();
 
-  void Clear(uint32_t start, uint32_t n = 1) {
-  }
+  void SetBit(uint32_t offset, bool bit);
 
-  uint32_t FindZero(uint32_t start, uint32_t n = 1) {
-    return 0;
-  }
-
-  // return 0/1
-  uint8_t GetBit(uint32_t nth_bit) {
-    return 0;
-  }
+  // return 0/1 (false/true)
+  bool GetBit(uint32_t offset);
 
   // TODO .. bitmap AND/OR/XOR
   // Only used for 1BIT bitmap
@@ -53,6 +44,7 @@ class Bitmap {
 
   }
  private:
+  Bitmap();
   // DO NOT CHANGE THIS ORDER !!!
   uint32_t length_;
   uint32_t bitcount_;

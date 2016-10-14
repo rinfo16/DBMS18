@@ -2,10 +2,11 @@
 #define CONFIG_H_
 
 #include "common/define.h"
+#include "common/singleton.hpp"
 #include <string>
 
 namespace config {
-struct Setting {
+struct Setting : utils::Singleton<Setting>{
   Setting() {
     page_size_ = PAGE_SIZE;
     page_number_per_extent_ = PAGE_NUMBER_PER_EXTENT;

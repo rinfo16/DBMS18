@@ -47,6 +47,7 @@ bool File::Read(size_t offset, void *buff, int length) {
     return false;
   }
 
+  // TODO .. readn
   ret = ::read(fd_, buff, length);
   if (ret < 0) {
     perror("read");
@@ -66,6 +67,7 @@ bool File::Write(size_t offset, const void *buff, int length) {
     return false;
   }
 
+  // TODO , writen ...
   ret = ::write(fd_, buff, length);
   if (ret < 0) {
     perror("read");

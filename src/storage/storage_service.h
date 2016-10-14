@@ -2,16 +2,25 @@
 #define STORAGE_STORAGE_SERVICE_H_
 
 #include "storage/storage_service_interface.h"
-
+#include "common/singleton.hpp"
 namespace storage {
 
-class StorageService : public StorageServiceInterface {
+class BufferManager;
+class SpaceManager;
+
+class StorageService : public StorageServiceInterface, public utils::Singleton<StorageService>  {
  public:
   StorageService();
   virtual ~StorageService();
-  void InitDB();
-  virtual RelationHandlerInterface * OpenHandler(relationid_t rel, int mode);
+  virtual bool Start();
+  virtual RelationHandlerInterface * OpenHandler(relationid_t rel, OpenMode mode);
   virtual void CloseHandler(RelationHandlerInterface* handler);
+
+  static void InitDB();
+  void FlushAll();
+ private:
+  BufferManager *buffer_manager_;
+  SpaceManager *space_manager_;
 };
 
 }  // namespace storage

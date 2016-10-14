@@ -8,7 +8,8 @@ class Singleton {
  public:
 
   static inline T & instance() {
-    // TODO ... aaa
+    static T t_;
+    return t_;
   }
 
 };

@@ -7,12 +7,8 @@ class FileTest : public testing::Test {
  protected:
   virtual void SetUp() {
     std::string path;
-    path = std::string() + kDataPath + "/" + "file.0";
+    path = std::string() + std::string("/tmp/file.0") ;
     file1_ = new storage::File(path);
-    path = std::string() + kDataPath + "/" + "file.1";
-    file2_ = new storage::File(path);
-    path = std::string() + kDataPath + "/" + "file.2";
-    file3_ = new storage::File(path);
   }
   storage::File *file1_;
   storage::File *file2_;

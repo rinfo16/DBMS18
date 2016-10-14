@@ -17,8 +17,10 @@ typedef std::vector<size_t> FreeFrameList;
 
 class BufferManager {
  public:
-  BufferManager(size_t pool_size, size_t page_size);
+  BufferManager(size_t pool_size, size_t page_size, std::string path);
   virtual ~BufferManager();
+
+  bool Start();
 
   Page* FixPage(PageID id, bool is_new);
 
@@ -28,16 +30,20 @@ class BufferManager {
 
   frame_index_t GetFrame();
 
- private:
+  void FlushAll();
   void FlushPage(frame_index_t frame_index);
 
-  void FlushAll();
+ private:
+  void ReadPage(PageID pageid, Page *page);
 
+  void WritePage(Page *page);
+  File* GetFile(fileno_t no);
   Frame *FrameAt(frame_index_t frame_index);
 
   Frame *buffer_pool_;
   size_t pool_size_;
   size_t page_size_;
+  std::string data_path_;
   FreeFrameList free_frames_;  // TODO use hash table ...
   LoadedFrameMap loaded_frames_;
   FileMap files_;

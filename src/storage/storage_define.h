@@ -3,7 +3,7 @@
 
 #include "common/define.h"
 
-const char *kDataPath = "/tmp";
+
 
 typedef size_t frame_index_t;
 

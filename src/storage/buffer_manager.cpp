@@ -1,15 +1,22 @@
 #include "buffer_manager.h"
+#include <sstream>
 
 namespace storage {
 
-BufferManager::BufferManager(size_t pool_size, size_t page_size) {
-  buffer_pool_ = new Frame[pool_size];
+BufferManager::BufferManager(size_t pool_size, size_t page_size, std::string data_path) {
+  buffer_pool_ = NULL;
   pool_size_ = pool_size;
   page_size_ = page_size;
+  data_path_ = data_path;
 }
 
 BufferManager::~BufferManager() {
   delete[] buffer_pool_;
+}
+
+bool BufferManager::Start() {
+  buffer_pool_ = new Frame[pool_size_];
+  return true;
 }
 
 Page* BufferManager::FixPage(PageID id, bool is_new) {
@@ -76,21 +83,52 @@ frame_index_t BufferManager::GetFrame() {
   return frame_index;
 }
 
-void BufferManager::FlushPage(frame_index_t frame_index) {
-  Frame *frame = FrameAt(frame_index);
-  assert(!frame->IsFree() && frame->IsDirty());
-  Page *page = frame->GetPage();
-  PageID page_id = page->pageid_;
-  FileMap::iterator iter = files_.find(page_id.fileno_);
-  assert(iter != files_.end());
-  File *file = iter->second;
-  bool ok = file->Write(page_id.blockno_ * page_size_, page, page_size_);
-  assert(ok);
-  frame->SetDirty(false);
-}
-
 Frame *BufferManager::FrameAt(frame_index_t frame_index) {
   return &(buffer_pool_[frame_index]);
+}
+
+void BufferManager::FlushAll() {
+  for (uint32_t i = 0; i < pool_size_; i++) {
+    if (buffer_pool_[i].IsDirty()) {
+      FlushPage(i);
+    }
+  }
+}
+
+void BufferManager::FlushPage(frame_index_t i) {
+  WritePage((Page*)buffer_pool_[i].GetPage());
+}
+
+void BufferManager::ReadPage(PageID pageid, Page *page) {
+  File *f = GetFile(pageid.fileno_);
+  if (f != NULL) {
+    f->Read(pageid.blockno_ * page_size_, page, page_size_);
+  }
+}
+
+void BufferManager::WritePage(Page *page) {
+  File *f = GetFile(page->pageid_.fileno_);
+  if (f != NULL) {
+    f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
+  }
+}
+
+File* BufferManager::GetFile(fileno_t no) {
+  FileMap::iterator iter = files_.find(no);
+  File *f = NULL;
+  if (iter == files_.end()) {
+    std::stringstream ssm;
+    ssm << data_path_ << "/nutshell.data." << no;
+    f = new File(ssm.str());
+    if (!f->Open()) {
+      return NULL;
+    }
+    files_.insert(std::make_pair(no, f));
+
+  } else {
+    f = iter->second;
+  }
+  return f;
 }
 
 }

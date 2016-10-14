@@ -11,9 +11,9 @@ class SpaceManager {
   SpaceManager(BufferManager *buffer_manager);
   virtual ~SpaceManager();
 
-  bool InitDB();
+  static bool InitDB();
 
-  bool CreateFile(fileno_t fileno);
+  static bool CreateFile(fileno_t fileno);
 
   bool CreateDataFile(fileno_t *fileno);
 
@@ -31,7 +31,9 @@ class SpaceManager {
                      Page *extent_header_page,
                      PageID *new_page_id);
 
-  bool FindSpace(PageID segment_header_page, size_t length, PageID *data_page_);
+  bool WriteTuple(PageID segment_header_pageid,
+                  void *tuple,
+                 uint32_t length);
 
   bool LinkPage(PageID left_id, PageID right_id);
 
