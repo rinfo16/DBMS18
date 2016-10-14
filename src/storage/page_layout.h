@@ -61,7 +61,9 @@ typedef struct {
 typedef struct {
   uint32_t extent_count_;
   PageID first_extent_header_page_id_;
+  PageID last_extent_header_page_id_;
   PageID first_data_page_id_;
+  PageID last_data_page_id_;
 } SegmentHeader;
 
 typedef struct {
