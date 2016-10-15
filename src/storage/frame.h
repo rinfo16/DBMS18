@@ -37,6 +37,8 @@ class Frame {
 
   uint32_t GetFrameIndex();
 
+  static Frame* ToFrame(Page *page);
+
   void SetFrameIndex(uint32_t frame_index);
  private:
   uint32_t frame_index_;

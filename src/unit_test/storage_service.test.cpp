@@ -14,12 +14,12 @@ class StorageServiceTest : public testing::Test {
 TEST_F(StorageServiceTest, handler_create) {
   storage::RelationHandlerInterface *handler = storage::StorageService::instance().OpenHandler(1, storage::kRelationCreate);
   EXPECT_NE((storage::RelationHandlerInterface *)0, handler);
-  EXPECT_NE(true, handler->Create());
+  EXPECT_EQ(true, handler->Create());
   storage::StorageService::instance().CloseHandler(handler);
 
   handler = storage::StorageService::instance().OpenHandler(2, storage::kRelationCreate);
   EXPECT_NE((storage::RelationHandlerInterface *)0, handler);
-  EXPECT_NE(true, handler->Create());
+  EXPECT_EQ(true, handler->Create());
   storage::StorageService::instance().CloseHandler(handler);
 
   storage::StorageService::instance().FlushAll();

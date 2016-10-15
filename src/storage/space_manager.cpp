@@ -49,9 +49,10 @@ bool SpaceManager::CreateDataFile(fileno_t *no) {
 }
 
 bool SpaceManager::CreateFile(fileno_t fileno) {
-  bool ok= false;
+  bool ok = false;
   std::stringstream ssm;
-  ssm << config::Setting::instance().data_directory_ << "/nutshell.data." << fileno;
+  ssm << config::Setting::instance().data_directory_ << "/nutshell.data."
+      << fileno;
   std::string path = ssm.str();
   File file(path);
   if (!file.Create()) {
@@ -81,6 +82,8 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
     seg_file_header->segment_count_ = 0;
   } else {
     DataFileHeader *data_file_header = ToDataFileHeader(page);
+    utils::Bitmap *bitmap = new (data_file_header->bits)
+        utils::Bitmap(config::Setting::instance().page_number_per_extent_);;
     data_file_header->extent_count_ = 0;
   }
 
@@ -89,6 +92,7 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
 
   return ok;
 }
+
 bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   PageID file_header_pageid;
   Page *page = buffer_manager_->FixPage(file_header_pageid, false);
@@ -107,14 +111,16 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;
     if (!CreateExtentInSegment(seg_hdr_page, NULL)) {
-      buffer_manager_->UnfixPage(seg_header_pageid);
-      buffer_manager_->UnfixPage(file_header_pageid);
-      return true;
+      buffer_manager_->UnfixPage(seg_hdr_page->pageid_);
+      buffer_manager_->UnfixPage(page->pageid_);
+      return false;
     }
   }
+  Frame::ToFrame(seg_hdr_page)->SetDirty(true);
+  Frame::ToFrame(page)->SetDirty(true);
   buffer_manager_->UnfixPage(seg_header_pageid);
   buffer_manager_->UnfixPage(file_header_pageid);
-  return false;
+  return true;
 }
 
 bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
@@ -156,6 +162,7 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
     SegmentHeader *header = ToSegmentHeader(segment_header_page);
     header->extent_count_++;
     header->first_data_page_id_ = PageID();
+    Frame::ToFrame(segment_header_page)->SetDirty(true);
   }
   return ret;
 }
@@ -179,7 +186,7 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
     buffer_manager_->UnfixPage(data_file_header_pageid);
     return false;
   }
-
+  bitmap->SetBit(nth, true);
   PageID extent_header_pageid;
   extent_header_pageid.fileno_ = data_file_no;
   extent_header_pageid.blockno_ = 1
@@ -202,8 +209,11 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
     LinkPage(segment_header->last_extent_header_page_id_, page->pageid_);
     segment_header->last_extent_header_page_id_ = page->pageid_;
   }
-  buffer_manager_->UnfixPage(extent_header_pageid);
-  buffer_manager_->UnfixPage(data_file_header_pageid);
+  Frame::ToFrame(page)->SetDirty(true);
+  Frame::ToFrame(data_file_header_page)->SetDirty(true);
+  buffer_manager_->UnfixPage(page->pageid_);
+  buffer_manager_->UnfixPage(data_file_header_page->pageid_);
+
   return true;
 }
 
@@ -260,7 +270,7 @@ bool SpaceManager::CreateDataPageInSegment(Page *segment_header_page,
       LinkPage(segment_header->last_data_page_id_, new_data_pageid);
       segment_header->last_data_page_id_ = new_data_pageid;
     }
-
+    Frame::ToFrame(segment_header_page)->SetDirty(true);
   }
   return ok;
 }
@@ -283,6 +293,8 @@ bool SpaceManager::CreateDataPageInExtent(Page *extent_header_page,
   DataHeader *header = ToDataHeader(new_data_page);
   InitPage(new_data_page, new_data_page_id, kPageData);
   InitDataHeader(header, config::Setting::instance().page_size_);
+  Frame::ToFrame(extent_header_page)->SetDirty(true);
+  Frame::ToFrame(new_data_page)->SetDirty(true);
   buffer_manager_->UnfixPage(new_data_page_id);
   *new_page_id = new_data_page_id;
   extent_header->page_count_++;
@@ -293,8 +305,8 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
                               uint32_t length) {
   bool ok = false;
   if (length
-      > config::Setting::instance().page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE
-          - sizeof(DataHeader)) {
+      > config::Setting::instance().page_size_ - PAGE_HEADER_SIZE
+          - PAGE_TAILER_SIZE - sizeof(DataHeader)) {
     return false;
   }
 
@@ -322,6 +334,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
     }
     if (PutTuple(data_page, tuple, length)) {
       ok = true;
+      Frame::ToFrame(data_page)->SetDirty(true);
       buffer_manager_->UnfixPage(data_page->pageid_);
       break;
     } else {
@@ -342,10 +355,14 @@ bool SpaceManager::LinkPage(PageID left_id, PageID right_id) {
       buffer_manager_->UnfixPage(right->pageid_);
     return false;
   }
+  Frame::ToFrame(left)->SetDirty(true);
+  Frame::ToFrame(right)->SetDirty(true);
   buffer_manager_->UnfixPage(left->pageid_);
   buffer_manager_->UnfixPage(right->pageid_);
   return true;
 }
+
+
 
 }
 // namespace storage

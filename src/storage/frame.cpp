@@ -38,4 +38,9 @@ void Frame::SetFrameIndex(uint32_t frame_index) {
   frame_index_ = frame_index;
 }
 
+Frame* Frame::ToFrame(Page *page) {
+  Frame *frame = (Frame*) ((uint8_t *) page - sizeof(Frame));
+  return frame;
+}
+
 }  // end namespace storage

@@ -116,6 +116,7 @@ void BufferManager::WritePage(Page *page) {
   File *f = GetFile(page->pageid_.fileno_);
   if (f != NULL) {
     f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
+    Frame::ToFrame(page)->SetDirty(false);
   }
 }
 
