@@ -16,8 +16,9 @@ class StorageService : public StorageServiceInterface, public utils::Singleton<S
   virtual RelationHandlerInterface * OpenHandler(relationid_t rel, OpenMode mode);
   virtual void CloseHandler(RelationHandlerInterface* handler);
 
-  static void InitDB();
+  void InitDB();
   void FlushAll();
+  void Stop();
  private:
   BufferManager *buffer_manager_;
   SpaceManager *space_manager_;

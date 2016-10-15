@@ -37,6 +37,7 @@ void BufferManager::Stop()
   {
     delete iter->second;
   }
+  files_.clear();
 }
 
 Page* BufferManager::FixPage(PageID id, bool is_new) {
@@ -49,6 +50,7 @@ Page* BufferManager::FixPage(PageID id, bool is_new) {
     frame = FrameAt(frame_index);
   }
   if (frame == 0) {
+    assert(false);
     return NULL;
   }
 
@@ -66,6 +68,7 @@ bool BufferManager::UnfixPage(PageID id) {
     Frame *frame = FrameAt(frame_index);
     frame->UnfixPage();
   } else {
+    assert(false);
     return false;
   }
   return true;
@@ -75,6 +78,7 @@ Frame* BufferManager::LocatePage(PageID id, bool is_new) {
   Frame *frame = GetFrame();
   if (frame == NULL)
   {
+    assert(false);
     return NULL;
   }
   if (!is_new) {  // read from disk
@@ -108,7 +112,7 @@ Frame *BufferManager::FrameAt(frame_index_t frame_index) {
 }
 
 void BufferManager::FlushAll() {
-  for (uint32_t i = 0; i < frame_count_; i++) {
+  for (int i = (int)(frame_count_-1); i >= 0 ; i--) {
     if (FrameAt(i)->IsDirty()) {
       FlushPage(i);
     }
@@ -129,7 +133,7 @@ void BufferManager::ReadPage(PageID pageid, Page *page) {
 void BufferManager::WritePage(Page *page) {
   File *f = GetFile(page->pageid_.fileno_);
   if (f != NULL) {
-    std::cout << "Flush page [" << page->pageid_.fileno_ << " , " << page->pageid_.blockno_ << "]" << std::endl;
+    //std::cout << "Flush page [" << page->pageid_.fileno_ << " , " << page->pageid_.blockno_ << "]" << std::endl;
     f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
     Frame::ToFrame(page)->SetDirty(false);
   }

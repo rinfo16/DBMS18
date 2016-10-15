@@ -31,10 +31,15 @@ void StorageService::CloseHandler(RelationHandlerInterface* handler) {
 }
 
 void StorageService::InitDB() {
-  SpaceManager::InitDB();
+  space_manager_->InitDB();
 }
 
 void StorageService::FlushAll() {
   buffer_manager_->FlushAll();
+}
+
+void StorageService::Stop()
+{
+  buffer_manager_->Stop();
 }
 }  // namespace storage

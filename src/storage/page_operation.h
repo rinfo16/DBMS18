@@ -11,15 +11,15 @@ DataFileHeader *ToDataFileHeader(Page *page);
 ExtentHeader *ToExtentHeader(Page *page);
 Slot *ToFirstSlot(DataHeader *header);
 
-void InitPage(Page *page, PageID id, PageType page_type);
+void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size);
 void InitExtentHeader(ExtentHeader *header, uint32_t extent_count_per_page);
 void InitDataHeader(DataHeader *header, uint32_t page_size);
 
 bool PutTuple(Page *data_page, void *tuple, uint32_t length,
               slotno_t *no = NULL);
-void *GetTuple(Page *data_page, slotno_t no, uint16_t *length = NULL);
+void *GetTuple(Page *data_page, slotno_t no, uint32_t *length = NULL);
 
-void LinkPage(Page *left, Page *right);
+void LinkTwoPage(Page *left, Page *right);
 
 }  // end namespace storage
 

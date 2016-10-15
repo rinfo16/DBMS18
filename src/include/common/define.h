@@ -5,9 +5,9 @@
 #include <stdlib.h>
 
 #define PAGE_SIZE                 8192
-#define PAGE_NUMBER_PER_EXTENT    32
+#define PAGE_NUMBER_PER_EXTENT    320
 #define MAX_PAGE_NUMBER_PER_FILE  8192000
-#define MAX_EXTENT_COUNT          8888
+#define MAX_EXTENT_COUNT          40000
 #define BUFFER_POOL_SIZE          800000000
 #define DATA_DIRECTORY            "/tmp"
 #define FLIP_NUMBER               20161012

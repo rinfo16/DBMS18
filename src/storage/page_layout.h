@@ -68,7 +68,7 @@ typedef struct {
 
 typedef struct {
   uint32_t page_count_;
-  uint8_t bits_[0];
+  uint32_t used_[0];
 } ExtentHeader;
 
 }  // end namespace storage

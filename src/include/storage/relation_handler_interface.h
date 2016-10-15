@@ -11,15 +11,16 @@ enum OpenMode {
   kRelationDrop,
   kRelationCreate
 };
+// TODO
+// read handler/write handler/create handler/....
 
 class RelationHandlerInterface {
 public:
   virtual ~RelationHandlerInterface() {};
-  virtual cursor_t BeginRead() = 0;
-  virtual void *ReadNext(cursor_t *tuple, uint32_t *length) = 0;
-  virtual void *ReadRrev(cursor_t *tuple, uint32_t *length) = 0;
+  virtual void *GetFirst(uint32_t *length) = 0;
+  virtual void *GetNext(uint32_t *length) = 0;
+  virtual bool Put(void *tuple, uint32_t length) = 0;
   virtual bool Delete(cursor_t tuple) = 0;
-  virtual bool Write(void *tuple, uint32_t length) = 0;
   virtual bool Create() = 0;
   virtual bool Drop() = 0;
 };

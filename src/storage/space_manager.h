@@ -9,11 +9,12 @@ namespace storage {
 class SpaceManager {
  public:
   SpaceManager(BufferManager *buffer_manager);
+
   virtual ~SpaceManager();
 
-  static bool InitDB();
+  bool InitDB();
 
-  static bool CreateFile(fileno_t fileno);
+  bool CreateFile(fileno_t fileno);
 
   bool CreateDataFile(fileno_t *fileno);
 
@@ -23,17 +24,12 @@ class SpaceManager {
                   Page* segment_header_page,
                     PageID *extent_header_page_id);
 
-  bool CreateDataPageInSegment(
-                      Page *segment_header_page,
-                      PageID *new_page_id /*OUT*/);
-
-  bool CreateDataPageInExtent(
-                     Page *extent_header_page,
-                     PageID *new_page_id);
-
   bool WriteTuple(PageID segment_header_pageid,
                   void *tuple,
                  uint32_t length);
+  bool WriteTupleToExtent(Page *extent_header_page, void *tuple, uint32_t length);
+
+  bool WriteTupleToPage(Page *extent_page, uint32_t off, void *tuple, uint32_t length);
 
   bool LinkPage(PageID left_id, PageID right_id);
 
@@ -42,6 +38,7 @@ class SpaceManager {
                           PageID *extent_header_page_id);
   std::vector<pageno_t> data_file_;
   BufferManager *buffer_manager_;
+  uint32_t page_size_;
 };
 
 }  // namespace storage

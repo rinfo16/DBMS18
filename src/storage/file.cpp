@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "file.h"
+#include <stdio.h>
 
 namespace storage {
 
@@ -18,6 +19,7 @@ File::File(const std::string path)
 }
 
 bool File::Create() {
+
   fd_ = ::creat(path_.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (fd_ < 0) {
     perror("open");
@@ -59,6 +61,7 @@ bool File::Read(size_t offset, void *buff, int length) {
 }
 
 bool File::Write(size_t offset, const void *buff, int length) {
+  //printf("write to file [%s], fd [%d], offset [%ld]\n", path_.c_str(), fd_, offset);
   int ret = ::lseek(fd_, offset, SEEK_SET);
   if (ret < 0) {
     perror("lseek");
