@@ -1,6 +1,8 @@
 #include "page_operation.h"
 #include "common/bitmap.h"
 #include <assert.h>
+#include <memory.h>
+
 namespace storage {
 
 DataHeader *ToDataHeader(Page *page) {
