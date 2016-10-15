@@ -1,5 +1,6 @@
 #include "buffer_manager.h"
 #include <sstream>
+#include <iostream>
 
 namespace storage {
 
@@ -9,20 +10,33 @@ BufferManager::BufferManager(size_t pool_size, size_t page_size,
   pool_size_ = pool_size;
   page_size_ = page_size;
   data_path_ = data_path;
+  frame_count_ = 0;
+  frame_size_ = 0;
 }
 
 BufferManager::~BufferManager() {
+  Stop();
   delete[] buffer_pool_;
 }
 
 bool BufferManager::Start() {
-  buffer_pool_ = new Frame[pool_size_];
-  free_frames_.reserve(pool_size_);
-  for (uint32_t i = 0; i < pool_size_; i++) {
+  frame_size_ = page_size_ + sizeof(Frame);
+  buffer_pool_ = new uint8_t[pool_size_];
+  frame_count_ = pool_size_ / frame_size_;
+  free_frames_.reserve(frame_count_);
+  for (uint32_t i = 0; i < frame_count_; i++) {
     free_frames_.push_back(i);
-    buffer_pool_[i].SetFrameIndex(i);
+    Frame *frame = new (buffer_pool_ + i * frame_size_) Frame(i);
   }
   return true;
+}
+
+void BufferManager::Stop()
+{
+  for (FileMap::iterator iter = files_.begin(); iter != files_.end(); iter++)
+  {
+    delete iter->second;
+  }
 }
 
 Page* BufferManager::FixPage(PageID id, bool is_new) {
@@ -90,19 +104,19 @@ Frame* BufferManager::GetFrame() {
 }
 
 Frame *BufferManager::FrameAt(frame_index_t frame_index) {
-  return &(buffer_pool_[frame_index]);
+  return (Frame*)(buffer_pool_ + frame_size_ * frame_index);
 }
 
 void BufferManager::FlushAll() {
-  for (uint32_t i = 0; i < pool_size_; i++) {
-    if (buffer_pool_[i].IsDirty()) {
+  for (uint32_t i = 0; i < frame_count_; i++) {
+    if (FrameAt(i)->IsDirty()) {
       FlushPage(i);
     }
   }
 }
 
 void BufferManager::FlushPage(frame_index_t i) {
-  WritePage((Page*) buffer_pool_[i].GetPage());
+  WritePage((Page*) FrameAt(i)->GetPage());
 }
 
 void BufferManager::ReadPage(PageID pageid, Page *page) {
@@ -115,6 +129,7 @@ void BufferManager::ReadPage(PageID pageid, Page *page) {
 void BufferManager::WritePage(Page *page) {
   File *f = GetFile(page->pageid_.fileno_);
   if (f != NULL) {
+    std::cout << "Flush page [" << page->pageid_.fileno_ << " , " << page->pageid_.blockno_ << "]" << std::endl;
     f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
     Frame::ToFrame(page)->SetDirty(false);
   }

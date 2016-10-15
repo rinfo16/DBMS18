@@ -106,7 +106,7 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   seg_header_pageid.blockno_ = ++seg_file_header->page_count_;
   seg_header_pageid.fileno_ = file_header_pageid.fileno_;
   Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, true);
-  if (segment_header_page) {
+  if (seg_hdr_page) {
     InitPage(seg_hdr_page, seg_header_pageid, kPageSegmentHeader);
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;

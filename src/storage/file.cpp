@@ -75,6 +75,7 @@ bool File::Write(size_t offset, const void *buff, int length) {
               << "] failed." << std::endl;
     return false;
   }
+  fsync(fd_);
   return true;
 }
 

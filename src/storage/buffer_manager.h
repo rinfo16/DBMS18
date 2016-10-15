@@ -22,6 +22,8 @@ class BufferManager {
 
   bool Start();
 
+  void Stop();
+
   Page* FixPage(PageID id, bool is_new);
 
   bool UnfixPage(PageID id);
@@ -40,9 +42,11 @@ class BufferManager {
   File* GetFile(fileno_t no);
   Frame *FrameAt(frame_index_t frame_index);
 
-  Frame *buffer_pool_;
-  size_t pool_size_;
-  size_t page_size_;
+  uint8_t *buffer_pool_;
+  uint32_t pool_size_;
+  uint32_t page_size_;
+  uint32_t frame_count_;
+  uint32_t frame_size_;
   std::string data_path_;
   FreeFrameList free_frames_;  // TODO use hash table ...
   LoadedFrameMap loaded_frames_;
