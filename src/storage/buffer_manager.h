@@ -26,9 +26,9 @@ class BufferManager {
 
   bool UnfixPage(PageID id);
 
-  frame_index_t LocatePage(PageID id, bool is_new);
+  Frame* LocatePage(PageID id, bool is_new);
 
-  frame_index_t GetFrame();
+  Frame* GetFrame();
 
   void FlushAll();
   void FlushPage(frame_index_t frame_index);

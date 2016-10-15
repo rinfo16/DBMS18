@@ -30,4 +30,12 @@ Page *Frame::GetPage() {
   return (Page*) (((uint8_t*) this) + sizeof(*this));
 }
 
+uint32_t Frame::GetFrameIndex() {
+  return frame_index_;
+}
+
+void Frame::SetFrameIndex(uint32_t frame_index) {
+  frame_index_ = frame_index;
+}
+
 }  // end namespace storage

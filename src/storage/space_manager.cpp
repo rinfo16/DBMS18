@@ -20,7 +20,7 @@ SpaceManager::~SpaceManager() {
 }
 
 bool SpaceManager::InitDB() {
-  return CreateFile(SEGMENT_DESCRIPT_FILE_NO) && CreateFile(DATA_FILE_NO);
+  return CreateFile(SEGMENT_DESCRIPT_FILE_NO);
 }
 
 bool SpaceManager::CreateDataFile(fileno_t *no) {
@@ -99,7 +99,7 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   SegFileHeader *seg_file_header = ToSegFileHeader(page);
 
   PageID seg_header_pageid;
-  seg_header_pageid.blockno_ = seg_file_header->page_count_++;
+  seg_header_pageid.blockno_ = ++seg_file_header->page_count_;
   seg_header_pageid.fileno_ = file_header_pageid.fileno_;
   Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, true);
   if (segment_header_page) {
@@ -109,13 +109,12 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
     if (!CreateExtentInSegment(seg_hdr_page, NULL)) {
       buffer_manager_->UnfixPage(seg_header_pageid);
       buffer_manager_->UnfixPage(file_header_pageid);
-      return false;
+      return true;
     }
   }
   buffer_manager_->UnfixPage(seg_header_pageid);
   buffer_manager_->UnfixPage(file_header_pageid);
-  return true;
-
+  return false;
 }
 
 bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
@@ -164,6 +163,8 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
 bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
                                       PageID *extent_header_page_id) {
   PageID data_file_header_pageid;
+  data_file_header_pageid.blockno_ = 0;
+  data_file_header_pageid.fileno_ = data_file_no;
   Page *data_file_header_page = buffer_manager_->FixPage(
       data_file_header_pageid, false);
   if (data_file_header_page == NULL) {
@@ -191,8 +192,6 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
   }
   InitPage(page, extent_header_pageid, kPageExtentHeader);
 
-  page->pageid_ = extent_header_pageid;
-  page->page_type_ = kPageExtentHeader;
   ExtentHeader *header = ToExtentHeader(page);
   InitExtentHeader(header, config::Setting::instance().page_number_per_extent_);
   SegmentHeader *segment_header = ToSegmentHeader(segment_page);

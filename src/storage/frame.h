@@ -35,6 +35,9 @@ class Frame {
 
   Page *GetPage();
 
+  uint32_t GetFrameIndex();
+
+  void SetFrameIndex(uint32_t frame_index);
  private:
   uint32_t frame_index_;
   uint32_t fix_count_;
