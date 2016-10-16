@@ -2,10 +2,11 @@
 #include <memory.h>
 #include <string.h>
 #include <sstream>
-#include "file.h"
+#include "common/define.h"
 #include "common/config.h"
 #include "common/bitmap.h"
 #include "page_layout.h"
+#include "file.h"
 #include "page_operation.h"
 #include "buffer_manager.h"
 #include "space_manager.h"
@@ -83,9 +84,15 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
     seg_file_header->segment_count_ = 0;
   } else {
     DataFileHeader *data_file_header = ToDataFileHeader(page);
-    utils::Bitmap *bitmap = new (data_file_header->bits) utils::Bitmap(
+    utils::Bitmap *bitmap = NULL;
+#if 0
+    bitmap = new (data_file_header->bits) utils::Bitmap(
         page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE - sizeof(utils::Bitmap)
             - sizeof(DataFileHeader));
+#else
+    bitmap = new (data_file_header->bits) utils::Bitmap(config::Setting::instance().max_extent_count_);
+#endif
+
     ;
     data_file_header->extent_count_ = 0;
   }
@@ -283,7 +290,9 @@ bool SpaceManager::WriteTupleToExtent(Page* segment_header_page, Page* extent_he
   bool ok = false;
   ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
   uint32_t i = 0;
-  for (i = 0; i < extent_header->page_count_; i++) {
+  for (i = 0; i < extent_header->page_count_ - 1; i++) {
+    // WHY (page count - 1) ?, the 1st page is extent header page,
+    // only the following can be used to write data
     if (extent_header->used_[i] + length + sizeof(Slot)<
     page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE) {
       if (WriteTupleToPage(segment_header_page, extent_header_page, i, tuple, length)) {
