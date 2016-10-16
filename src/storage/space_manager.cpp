@@ -119,6 +119,8 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
       return false;
     }
   }
+  if (segment_header_page != NULL)
+    *segment_header_page = seg_header_pageid;
   Frame::ToFrame(seg_hdr_page)->SetDirty(true);
   Frame::ToFrame(page)->SetDirty(true);
   buffer_manager_->UnfixPage(seg_header_pageid);
@@ -165,10 +167,6 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
     if (extent_header_pageid != NULL) {
       *extent_header_pageid = new_externt_header_pageid;
     }
-    SegmentHeader *header = ToSegmentHeader(segment_header_page);
-    header->extent_count_++;
-    header->first_data_page_id_ = PageID();
-    Frame::ToFrame(segment_header_page)->SetDirty(true);
   }
   return ret;
 }
@@ -214,8 +212,12 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
     LinkPage(segment_header->last_extent_header_page_id_, page->pageid_);
     segment_header->last_extent_header_page_id_ = page->pageid_;
   }
+  segment_header->extent_count_ ++;
+
   Frame::ToFrame(page)->SetDirty(true);
   Frame::ToFrame(data_file_header_page)->SetDirty(true);
+  Frame::ToFrame(segment_page);
+
   buffer_manager_->UnfixPage(page->pageid_);
   buffer_manager_->UnfixPage(data_file_header_page->pageid_);
   if (extent_header_page_id != NULL) {
@@ -249,7 +251,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
       buffer_manager_->UnfixPage(segment_header_pageid);
       return false;
     }
-    if (WriteTupleToExtent(extent_header_page, tuple, length)) {
+    if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple, length)) {
       buffer_manager_->UnfixPage(extent_header_page->pageid_);
       ok = true;
       break;
@@ -263,7 +265,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
       Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid,
                                                           false);
       if (extent_header_page != NULL) {
-        if (WriteTupleToExtent(extent_header_page, tuple, length)) {
+        if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple, length)) {
           ok = true;
         }
       }
@@ -274,7 +276,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
   return ok;
 }
 
-bool SpaceManager::WriteTupleToExtent(Page* extent_header_page, void *tuple,
+bool SpaceManager::WriteTupleToExtent(Page* segment_header_page, Page* extent_header_page, void *tuple,
                                       uint32_t length) {
   bool ok = false;
   ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
@@ -282,7 +284,7 @@ bool SpaceManager::WriteTupleToExtent(Page* extent_header_page, void *tuple,
   for (i = 0; i < extent_header->page_count_; i++) {
     if (extent_header->used_[i] + length + sizeof(Slot)<
     page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE) {
-      if (WriteTupleToPage(extent_header_page, i, tuple, length)) {
+      if (WriteTupleToPage(segment_header_page, extent_header_page, i, tuple, length)) {
         ok = true;
         return ok;
       }
@@ -291,7 +293,7 @@ bool SpaceManager::WriteTupleToExtent(Page* extent_header_page, void *tuple,
   return ok;
 }
 
-bool SpaceManager::WriteTupleToPage(Page* extent_header_page, uint32_t off,
+bool SpaceManager::WriteTupleToPage(Page *segment_header_page, Page* extent_header_page, uint32_t off,
                                     void *tuple, uint32_t length) {
   bool ok;
   bool new_page = false;
@@ -307,6 +309,18 @@ bool SpaceManager::WriteTupleToPage(Page* extent_header_page, uint32_t off,
   if (new_page) {
     InitPage(data_page, data_pageid, kPageData, page_size_);
     InitDataHeader(ToDataHeader(data_page), page_size_);
+    SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
+    if (segment_header->last_data_page_id_.Invalid())
+    {
+      segment_header->last_data_page_id_ = data_page->pageid_;
+      segment_header->first_data_page_id_ = data_page->pageid_;
+    }
+    else
+    {
+      LinkPage(segment_header->last_data_page_id_, data_page->pageid_);
+    }
+    Frame::ToFrame(segment_header_page)->SetDirty(true);
+    Frame::ToFrame(data_page)->SetDirty(true);
   }
 
   if (PutTuple(data_page, tuple, length)) {

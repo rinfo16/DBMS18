@@ -16,7 +16,6 @@ BufferManager::BufferManager(size_t pool_size, size_t page_size,
 
 BufferManager::~BufferManager() {
   Stop();
-  delete[] buffer_pool_;
 }
 
 bool BufferManager::Start() {
@@ -33,11 +32,19 @@ bool BufferManager::Start() {
 
 void BufferManager::Stop()
 {
+  if (buffer_pool_ == NULL)
+    return;
+
+  FlushAll();
   for (FileMap::iterator iter = files_.begin(); iter != files_.end(); iter++)
   {
     delete iter->second;
   }
   files_.clear();
+  delete [] buffer_pool_;
+  buffer_pool_ = NULL;
+  free_frames_.clear();
+  loaded_frames_.clear();
 }
 
 Page* BufferManager::FixPage(PageID id, bool is_new) {
@@ -133,7 +140,6 @@ void BufferManager::ReadPage(PageID pageid, Page *page) {
 void BufferManager::WritePage(Page *page) {
   File *f = GetFile(page->pageid_.fileno_);
   if (f != NULL) {
-    //std::cout << "Flush page [" << page->pageid_.fileno_ << " , " << page->pageid_.blockno_ << "]" << std::endl;
     f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
     Frame::ToFrame(page)->SetDirty(false);
   }

@@ -48,7 +48,7 @@ class BufferManager {
   uint32_t frame_count_;
   uint32_t frame_size_;
   std::string data_path_;
-  FreeFrameList free_frames_;  // TODO use hash table ...
+  FreeFrameList free_frames_;
   LoadedFrameMap loaded_frames_;
   FileMap files_;
 };

@@ -64,7 +64,7 @@ bool RelationHandler::Create() {
 void *RelationHandler::GetNextTuple(uint32_t *length) {
   void *tuple = NULL;
   while (page_ != NULL) {
-    tuple = GetTuple(page_, nth_slot_, length);
+    tuple = GetTuple(page_, nth_slot_++, length);
     if (tuple != NULL) {
       break;
     } else {
@@ -74,6 +74,7 @@ void *RelationHandler::GetNextTuple(uint32_t *length) {
         break;
       }
       page_ = buffer_manager_->FixPage(data_page_id, false);
+      nth_slot_ = 0;
     }
   }
   return tuple;

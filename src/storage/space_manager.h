@@ -27,9 +27,9 @@ class SpaceManager {
   bool WriteTuple(PageID segment_header_pageid,
                   void *tuple,
                  uint32_t length);
-  bool WriteTupleToExtent(Page *extent_header_page, void *tuple, uint32_t length);
+  bool WriteTupleToExtent(Page *segment_header_page, Page *extent_header_page, void *tuple, uint32_t length);
 
-  bool WriteTupleToPage(Page *extent_page, uint32_t off, void *tuple, uint32_t length);
+  bool WriteTupleToPage(Page *segment_header_page, Page *extent_header_page, uint32_t off, void *tuple, uint32_t length);
 
   bool LinkPage(PageID left_id, PageID right_id);
 
