@@ -1,21 +1,29 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 project (Nutshell)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(include)
+
 add_subdirectory(unit_test)
 add_subdirectory(storage)
 add_subdirectory(common)
 add_subdirectory(third_party)
+
+set (CMAKE_CXX_STANDARD 11)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(CodeCoverage)
+
+
 if (ENABLE_GCOV)
   if (NOT WIN32 AND NOT APPLE)
-    set(CMAKE_CXX_FLAGS "-g -fprofile-arcs -ftest-coverage")
-    set(CMAKE_C_FLAGS "-g -fprofile-arcs -ftest-coverage")
-    set(CMAKE_EXE_LINKER_FLAGS "-fprofile-arcs -ftest-coverage -lgcov")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fprofile-arcs -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "$CMAKE_EXE_LINKER_FLAGS -fprofile-arcs -ftest-coverage -lgcov")
   endif()
   if (APPLE)
-    set(CMAKE_CXX_FLAGS "-g -fprofile-arcs -ftest-coverage")
-    set(CMAKE_C_FLAGS "-g -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fprofile-arcs -ftest-coverage")
   endif()
 endif()
+
