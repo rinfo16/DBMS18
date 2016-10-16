@@ -145,6 +145,8 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
     fileno_t file_no = seg_file_header->fileno_[i];
     if (!CreateExtentInFile(segment_header_page, file_no,
                             &new_externt_header_pageid)) {
+      // TODO .. create a new data file ..
+      // FIXME .. test case
       ret = false;
       break;
     } else {
