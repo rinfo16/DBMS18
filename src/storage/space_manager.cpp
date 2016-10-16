@@ -90,7 +90,7 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
         page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE - sizeof(utils::Bitmap)
             - sizeof(DataFileHeader));
 #else
-    bitmap = new (data_file_header->bits) utils::Bitmap(config::Setting::instance().max_extent_count_);
+    bitmap = new (data_file_header->bits) utils::Bitmap(config::Setting::instance().max_extent_count_/8);
 #endif
 
     ;
