@@ -33,6 +33,8 @@ class Frame {
 
   bool IsDirty() const;
 
+  uint32_t FixCount() const;
+
   Page *GetPage();
 
   uint32_t GetFrameIndex();

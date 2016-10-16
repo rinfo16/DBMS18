@@ -26,6 +26,10 @@ bool Frame::IsDirty() const {
   return dirty_ == (int8_t) true;
 }
 
+uint32_t Frame::FixCount() const {
+  return fix_count_;
+}
+
 Page *Frame::GetPage() {
   return (Page*) (((uint8_t*) this) + sizeof(*this));
 }

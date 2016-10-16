@@ -16,7 +16,7 @@ namespace storage {
 struct HashFunction
 {
   size_t operator () (const PageID &id) const{
-    return (size_t)utils::Hash64(&id, sizeof(id));
+    return (size_t)(*(size_t*)(&id));
   }
 };
 

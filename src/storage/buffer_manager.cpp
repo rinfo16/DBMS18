@@ -30,18 +30,16 @@ bool BufferManager::Start() {
   return true;
 }
 
-void BufferManager::Stop()
-{
+void BufferManager::Stop() {
   if (buffer_pool_ == NULL)
     return;
 
   FlushAll();
-  for (FileMap::iterator iter = files_.begin(); iter != files_.end(); iter++)
-  {
+  for (FileMap::iterator iter = files_.begin(); iter != files_.end(); iter++) {
     delete iter->second;
   }
   files_.clear();
-  delete [] buffer_pool_;
+  delete[] buffer_pool_;
   buffer_pool_ = NULL;
   free_frames_.clear();
   loaded_frames_.clear();
@@ -83,8 +81,7 @@ bool BufferManager::UnfixPage(PageID id) {
 
 Frame* BufferManager::LocatePage(PageID id, bool is_new) {
   Frame *frame = GetFrame();
-  if (frame == NULL)
-  {
+  if (frame == NULL) {
     assert(false);
     return NULL;
   }
@@ -106,6 +103,18 @@ Frame* BufferManager::GetFrame() {
     // LRU
     // 1. It's better to find a clean page
     // 2. If there is not a clean page, flush the dirty page to disk
+    for (LoadedFrameMap::iterator iter = loaded_frames_.begin();
+        iter != loaded_frames_.end(); iter++) {
+      frame = FrameAt(iter->second);
+      if (frame->FixCount() != 0) {
+        if (frame->IsDirty()) {
+          WritePage(frame->GetPage());
+          frame->SetDirty(false);
+        }
+        loaded_frames_.erase(iter);
+        break;
+      }
+    }
   } else {
     frame_index_t frame_index = free_frames_.back();
     frame = FrameAt(frame_index);
@@ -115,11 +124,11 @@ Frame* BufferManager::GetFrame() {
 }
 
 Frame *BufferManager::FrameAt(frame_index_t frame_index) {
-  return (Frame*)(buffer_pool_ + frame_size_ * frame_index);
+  return (Frame*) (buffer_pool_ + frame_size_ * frame_index);
 }
 
 void BufferManager::FlushAll() {
-  for (int i = (int)(frame_count_-1); i >= 0 ; i--) {
+  for (int i = (int) (frame_count_ - 1); i >= 0; i--) {
     if (FrameAt(i)->IsDirty()) {
       FlushPage(i);
     }
