@@ -2,7 +2,7 @@
 
 namespace utils {
 
-uint32_t Hash32(void *ptr, size_t length) {
+uint32_t Hash32(const void *ptr, size_t length) {
   const uint32_t m = 0x5bd1e995;
         const int r = 24;
         const int seed = 97;
@@ -37,7 +37,7 @@ uint32_t Hash32(void *ptr, size_t length) {
 
 }
 
-uint64_t Hash64(void *ptr, size_t length) {
+uint64_t Hash64(const void *ptr, size_t length) {
  
 	const uint32_t m = 0x5bd1e995;
         const int r = 24;

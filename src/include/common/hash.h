@@ -5,9 +5,9 @@
 
 namespace utils {
 
-uint32_t Hash32(void *ptr, size_t length);
+uint32_t Hash32(const void *ptr, size_t length);
 
-uint64_t Hash64(void *ptr, size_t length);
+uint64_t Hash64(const void *ptr, size_t length);
 
 }
 

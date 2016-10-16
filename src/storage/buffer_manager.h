@@ -3,7 +3,9 @@
 
 #include <map>
 #include <vector>
+#include <unordered_map>
 #include <assert.h>
+#include "common/hash.h"
 #include "storage_define.h"
 #include "frame.h"
 #include "file.h"
@@ -11,8 +13,23 @@
 
 namespace storage {
 
+struct HashFunction
+{
+  size_t operator () (const PageID &id) const{
+    return (size_t)utils::Hash64(&id, sizeof(id));
+  }
+};
+
+struct EqualTo
+{
+  bool operator()(const PageID & id1, const PageID & id2) const{
+    return id1.blockno_ == id2.blockno_ && id1.fileno_ == id2.fileno_;
+  }
+};
+
+typedef std::unordered_map <PageID, frame_index_t, HashFunction, EqualTo> LoadedFrameMap;
 typedef std::map<fileno_t, File *> FileMap;
-typedef std::map<PageID, frame_index_t> LoadedFrameMap;
+//typedef std::map<PageID, frame_index_t> LoadedFrameMap;
 typedef std::vector<size_t> FreeFrameList;
 
 class BufferManager {
