@@ -26,6 +26,7 @@ typedef struct {
   PageID pageid_;
   PageID prev_page_;
   PageID next_page_;
+  uint64_t frame_ptr_;
 } Page;
 
 typedef struct {

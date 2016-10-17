@@ -5,7 +5,7 @@
 
 
 
-typedef size_t frame_index_t;
+typedef size_t buffer_index_t;
 
 struct PageID {
   fileno_t fileno_;

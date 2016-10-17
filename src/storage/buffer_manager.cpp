@@ -1,6 +1,7 @@
 #include "buffer_manager.h"
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 namespace storage {
 
@@ -12,6 +13,8 @@ BufferManager::BufferManager(size_t pool_size, size_t page_size,
   data_path_ = data_path;
   frame_count_ = 0;
   frame_size_ = 0;
+  page_count_ = pool_size / page_size;
+  pool_size_ = page_count_ * page_size;
 }
 
 BufferManager::~BufferManager() {
@@ -19,13 +22,12 @@ BufferManager::~BufferManager() {
 }
 
 bool BufferManager::Start() {
-  frame_size_ = page_size_ + sizeof(Frame);
   buffer_pool_ = new uint8_t[pool_size_];
-  frame_count_ = pool_size_ / frame_size_;
-  free_frames_.reserve(frame_count_);
-  for (uint32_t i = 0; i < frame_count_; i++) {
-    free_frames_.push_back(i);
-    Frame *frame = new (buffer_pool_ + i * frame_size_) Frame(i);
+  free_buffer_index_.reserve(page_count_);
+  for (uint32_t i = 0; i < page_count_; i++) {
+    free_buffer_index_.push_back(i);
+    //Frame *frame = new (buffer_pool_ + i * frame_size_) Frame();
+    //frame->SetFrameIndex(i);
   }
   return true;
 }
@@ -41,102 +43,159 @@ void BufferManager::Stop() {
   files_.clear();
   delete[] buffer_pool_;
   buffer_pool_ = NULL;
-  free_frames_.clear();
-  loaded_frames_.clear();
+  free_buffer_index_.clear();
+  loaded_buffers_.clear();
+  stack_s_.clear();
+  stack_s_.clear();
 }
 
 Page* BufferManager::FixPage(PageID id, bool is_new) {
-  LoadedFrameMap::iterator iter = loaded_frames_.find(id);
+
+  LoadedBufferMap::iterator frame_iter = loaded_buffers_.find(id);
+  Page *page = NULL;
   Frame* frame = NULL;
-  if (iter == loaded_frames_.end()) {  // cannot find page, read from disk
-    frame = LocatePage(id, is_new);
+  bool non_resident = false;
+  bool find_in_buffers = false;
+#if LIRS
+  if (frame_iter == loaded_buffers_.end()) {
+    // cannot find a the frame, get a free page, or VICTIM one;
+    non_resident = true;
+    page = GetFreePage();
+    assert(page);
+    frame = new Frame();// TODO delete this ???
+    frame->SetPage(page);
+    frame->SetHIR();
+    loaded_buffers_.insert(std::make_pair(id, frame));
   } else {
-    frame_index_t frame_index = iter->second;
-    frame = FrameAt(frame_index);
+    frame = frame_iter->second;
+    assert(frame);
+    page = frame->GetPage();
+    if (frame->IsLIR()) {
+      assert(FrameToPage(frame));
+      RemoveFromStackS(frame);
+    } else {
+      assert(frame->IsHIR());
+      if (page != NULL) {
+        bool in_stack_s = RemoveFromStackS(frame);
+        if (in_stack_s) {
+          frame->SetLIR();
+          RemoveFromStackQ(frame);
+        } else {
+          RemoveFromStackQ(frame);
+          SHeadToQTail();
+        }
+      } else {
+        page = GetFreePage();
+        assert(page);
+        frame->SetPage(page);
+        frame->SetLIR();
+        page->frame_ptr_ = (uint64_t) page;
+        non_resident = true;
+      }
+    }
   }
+  if (non_resident && !is_new) {
+    ReadPage(id, page);
+  }
+
   if (frame == 0) {
     assert(false);
     return NULL;
   }
-
+#else
+  if (frame_iter == loaded_buffers_.end()) {
+    page = LocatePage(id, is_new);
+    if (page == NULL) {
+      return NULL;
+    }
+    frame = new Frame();
+    frame->SetPage(page);
+    loaded_buffers_.insert(std::make_pair(id, frame));
+  } else {
+    frame = frame_iter->second;
+    page = frame->GetPage();
+  }
+#endif
+  PageSetFrame(page, frame);
   frame->FixPage();
 
-  // TODO .. do something
-  return (Page*) frame->GetPage();
+  return frame->GetPage();
 
 }
 
 bool BufferManager::UnfixPage(PageID id) {
-  LoadedFrameMap::iterator iter = loaded_frames_.find(id);
-  if (iter != loaded_frames_.end()) {  // cannot find page, read from disk
-    frame_index_t frame_index = iter->second;
-    Frame *frame = FrameAt(frame_index);
+#ifdef LIRS
+  LoadedBufferMap::iterator iter = loaded_buffers_.find(id);
+  if (iter != loaded_buffers_.end()) {
+    Frame *frame = iter->second;
+    frame->UnfixPage();
+    if (frame->IsLIR()) {
+      stack_s_.push_back(frame);
+    } else {
+      stack_s_.push_back(frame);
+      stack_q_.push_back(frame);
+    }
+  } else {
+    assert(false);
+    return false;
+  }
+  return true;
+#else
+  LoadedBufferMap::iterator iter = loaded_buffers_.find(id);
+  if (iter != loaded_buffers_.end()) {
+    Frame *frame = iter->second;
     frame->UnfixPage();
   } else {
     assert(false);
     return false;
   }
   return true;
+#endif
+
 }
 
-Frame* BufferManager::LocatePage(PageID id, bool is_new) {
-  Frame *frame = GetFrame();
-  if (frame == NULL) {
+Page* BufferManager::LocatePage(PageID id, bool is_new) {
+  Page *page = GetFreePage();
+  if (page == NULL) {
     assert(false);
     return NULL;
   }
   if (!is_new) {  // read from disk
-    ReadPage(id, frame->GetPage());
-  } else {  // a new page
-
+    ReadPage(id, page);
   }
 
-  loaded_frames_.insert(std::make_pair(id, frame->GetFrameIndex()));
-
-  return frame;
+  return page;
 }
 
-Frame* BufferManager::GetFrame() {
-  Frame *frame = NULL;
-  if (free_frames_.empty()) {
-    // TODO find unfixed page in loaded_frames_, if there is not return false
-    // LRU
-    // 1. It's better to find a clean page
-    // 2. If there is not a clean page, flush the dirty page to disk
-    for (LoadedFrameMap::iterator iter = loaded_frames_.begin();
-        iter != loaded_frames_.end(); iter++) {
-      frame = FrameAt(iter->second);
-      if (frame->FixCount() != 0) {
-        if (frame->IsDirty()) {
-          WritePage(frame->GetPage());
-          frame->SetDirty(false);
-        }
-        loaded_frames_.erase(iter);
-        break;
-      }
-    }
+Page* BufferManager::GetFreePage() {
+  Page *page = NULL;
+  if (free_buffer_index_.empty()) {
+    page = Victim();
   } else {
-    frame_index_t frame_index = free_frames_.back();
-    frame = FrameAt(frame_index);
-    free_frames_.pop_back();
+    buffer_index_t buffer_index = free_buffer_index_.back();
+    page = BufferAt(buffer_index);
+    free_buffer_index_.pop_back();
   }
-  return frame;
+  if (page != NULL) {
+    memset(page, 0, page_size_);
+  }
+  return page;
 }
 
-Frame *BufferManager::FrameAt(frame_index_t frame_index) {
-  return (Frame*) (buffer_pool_ + frame_size_ * frame_index);
+Page *BufferManager::BufferAt(buffer_index_t frame_index) {
+  return (Page*) (buffer_pool_ + page_size_ * frame_index);
 }
 
 void BufferManager::FlushAll() {
-  for (int i = (int) (frame_count_ - 1); i >= 0; i--) {
-    if (FrameAt(i)->IsDirty()) {
-      FlushPage(i);
+  for (int i = 0; i < page_count_; i++) {
+    Page *page = BufferAt(i);
+    Frame *frame = PageGetFrame(page);
+    if (frame && page) {
+      if (frame->IsDirty()) {
+        WritePage(frame->GetPage());
+      }
     }
   }
-}
-
-void BufferManager::FlushPage(frame_index_t i) {
-  WritePage((Page*) FrameAt(i)->GetPage());
 }
 
 void BufferManager::ReadPage(PageID pageid, Page *page) {
@@ -149,8 +208,11 @@ void BufferManager::ReadPage(PageID pageid, Page *page) {
 void BufferManager::WritePage(Page *page) {
   File *f = GetFile(page->pageid_.fileno_);
   if (f != NULL) {
+    Frame *frame = PageGetFrame(page);
+    PageSetFrame(page, NULL);
     f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
-    Frame::ToFrame(page)->SetDirty(false);
+    frame->SetDirty(false);
+    PageSetFrame(page, frame);
   }
 }
 
@@ -170,6 +232,101 @@ File* BufferManager::GetFile(fileno_t no) {
     f = iter->second;
   }
   return f;
+}
+
+bool BufferManager::RemoveFromStackS(Frame *frame) {
+  FrameStack::iterator iter = std::find(stack_s_.begin(), stack_s_.end(),
+                                        frame);
+  bool ret = false;
+  if (iter != stack_s_.end()) {
+    if (iter == stack_s_.begin()) {
+      stack_s_.erase(iter);
+      RemoveUnResidentHIRPage();
+    } else {
+      stack_s_.erase(iter);
+    }
+    return true;
+  }
+  return false;
+}
+
+bool BufferManager::RemoveFromStackQ(Frame *frame) {
+  FrameStack::iterator iter = std::find(stack_q_.begin(), stack_q_.end(),
+                                        frame);
+  bool ret = false;
+  if (iter != stack_q_.end()) {
+    stack_q_.erase(iter);
+    ret = true;
+  } else {
+    ret = false;
+  }
+  return true;
+}
+
+void BufferManager::SHeadToQTail() {
+  FrameStack::iterator iter = stack_s_.begin();
+  if (iter != stack_s_.end()) {
+    Frame *frame = *iter;
+    frame->SetHIR();
+    stack_s_.erase(iter);
+    stack_q_.push_back(frame);
+    RemoveUnResidentHIRPage();
+  }
+}
+
+void BufferManager::RemoveUnResidentHIRPage() {
+  FrameStack::iterator iter;
+  for (iter = stack_s_.begin(); iter != stack_s_.end(); iter++) {
+    Frame *f = *iter;
+    if (FrameToPage(f) == NULL) {
+      loaded_buffers_.erase(f->GetPageID());
+      delete f;
+      iter = stack_s_.erase(iter);
+    }
+  }
+}
+
+Page* BufferManager::Victim() {
+  Page *page = NULL;
+#if LIRS
+  if (stack_q_.empty()) {
+    assert(false);
+    return NULL;
+  }
+  Frame *frame = stack_q_.front();
+  if (frame->FixCount() > 0) {
+    // Logic error, should not be here
+    return NULL;
+  }
+  page = frame->GetPage();
+  if (frame->IsDirty()) {
+    WritePage(page);
+  }
+  frame->SetPage(NULL);
+  stack_q_.pop_front();
+  FrameStack::iterator iter = std::find(stack_s_.begin(), stack_s_.end(),
+      frame);
+  if (iter == stack_s_.end()) {
+    loaded_buffers_.erase(frame->GetPageID());
+    delete frame;
+  }
+#else
+  for (LoadedBufferMap::iterator iter = loaded_buffers_.begin();
+      iter != loaded_buffers_.end(); iter++) {
+    Frame *frame = (iter->second);
+    if (frame->FixCount() != 0) {
+      if (frame->IsDirty()) {
+        WritePage(frame->GetPage());
+        frame->SetDirty(false);
+      }
+      page = frame->GetPage();
+      loaded_buffers_.erase(iter);
+      delete frame;
+      break;
+    }
+  }
+#endif
+  return page;
 }
 
 }

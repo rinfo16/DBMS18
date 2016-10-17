@@ -31,18 +31,14 @@ Slot *ToFirstSlot(DataHeader *header) {
   return (Slot *) ((uint8_t*) header + sizeof(DataHeader));
 }
 void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size) {
-  memset(page, 0, page_size);
   memcpy(&page->flip_, "HEAD", 4);
   page->pageid_ = id;
   page->page_type_ = page_type;
-
   memcpy((uint8_t*)page + page_size - PAGE_TAILER_SIZE, "TAIL", 4);
 }
 
 void InitExtentHeader(ExtentHeader *header, uint32_t extent_count_per_page) {
   header->page_count_ = extent_count_per_page;
-  //utils::Bitmap* bitmap = new (header->used_) utils::Bitmap(
-  //    extent_count_per_page);
 }
 
 void InitDataHeader(DataHeader *header, uint32_t page_size) {

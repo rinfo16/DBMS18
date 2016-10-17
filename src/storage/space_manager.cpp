@@ -5,8 +5,8 @@
 #include "common/define.h"
 #include "common/config.h"
 #include "common/bitmap.h"
-#include "page_layout.h"
 #include "file.h"
+#include "page_layout.h"
 #include "page_operation.h"
 #include "buffer_manager.h"
 #include "space_manager.h"
@@ -88,9 +88,10 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
 #if 0
     bitmap = new (data_file_header->bits) utils::Bitmap(
         page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE - sizeof(utils::Bitmap)
-            - sizeof(DataFileHeader));
+        - sizeof(DataFileHeader));
 #else
-    bitmap = new (data_file_header->bits) utils::Bitmap(config::Setting::instance().max_extent_count_/8);
+    bitmap = new (data_file_header->bits) utils::Bitmap(
+        config::Setting::instance().max_extent_count_ / 8);
 #endif
 
     ;
@@ -120,7 +121,7 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
     InitPage(seg_hdr_page, seg_header_pageid, kPageSegmentHeader, page_size_);
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;
-    if (!CreateExtentInSegment(seg_hdr_page, NULL)) {
+    if (!AllocateExtentInSegment(seg_hdr_page, NULL)) {
       buffer_manager_->UnfixPage(seg_hdr_page->pageid_);
       buffer_manager_->UnfixPage(page->pageid_);
       return false;
@@ -128,15 +129,15 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   }
   if (segment_header_page != NULL)
     *segment_header_page = seg_header_pageid;
-  Frame::ToFrame(seg_hdr_page)->SetDirty(true);
-  Frame::ToFrame(page)->SetDirty(true);
+  PageGetFrame(seg_hdr_page)->SetDirty(true);
+  PageGetFrame(page)->SetDirty(true);
   buffer_manager_->UnfixPage(seg_header_pageid);
   buffer_manager_->UnfixPage(file_header_pageid);
   return true;
 }
 
-bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
-                                         PageID *extent_header_pageid) {
+bool SpaceManager::AllocateExtentInSegment(Page* segment_header_page,
+                                           PageID *extent_header_pageid) {
   bool ret = false;
   PageID new_externt_header_pageid;
   PageID seg_file_header_pageid;
@@ -146,14 +147,13 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
     return false;
   }
 
-  SegFileHeader *seg_file_header = ToSegFileHeader(segment_header_file_page);
-  for (uint32_t i = 0; i < seg_file_header->data_file_count_; i++) {
+  SegFileHeader *segment_file_header = ToSegFileHeader(
+      segment_header_file_page);
+  for (uint32_t i = 0; i < segment_file_header->data_file_count_; i++) {
 
-    fileno_t file_no = seg_file_header->fileno_[i];
-    if (!CreateExtentInFile(segment_header_page, file_no,
-                            &new_externt_header_pageid)) {
-      // TODO .. create a new data file ..
-      // FIXME .. test case
+    fileno_t file_no = segment_file_header->fileno_[i];
+    if (!AllocateExtentInFile(segment_header_page, file_no,
+                              &new_externt_header_pageid)) {
       ret = false;
       break;
     } else {
@@ -169,8 +169,8 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
     if (!CreateDataFile(&new_created)) {
       return false;
     }
-    ret = CreateExtentInFile(segment_header_page, new_created,
-                             &new_externt_header_pageid);
+    ret = AllocateExtentInFile(segment_header_page, new_created,
+                               &new_externt_header_pageid);
   }
   if (ret) {
     if (extent_header_pageid != NULL) {
@@ -180,8 +180,9 @@ bool SpaceManager::CreateExtentInSegment(Page* segment_header_page,
   return ret;
 }
 
-bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
-                                      PageID *extent_header_page_id) {
+bool SpaceManager::AllocateExtentInFile(Page *segment_page,
+                                        fileno_t data_file_no,
+                                        PageID *extent_header_page_id) {
   PageID data_file_header_pageid;
   data_file_header_pageid.blockno_ = 0;
   data_file_header_pageid.fileno_ = data_file_no;
@@ -221,11 +222,11 @@ bool SpaceManager::CreateExtentInFile(Page *segment_page, fileno_t data_file_no,
     LinkPage(segment_header->last_extent_header_page_id_, page->pageid_);
     segment_header->last_extent_header_page_id_ = page->pageid_;
   }
-  segment_header->extent_count_ ++;
+  segment_header->extent_count_++;
 
-  Frame::ToFrame(page)->SetDirty(true);
-  Frame::ToFrame(data_file_header_page)->SetDirty(true);
-  Frame::ToFrame(segment_page);
+  PageGetFrame(page)->SetDirty(true);
+  PageGetFrame(data_file_header_page)->SetDirty(true);
+  PageGetFrame(segment_page);
 
   buffer_manager_->UnfixPage(page->pageid_);
   buffer_manager_->UnfixPage(data_file_header_page->pageid_);
@@ -260,7 +261,8 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
       buffer_manager_->UnfixPage(segment_header_pageid);
       return false;
     }
-    if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple, length)) {
+    if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple,
+                           length)) {
       buffer_manager_->UnfixPage(extent_header_page->pageid_);
       ok = true;
       break;
@@ -270,11 +272,12 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
   }
   if (!ok) {
     PageID extent_header_pageid;
-    if (CreateExtentInSegment(segment_header_page, &extent_header_pageid)) {
+    if (AllocateExtentInSegment(segment_header_page, &extent_header_pageid)) {
       Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid,
                                                           false);
       if (extent_header_page != NULL) {
-        if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple, length)) {
+        if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple,
+                               length)) {
           ok = true;
         }
       }
@@ -285,7 +288,8 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
   return ok;
 }
 
-bool SpaceManager::WriteTupleToExtent(Page* segment_header_page, Page* extent_header_page, void *tuple,
+bool SpaceManager::WriteTupleToExtent(Page* segment_header_page,
+                                      Page* extent_header_page, void *tuple,
                                       uint32_t length) {
   bool ok = false;
   ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
@@ -295,7 +299,8 @@ bool SpaceManager::WriteTupleToExtent(Page* segment_header_page, Page* extent_he
     // only the following can be used to write data
     if (extent_header->used_[i] + length + sizeof(Slot)<
     page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE) {
-      if (WriteTupleToPage(segment_header_page, extent_header_page, i, tuple, length)) {
+      if (WriteTupleToPage(segment_header_page, extent_header_page, i, tuple,
+                           length)) {
         ok = true;
         return ok;
       }
@@ -304,7 +309,8 @@ bool SpaceManager::WriteTupleToExtent(Page* segment_header_page, Page* extent_he
   return ok;
 }
 
-bool SpaceManager::WriteTupleToPage(Page *segment_header_page, Page* extent_header_page, uint32_t off,
+bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
+                                    Page* extent_header_page, uint32_t off,
                                     void *tuple, uint32_t length) {
   bool ok;
   bool new_page = false;
@@ -321,17 +327,14 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page, Page* extent_head
     InitPage(data_page, data_pageid, kPageData, page_size_);
     InitDataHeader(ToDataHeader(data_page), page_size_);
     SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
-    if (segment_header->last_data_page_id_.Invalid())
-    {
+    if (segment_header->last_data_page_id_.Invalid()) {
       segment_header->last_data_page_id_ = data_page->pageid_;
       segment_header->first_data_page_id_ = data_page->pageid_;
-    }
-    else
-    {
+    } else {
       LinkPage(segment_header->last_data_page_id_, data_page->pageid_);
     }
-    Frame::ToFrame(segment_header_page)->SetDirty(true);
-    Frame::ToFrame(data_page)->SetDirty(true);
+    PageGetFrame(segment_header_page)->SetDirty(true);
+    PageGetFrame(data_page)->SetDirty(true);
   }
 
   if (PutTuple(data_page, tuple, length)) {
@@ -340,8 +343,8 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page, Page* extent_head
       extent_header->used_[off]++;
     }
     extent_header->used_[off] += length + sizeof(Slot);
-    Frame::ToFrame(data_page)->SetDirty(true);
-    Frame::ToFrame(extent_header_page)->SetDirty(true);
+    PageGetFrame(data_page)->SetDirty(true);
+    PageGetFrame(extent_header_page)->SetDirty(true);
   } else {
     ok = false;
   }
@@ -360,11 +363,17 @@ bool SpaceManager::LinkPage(PageID left_id, PageID right_id) {
     return false;
   }
   LinkTwoPage(left, right);
-  Frame::ToFrame(left)->SetDirty(true);
-  Frame::ToFrame(right)->SetDirty(true);
+  PageGetFrame(left)->SetDirty(true);
+  PageGetFrame(right)->SetDirty(true);
   buffer_manager_->UnfixPage(left->pageid_);
   buffer_manager_->UnfixPage(right->pageid_);
   return true;
+}
+
+void SpaceManager::Vacuum() {
+}
+
+void SpaceManager::VacuumAll() {
 }
 
 }

@@ -2,49 +2,60 @@
 
 namespace storage {
 
-void Frame::FixPage() {
+void PageFrame::FixPage() {
   fix_count_++;
 }
 
-void Frame::UnfixPage() {
+void PageFrame::UnfixPage() {
   fix_count_--;
 }
 
-void Frame::SetFree(bool is_free) {
+void PageFrame::SetFree(bool is_free) {
   free_ = (int8_t) is_free;
 }
 
-bool Frame::IsFree() const {
+bool PageFrame::IsFree() const {
   return free_ == (int8_t) true;
 }
 
-void Frame::SetDirty(bool dirty) {
+void PageFrame::SetDirty(bool dirty) {
   dirty_ = (int8_t) dirty;
 }
 
-bool Frame::IsDirty() const {
+bool PageFrame::IsDirty() const {
   return dirty_ == (int8_t) true;
 }
 
-uint32_t Frame::FixCount() const {
+uint32_t PageFrame::FixCount() const {
   return fix_count_;
 }
 
-Page *Frame::GetPage() {
-  return (Page*) (((uint8_t*) this) + sizeof(*this));
-}
-
-uint32_t Frame::GetFrameIndex() {
+uint32_t PageFrame::GetFrameIndex() {
   return frame_index_;
 }
 
-void Frame::SetFrameIndex(uint32_t frame_index) {
+void PageFrame::SetFrameIndex(uint32_t frame_index) {
   frame_index_ = frame_index;
 }
 
-Frame* Frame::ToFrame(Page *page) {
-  Frame *frame = (Frame*) ((uint8_t *) page - sizeof(Frame));
-  return frame;
+void PageFrame::SetPage(Page *page) {
+  if (page != NULL)
+    pageid_ = page->pageid_;
+  page_ = page;
 }
+
+Page *FrameToPage(Frame *frame) {
+  Page* page = (Page*) (((uint8_t*) frame) + sizeof(Frame));
+  return page;
+}
+
+Frame *PageGetFrame(Page *page) {
+  return (Frame*) page->frame_ptr_;
+}
+
+void PageSetFrame(Page *page, Frame *frame) {
+  page->frame_ptr_ = (uint64_t)frame;
+}
+
 
 }  // end namespace storage
