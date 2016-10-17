@@ -6,9 +6,9 @@
 namespace utils {
 
 template<typename T>
-class List : public T {
+class ListNode : public T {
  public:
-  List()
+  ListNode()
       : prev_(NULL),
         next_(NULL) {
   }
@@ -20,27 +20,67 @@ class List : public T {
   bool IsLast() const {
     return false;
   }
-  void LinkToRight(List<T> *right_node) {
+  void LinkToRight(ListNode<T> *right_node) {
   }
 
-  void LinkToLeft(List<T> *left_node) {
+  void LinkToLeft(ListNode<T> *left_node) {
   }
 
-  List<T>* First() {
+  ListNode<T>* First() {
     return NULL;
   }
 
-  List<T>* Last() {
+  ListNode<T>* Last() {
     return NULL;
   }
 
-  void RemoveThis() {
+  void Remove() {
 
+  }
+
+  ListNode<T>* Next() {
+    return NULL;
+  }
+  ListNode<T>* Prev() {
+    return NULL;
   }
 
  private:
-  List<T> *prev_;
-  List<T> *next_;
+  ListNode<T> *prev_;
+  ListNode<T> *next_;
+};
+
+template<typename T>
+class List {
+ public:
+  List()
+      : head_(NULL),
+        tail_(NULL) {
+  }
+  ;
+  void PushBack(ListNode<T> *node) {
+  }
+  void PushFront(ListNode<T> *node) {
+  }
+  ListNode<T>* PopFront(ListNode<T> *node) {
+    return NULL;
+  }
+  ListNode<T>* PopBack(ListNode<T> *node) {
+    return NULL;
+  }
+  void Remove(ListNode<T> *node) {
+    if (node == head_) {
+
+    }
+    if (node == tail_) {
+
+    }
+    node->Remove();
+  }
+
+ private:
+  ListNode<T> *head_;
+  ListNode<T> *tail_;
 };
 
 }  // namespace utils

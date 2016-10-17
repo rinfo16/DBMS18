@@ -1,11 +1,11 @@
-#include "common/list.hpp"
 #include <iostream>
+#include "../include/common/list.hpp"
 
 class C {
 };
 
 int main(int argc, const char* argv[]) {
   std::cout << "List unit test !!!" << std::endl;
-  utils::List<C> list;
-  utils::List<C> *first = list.First();
+  utils::ListNode<C> list;
+  utils::ListNode<C> *first = list.First();
 }
