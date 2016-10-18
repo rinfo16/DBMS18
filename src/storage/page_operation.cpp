@@ -34,7 +34,7 @@ void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size) {
   memcpy(&page->flip_, "HEAD", 4);
   page->pageid_ = id;
   page->page_type_ = page_type;
-  memcpy((uint8_t*)page + page_size - PAGE_TAILER_SIZE, "TAIL", 4);
+  memcpy((uint8_t*) page + page_size - PAGE_TAILER_SIZE, "TAIL", 4);
 }
 
 void InitExtentHeader(ExtentHeader *header, uint32_t extent_count_per_page) {
@@ -47,7 +47,8 @@ void InitDataHeader(DataHeader *header, uint32_t page_size) {
   header->tuple_count_ = 0;
 }
 
-bool PutTuple(Page *data_page, void *tuple, uint32_t length, slotno_t *slotno) {
+bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
+              slotno_t *slotno) {
   DataHeader *header = ToDataHeader(data_page);
   if (header->free_end_ - header->free_begin_ < length + sizeof(Slot)) {
     return false;
@@ -64,12 +65,12 @@ bool PutTuple(Page *data_page, void *tuple, uint32_t length, slotno_t *slotno) {
   slot->length_ = length;
   slot->offset_ = header->free_end_;
 
-  memcpy(((uint8_t*)data_page + header->free_end_), tuple, length);
+  memcpy(((uint8_t*) data_page + header->free_end_), tuple, length);
 
   return true;
 }
 
-void *GetTuple(Page *data_page, slotno_t no, uint32_t *length) {
+const void *GetTuple(Page *data_page, slotno_t no, uint32_t *length) {
   DataHeader *header = ToDataHeader(data_page);
   if (no >= header->tuple_count_) {
     return NULL;

@@ -25,6 +25,8 @@ target_link_libraries (storage_service storage common gtest)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 include(CodeCoverage)
 
-if (ENABLE_GCOV)
-  setup_target_for_coverage(coverage storage_service coverage)
+if (ENABLE_CODE_COVERAGE)
+  setup_target_for_coverage(coverage list coverage)
 endif()
+
+

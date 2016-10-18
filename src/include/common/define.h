@@ -14,6 +14,7 @@
 #define SEGMENT_DESCRIPT_FILE_NO  0
 #define DATA_FILE_NO              1
 #define FILE_HEADER_PAGE_NO       0
+#define OUT
 typedef uint32_t fileno_t;
 typedef uint32_t segmentno_t;
 typedef uint32_t extentno_t;

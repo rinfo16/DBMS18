@@ -13,14 +13,14 @@ struct Setting : utils::Singleton<Setting>{
     buffer_pool_size_ = BUFFER_POOL_SIZE;
     data_directory_ = DATA_DIRECTORY;
     max_page_number_per_file_ = MAX_PAGE_NUMBER_PER_FILE;
-    max_extent_count_ = MAX_EXTENT_COUNT;
+    extent_number_per_file_ = MAX_EXTENT_COUNT;
   }
 
   uint32_t page_size_;
   uint32_t page_number_per_extent_;
   uint32_t buffer_pool_size_;
   uint32_t max_page_number_per_file_;
-  uint32_t max_extent_count_;
+  uint32_t extent_number_per_file_;
   std::string data_directory_;
 };
 

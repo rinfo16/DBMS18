@@ -1,13 +1,9 @@
 #include "storage_service.h"
-#include "common/config.h"
 #include "relation_handler.h"
 namespace storage {
 
 StorageService::StorageService() {
-  buffer_manager_ = new BufferManager(
-      config::Setting::instance().buffer_pool_size_,
-      config::Setting::instance().page_size_,
-      config::Setting::instance().data_directory_);
+  buffer_manager_ = new BufferManager();
   space_manager_ = new SpaceManager(buffer_manager_);
 }
 
@@ -38,8 +34,7 @@ void StorageService::FlushAll() {
   buffer_manager_->FlushAll();
 }
 
-void StorageService::Stop()
-{
+void StorageService::Stop() {
   buffer_manager_->Stop();
 }
 }  // namespace storage

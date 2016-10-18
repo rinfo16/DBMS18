@@ -17,8 +17,8 @@ enum OpenMode {
 class RelationHandlerInterface {
 public:
   virtual ~RelationHandlerInterface() {};
-  virtual void *GetFirst(uint32_t *length) = 0;
-  virtual void *GetNext(uint32_t *length) = 0;
+  virtual const void *GetFirst(uint32_t *length) = 0;
+  virtual const void *GetNext(uint32_t *length) = 0;
   virtual bool Put(void *tuple, uint32_t length) = 0;
   virtual bool Delete(cursor_t tuple) = 0;
   virtual bool Create() = 0;

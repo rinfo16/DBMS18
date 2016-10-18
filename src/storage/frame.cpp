@@ -54,8 +54,7 @@ Frame *PageGetFrame(Page *page) {
 }
 
 void PageSetFrame(Page *page, Frame *frame) {
-  page->frame_ptr_ = (uint64_t)frame;
+  page->frame_ptr_ = (uint64_t) frame;
 }
-
 
 }  // end namespace storage

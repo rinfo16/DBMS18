@@ -2,19 +2,19 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include "common/config.h"
 
 namespace storage {
 
-BufferManager::BufferManager(size_t pool_size, size_t page_size,
-                             std::string data_path) {
+BufferManager::BufferManager() {
   buffer_pool_ = NULL;
-  pool_size_ = pool_size;
-  page_size_ = page_size;
-  data_path_ = data_path;
+  pool_size_ = config::Setting::instance().buffer_pool_size_;
+  page_size_ = config::Setting::instance().page_size_;
+  data_path_ = config::Setting::instance().data_directory_;
+  page_count_ = pool_size_ / page_size_;
+  pool_size_ = page_count_ * page_size_;
   frame_count_ = 0;
   frame_size_ = 0;
-  page_count_ = pool_size / page_size;
-  pool_size_ = page_count_ * page_size;
 }
 
 BufferManager::~BufferManager() {
@@ -26,8 +26,6 @@ bool BufferManager::Start() {
   free_buffer_index_.reserve(page_count_);
   for (uint32_t i = 0; i < page_count_; i++) {
     free_buffer_index_.push_back(i);
-    //Frame *frame = new (buffer_pool_ + i * frame_size_) Frame();
-    //frame->SetFrameIndex(i);
   }
   return true;
 }

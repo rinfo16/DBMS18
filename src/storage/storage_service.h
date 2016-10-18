@@ -8,12 +8,14 @@ namespace storage {
 class BufferManager;
 class SpaceManager;
 
-class StorageService : public StorageServiceInterface, public utils::Singleton<StorageService>  {
+class StorageService : public StorageServiceInterface, public utils::Singleton<
+    StorageService> {
  public:
   StorageService();
   virtual ~StorageService();
   virtual bool Start();
-  virtual RelationHandlerInterface * OpenHandler(relationid_t rel, OpenMode mode);
+  virtual RelationHandlerInterface * OpenHandler(relationid_t rel,
+                                                 OpenMode mode);
   virtual void CloseHandler(RelationHandlerInterface* handler);
 
   void InitDB();

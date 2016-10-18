@@ -14,7 +14,7 @@ RelationHandler::RelationHandler(relationid_t relation_id, OpenMode mode,
   nth_slot_ = 0;
 }
 
-void *RelationHandler::GetFirst(uint32_t *length) {
+const void *RelationHandler::GetFirst(uint32_t *length) {
   PageID segment_header_pageid;
   void *tuple = NULL;
   segment_header_pageid.blockno_ = relation_id_;
@@ -34,7 +34,7 @@ void *RelationHandler::GetFirst(uint32_t *length) {
   return GetNextTuple(length);
 }
 
-void *RelationHandler::GetNext(uint32_t *length) {
+const void *RelationHandler::GetNext(uint32_t *length) {
   return GetNextTuple(length);
 }
 
@@ -61,8 +61,8 @@ bool RelationHandler::Create() {
 // TODO  read/write meta data ...
   return space_manager_->CreateSegment(&id);
 }
-void *RelationHandler::GetNextTuple(uint32_t *length) {
-  void *tuple = NULL;
+const void *RelationHandler::GetNextTuple(uint32_t *length) {
+  const void *tuple = NULL;
   while (page_ != NULL) {
     tuple = GetTuple(page_, nth_slot_++, length);
     if (tuple != NULL) {

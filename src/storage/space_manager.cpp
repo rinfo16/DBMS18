@@ -16,6 +16,9 @@ namespace storage {
 SpaceManager::SpaceManager(BufferManager *buffer_manager)
     : buffer_manager_(buffer_manager) {
   page_size_ = config::Setting::instance().page_size_;
+  extent_number_per_file_ = config::Setting::instance().extent_number_per_file_;
+  data_directory_ = config::Setting::instance().data_directory_;
+  page_number_per_extent_ = config::Setting::instance().page_number_per_extent_;
 }
 
 SpaceManager::~SpaceManager() {
@@ -37,7 +40,7 @@ bool SpaceManager::CreateDataFile(fileno_t *no) {
   }
   SegFileHeader *header = ToSegFileHeader(page);
   if ((header->data_file_count_ + 1) * sizeof(fileno_t) + PAGE_HEADER_SIZE
-      + PAGE_TAILER_SIZE > config::Setting::instance().page_size_) {
+      + PAGE_TAILER_SIZE > page_size_) {
     return false;
   }
   header->fileno_[header->data_file_count_] = header->data_file_count_ + 1;
@@ -53,8 +56,7 @@ bool SpaceManager::CreateDataFile(fileno_t *no) {
 bool SpaceManager::CreateFile(fileno_t fileno) {
   bool ok = false;
   std::stringstream ssm;
-  ssm << config::Setting::instance().data_directory_ << "/nutshell.data."
-      << fileno;
+  ssm << data_directory_ << "/nutshell.data." << fileno;
   std::string path = ssm.str();
   File file(path);
   if (!file.Create()) {
@@ -91,7 +93,7 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
         - sizeof(DataFileHeader));
 #else
     bitmap = new (data_file_header->bits) utils::Bitmap(
-        config::Setting::instance().max_extent_count_ / 8);
+        extent_number_per_file_ / 8);
 #endif
 
     ;
@@ -202,8 +204,7 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
   bitmap->SetBit(nth, true);
   PageID extent_header_pageid;
   extent_header_pageid.fileno_ = data_file_no;
-  extent_header_pageid.blockno_ = 1
-      + nth * config::Setting::instance().page_number_per_extent_;
+  extent_header_pageid.blockno_ = 1 + nth * page_number_per_extent_;
 
   Page *page = buffer_manager_->FixPage(extent_header_pageid, true);
   if (page == NULL) {
@@ -289,8 +290,8 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
 }
 
 bool SpaceManager::WriteTupleToExtent(Page* segment_header_page,
-                                      Page* extent_header_page, void *tuple,
-                                      uint32_t length) {
+                                      Page* extent_header_page,
+                                      const void *tuple, uint32_t length) {
   bool ok = false;
   ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
   uint32_t i = 0;
@@ -311,7 +312,7 @@ bool SpaceManager::WriteTupleToExtent(Page* segment_header_page,
 
 bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
                                     Page* extent_header_page, uint32_t off,
-                                    void *tuple, uint32_t length) {
+                                    const void *tuple, uint32_t length) {
   bool ok;
   bool new_page = false;
   PageID data_pageid;

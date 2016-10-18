@@ -35,7 +35,8 @@ typedef std::deque<Frame*> FrameStack;
 
 class BufferManager {
  public:
-  BufferManager(size_t pool_size, size_t page_size, std::string path);
+  BufferManager();
+
   virtual ~BufferManager();
 
   bool Start();
@@ -49,6 +50,7 @@ class BufferManager {
   void FlushAll();
 
  private:
+
   Page* LocatePage(PageID id, bool is_new);
 
   Page* GetFreePage();

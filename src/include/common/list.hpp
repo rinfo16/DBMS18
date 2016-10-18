@@ -2,6 +2,7 @@
 #define SRC_INCLUDE_COMMON_LIST_HPP_
 
 #include "common/define.h"
+#include <assert.h>
 
 namespace utils {
 
@@ -21,6 +22,8 @@ class ListNode : public T {
     return false;
   }
   void LinkToRight(ListNode<T> *right_node) {
+    next_ = right_node;
+    right_node->prev_ = this;
   }
 
   void LinkToLeft(ListNode<T> *left_node) {
@@ -35,11 +38,16 @@ class ListNode : public T {
   }
 
   void Remove() {
-
+    if (prev_ != NULL) {
+      prev_->next_ = next_;
+    }
+    if (next_ != NULL) {
+      next_->prev = prev_;
+    }
   }
 
   ListNode<T>* Next() {
-    return NULL;
+    return next_;
   }
   ListNode<T>* Prev() {
     return NULL;
@@ -59,21 +67,41 @@ class List {
   }
   ;
   void PushBack(ListNode<T> *node) {
+    if (tail_ == NULL) {
+      assert(head_ == NULL);
+      head_ = node;
+      tail_ = node;
+    } else {
+      tail_->LinkToRight(node);
+      tail_ = node;
+    }
   }
   void PushFront(ListNode<T> *node) {
   }
-  ListNode<T>* PopFront(ListNode<T> *node) {
+  ListNode<T>* PopFront() {
+    ListNode<T> *node = head_;
+    if (head_ == tail_) {
+      assert(head_ == NULL || head_->Next() == NULL);
+      assert(tail_ == NULL || tail_->Prev() == NULL);
+      head_ = NULL;
+      tail_ = NULL;
+    } else {
+      head_ = head_->Next();
+    }
+
+    return node;
+  }
+
+  ListNode<T>* PopBack() {
     return NULL;
   }
-  ListNode<T>* PopBack(ListNode<T> *node) {
-    return NULL;
-  }
+
   void Remove(ListNode<T> *node) {
     if (node == head_) {
-
+      head_ = node->Next();
     }
     if (node == tail_) {
-
+      tail_ = node->Prev();
     }
     node->Remove();
   }

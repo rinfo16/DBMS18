@@ -8,13 +8,16 @@ while [ -n "$*" ]
 do
   case "$1" in
     -debug)
-      CMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=Debug"
+      CMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=DEBUG"
       ;;
     -release)
-      CMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=Release"
+      CMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=RELEASE"
       ;;
-    -coverage)
-      CMAKE_ARGS+=" -DENABLE_GCOV=1"
+    -coverage_debug)
+      CMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=COVERAGE_DEBUG"
+      ;;
+    -coverage_release)
+      CMAKE_ARGS+=" -DCMAKE_BUILD_TYPE=COVERAGE_RELEASE"
       ;;
     -help|*)
       echo "help ... TODO ...."

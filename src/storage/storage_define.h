@@ -3,8 +3,6 @@
 
 #include "common/define.h"
 
-
-
 typedef size_t buffer_index_t;
 
 struct PageID {

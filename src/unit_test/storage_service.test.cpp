@@ -52,7 +52,7 @@ TEST_F(StorageServiceTest, storage1) {
                                                       storage::kRelationRead);
   EXPECT_NE((storage::RelationHandlerInterface*)NULL, handler);
   uint32_t length = 0;
-  void *tuple = handler->GetFirst(&length);
+  const void *tuple = handler->GetFirst(&length);
   while (tuple != NULL) {
     std::string str((const char *) tuple, length);
     std::cout << str << std::endl;
