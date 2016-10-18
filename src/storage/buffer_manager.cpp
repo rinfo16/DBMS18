@@ -1,4 +1,5 @@
 #include "buffer_manager.h"
+#include <memory.h>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
