@@ -8,8 +8,7 @@ namespace storage {
 class BufferManager;
 class SpaceManager;
 
-class StorageService : public StorageServiceInterface, public utils::Singleton<
-    StorageService> {
+class StorageService : public StorageServiceInterface {
  public:
   StorageService();
   virtual ~StorageService();
@@ -25,6 +24,8 @@ class StorageService : public StorageServiceInterface, public utils::Singleton<
   BufferManager *buffer_manager_;
   SpaceManager *space_manager_;
 };
+
+typedef utils::Singleton<storage::StorageService> Storage;
 
 }  // namespace storage
 

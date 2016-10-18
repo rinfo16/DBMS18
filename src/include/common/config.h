@@ -6,8 +6,8 @@
 #include <string>
 
 namespace config {
-struct Setting : utils::Singleton<Setting>{
-  Setting() {
+struct SettingParam {
+  SettingParam() {
     page_size_ = PAGE_SIZE;
     page_number_per_extent_ = PAGE_NUMBER_PER_EXTENT;
     buffer_pool_size_ = BUFFER_POOL_SIZE;
@@ -24,6 +24,7 @@ struct Setting : utils::Singleton<Setting>{
   std::string data_directory_;
 };
 
+typedef utils::Singleton<config::SettingParam> Setting;
 }  // end namespace config
 
 #endif // CONFIG_H_

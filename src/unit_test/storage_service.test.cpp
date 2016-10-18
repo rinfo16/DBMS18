@@ -10,27 +10,27 @@ class StorageServiceTest : public testing::Test {
 };
 
 TEST_F(StorageServiceTest, handler_create) {
-  storage::StorageService::instance().Start();
+  storage::Storage::instance().Start();
   storage::RelationHandlerInterface *handler =
-      storage::StorageService::instance().OpenHandler(1,
+      storage::Storage::instance().OpenHandler(1,
                                                       storage::kRelationCreate);
   EXPECT_NE((storage::RelationHandlerInterface * )0, handler);
   EXPECT_EQ(true, handler->Create());
-  storage::StorageService::instance().CloseHandler(handler);
+  storage::Storage::instance().CloseHandler(handler);
 
-  handler = storage::StorageService::instance().OpenHandler(
+  handler = storage::Storage::instance().OpenHandler(
       2, storage::kRelationCreate);
   EXPECT_NE((storage::RelationHandlerInterface * )0, handler);
   EXPECT_EQ(true, handler->Create());
-  storage::StorageService::instance().CloseHandler(handler);
-  storage::StorageService::instance().FlushAll();
-  storage::StorageService::instance().Stop();
+  storage::Storage::instance().CloseHandler(handler);
+  storage::Storage::instance().FlushAll();
+  storage::Storage::instance().Stop();
 }
 
 TEST_F(StorageServiceTest, handler_write) {
-  storage::StorageService::instance().Start();
+  storage::Storage::instance().Start();
   storage::RelationHandlerInterface *handler =
-      storage::StorageService::instance().OpenHandler(1,
+      storage::Storage::instance().OpenHandler(1,
                                                       storage::kRelationWrite);
   EXPECT_NE((storage::RelationHandlerInterface*)NULL, handler);
 
@@ -40,15 +40,15 @@ TEST_F(StorageServiceTest, handler_write) {
     sprintf(buff, "TUPLE_%d", i);
     EXPECT_EQ(true, handler->Put(buff, sizeof(buff)));
   }
-  storage::StorageService::instance().CloseHandler(handler);
-  storage::StorageService::instance().FlushAll();
-  storage::StorageService::instance().Stop();
+  storage::Storage::instance().CloseHandler(handler);
+  storage::Storage::instance().FlushAll();
+  storage::Storage::instance().Stop();
 }
 
 TEST_F(StorageServiceTest, storage1) {
-  storage::StorageService::instance().Start();
+  storage::Storage::instance().Start();
   storage::RelationHandlerInterface *handler =
-      storage::StorageService::instance().OpenHandler(1,
+      storage::Storage::instance().OpenHandler(1,
                                                       storage::kRelationRead);
   EXPECT_NE((storage::RelationHandlerInterface*)NULL, handler);
   uint32_t length = 0;
@@ -58,13 +58,13 @@ TEST_F(StorageServiceTest, storage1) {
     std::cout << str << std::endl;
     tuple = handler->GetNext(&length);
   }
-  storage::StorageService::instance().Stop();
+  storage::Storage::instance().Stop();
 }
 
 int main(int argc, char* argv[]) {
   std::cout << "Storage unit test !!!" << std::endl;
-  storage::StorageService::instance().InitDB();
-  storage::StorageService::instance().Start();
+  storage::Storage::instance().InitDB();
+  storage::Storage::instance().Start();
   ::testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();
   return 0;

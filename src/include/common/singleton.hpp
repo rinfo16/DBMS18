@@ -11,9 +11,12 @@ class Singleton {
     static T t_;
     return t_;
   }
-
+ private:
+  Singleton();
+  Singleton & operator =(const Singleton &);
+  Singleton(const Singleton &);
 };
 
-} // end namespace utils
+}  // end namespace utils
 
 #endif // SINGLETON_HPP_
