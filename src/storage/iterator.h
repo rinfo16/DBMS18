@@ -12,7 +12,7 @@ class Iterator : public IteratorInterface {
  public:
   Iterator(RelationHandlerInterface *rel_handler);
   ~Iterator();
-  virtual bool Get(Tuple *tuple);
+  virtual bool Get(TupleWarpper *tuple);
   virtual void* Get(uint32_t *length);
   virtual bool Delete();
   virtual void SeekToFirst();

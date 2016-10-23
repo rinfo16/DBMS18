@@ -11,7 +11,7 @@ WriteBatch::~WriteBatch() {
   delete rel_handler_;
 }
 
-bool WriteBatch::Put(Tuple *tuple) {
+bool WriteBatch::Put(TupleWarpper *tuple) {
   return rel_handler_->Put((void*)tuple->Data(), (uint32_t)tuple->Size());
 }
 

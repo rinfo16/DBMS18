@@ -2,42 +2,48 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include "gtest/gtest.h"
 
-void test1() {
+class StorageServiceTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+  }
+};
+
+TEST_F(StorageServiceTest, handler_create) {
   storage::Storage::instance().Start();
-  Relation *rel1 = new Relation();
-  Relation *rel2 = new Relation();
-  Relation *rel3 = new Relation();
-  bool ret = storage::Storage::instance().CreateRelation(rel1);
-  ret = storage::Storage::instance().CreateRelation(rel2);
-  ret = storage::Storage::instance().CreateRelation(rel3);
+  EXPECT_EQ(true, storage::Storage::instance().CreateRelation(1));
+  EXPECT_EQ(true, storage::Storage::instance().CreateRelation(2));
+  EXPECT_EQ(true, storage::Storage::instance().CreateRelation(3));
   storage::Storage::instance().FlushAll();
   storage::Storage::instance().Stop();
 }
 
-void test2() {
+TEST_F(StorageServiceTest, handler_write) {
   storage::Storage::instance().Start();
 
   // write to relation 1
   storage::WriteBatchInterface *write_batch = storage::Storage::instance().NewWriteBatch(1);
+  EXPECT_NE((storage::WriteBatchInterface*)NULL, write_batch);
 
   char buff[64];
   for (int i = 0; i < 50000; i++) {
     memset(buff, 0, sizeof(buff));
     sprintf(buff, "TUPLE_%d", i);
-    TupleWarpper tuple((const uint8_t*)buff, sizeof(buff));
-    write_batch->Put(&tuple);
+    Tuple tuple((const uint8_t*)buff, sizeof(buff));
+    EXPECT_EQ(true, write_batch->Put(&tuple));
   }
   storage::Storage::instance().DeleteIOObject(write_batch);
 
   // write to relation 2
   write_batch = storage::Storage::instance().NewWriteBatch(2);
+  EXPECT_NE((storage::WriteBatchInterface*)NULL, write_batch);
 
   for (int i = 0; i < 50000; i++) {
     memset(buff, 0, sizeof(buff));
     sprintf(buff, "TUPLE_%d", i);
-    TupleWarpper tuple((uint8_t*)buff, sizeof(buff));
-    write_batch->Put(&tuple);
+    Tuple tuple((uint8_t*)buff, sizeof(buff));
+    EXPECT_EQ(true, write_batch->Put(&tuple));
   }
   storage::Storage::instance().DeleteIOObject(write_batch);
 
@@ -45,14 +51,14 @@ void test2() {
   storage::Storage::instance().Stop();
 }
 
-void test3() {
+TEST_F(StorageServiceTest, storage1) {
   storage::Storage::instance().Start();
   storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(1);
-
+  EXPECT_NE((storage::IteratorInterface*)NULL, iter);
   uint32_t length = 0;
   iter->SeekToFirst();
   while (iter->GetStatus() != storage::kStatusEOF) {
-    TupleWarpper tuple;
+    Tuple tuple;
     iter->Get(&tuple);
     std::string str((const char *) tuple.Data(), tuple.Size());
     std::cout << str << std::endl;
@@ -67,8 +73,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Storage unit test !!!" << std::endl;
   storage::Storage::instance().InitDB();
   storage::Storage::instance().Start();
-  test1();
-  test2();
-  test3();
+  ::testing::InitGoogleTest(&argc, argv);
+  int ret = RUN_ALL_TESTS();
   return 0;
 }

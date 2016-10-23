@@ -11,7 +11,7 @@ class WriteBatch : public WriteBatchInterface {
  public:
   WriteBatch(RelationHandlerInterface *rel_handler);
   virtual ~WriteBatch();
-  virtual bool Put(Tuple *tuple);
+  virtual bool Put(TupleWarpper *tuple);
  private:
   RelationHandlerInterface *rel_handler_;
 };

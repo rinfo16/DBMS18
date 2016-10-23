@@ -15,7 +15,7 @@ Iterator::~Iterator() {
   delete rel_handler_;
 }
 
-bool Iterator::Get(Tuple *tuple) {
+bool Iterator::Get(TupleWarpper *tuple) {
   if (tuple_data_ == NULL)
     return false;
 
@@ -23,7 +23,7 @@ bool Iterator::Get(Tuple *tuple) {
   // the memory of Tuple::data_ will allocate from memory context
   void *ptr = malloc((size_t) tuple_length_);
   memcpy(ptr, tuple_data_, tuple_length_);
-  Tuple t((const uint8_t*) ptr, tuple_length_);
+  TupleWarpper t((const uint8_t*) ptr, tuple_length_);
   *tuple = t;
 
   return true;

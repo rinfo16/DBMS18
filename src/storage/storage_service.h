@@ -14,7 +14,7 @@ class StorageService : public StorageServiceInterface {
   virtual ~StorageService();
   virtual bool Start();
   void Stop();
-  virtual bool CreateRelation(relationid_t rel);
+  virtual bool CreateRelation(Relation* rel);
   virtual bool DropRelation(relationid_t rel);
   virtual IteratorInterface * NewIterator(relationid_t rel);
   virtual WriteBatchInterface * NewWriteBatch(relationid_t rel);
@@ -23,9 +23,12 @@ class StorageService : public StorageServiceInterface {
   void FlushAll();
 
   void InitDB();
+
+  MetaDataManagerInterface *GetMetaDataManager() { return meta_data_manager_; }
  private:
   BufferManager *buffer_manager_;
   SpaceManager *space_manager_;
+  MetaDataManagerInterface *meta_data_manager_;
 };
 
 typedef utils::Singleton<storage::StorageService> Storage;

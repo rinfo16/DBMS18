@@ -1,17 +1,19 @@
-#ifndef SRC_STORAGE_META_DATA_SERVICE_H_
-#define SRC_STORAGE_META_DATA_SERVICE_H_
+#ifndef SRC_STORAGE_META_DATA_MANAGER_H_
+#define SRC_STORAGE_META_DATA_MANAGER_H_
 
+#include "storage/meta_data_manager_interface.h"
 #include <vector>
 #include <map>
 #include "buffer_manager.h"
 #include "space_manager.h"
 
+
 namespace storage {
 
-class MetaDataService : public MetaDataServiceInterface {
+class MetaDataManager : public MetaDataManagerInterface {
  public:
-  MetaDataService(BufferManager *buffer_manager, SpaceManager *space_manager);
-  virtual ~MetaDataService();
+  MetaDataManager(BufferManager *buffer_manager, SpaceManager *space_manager);
+  virtual ~MetaDataManager();
   virtual void AddRelation(Relation *rel);
   virtual Relation* GetRelationByName(const std::string &);
   virtual Relation* GetRelationByID(relationid_t id);
@@ -20,7 +22,7 @@ class MetaDataService : public MetaDataServiceInterface {
   virtual bool Start();
   virtual void Stop();
  private:
-  MetaDataService();
+  MetaDataManager();
 
   std::vector<Relation*> all_relations_;
   std::map<relationid_t, Relation*> id_rel_map_;
@@ -32,4 +34,4 @@ class MetaDataService : public MetaDataServiceInterface {
 
 }  // namespace storage
 
-#endif // SRC_STORAGE_META_DATA_SERVICE_H_
+#endif // SRC_STORAGE_META_DATA_MANAGER_H_

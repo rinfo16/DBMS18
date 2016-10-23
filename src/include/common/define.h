@@ -42,4 +42,5 @@ typedef uint32_t slotno_t;
 typedef uint32_t relationid_t;
 typedef uint32_t attributeid_t;
 
+
 #endif // DEFINE_H_

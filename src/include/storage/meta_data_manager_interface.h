@@ -1,5 +1,5 @@
-#ifndef SRC_INCLUDE_STORAGE_META_DATA_SERVICE_INTERFACE_H_
-#define SRC_INCLUDE_STORAGE_META_DATA_SERVICE_INTERFACE_H_
+#ifndef SRC_INCLUDE_STORAGE_META_DATA_MANAGER_INTERFACE_H_
+#define SRC_INCLUDE_STORAGE_META_DATA_MANAGER_INTERFACE_H_
 
 #include <string>
 #include <boost/core/noncopyable.hpp>
@@ -7,9 +7,9 @@
 
 namespace storage {
 
-class MetaDataServiceInterface : boost::noncopyable {
+class MetaDataManagerInterface : boost::noncopyable {
  public:
-  virtual ~MetaDataServiceInterface() {}
+  virtual ~MetaDataManagerInterface() {}
   virtual void AddRelation(Relation *rel) = 0;
   virtual Relation* GetRelationByName(const std::string &) = 0;
   virtual Relation* GetRelationByID(relationid_t id) = 0;
@@ -21,4 +21,4 @@ class MetaDataServiceInterface : boost::noncopyable {
 
 }  // end namespace storage
 
-#endif // SRC_INCLUDE_STORAGE_META_DATA_SERVICE_INTERFACE_H_
+#endif // SRC_INCLUDE_STORAGE_META_DATA_MANAGER_INTERFACE_H_

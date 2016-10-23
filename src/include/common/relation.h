@@ -8,6 +8,7 @@
 #include "common/define.h"
 #include "common/page_id.h"
 #include "common/attribute.h"
+#include "common/tuple_desc.h"
 
 boost::property_tree::ptree PageIDToPropertyTree(PageID pageid);
 PageID PropertyTreeToPageID(boost::property_tree::ptree tree);
@@ -85,10 +86,14 @@ class Relation {
     boost::property_tree::ptree attributes;
     relation.put(STR_NAME, name_);
     relation.put(STR_ID, id_);
-    relation.put_child(STR_FIRST_DATA_PAGE, PageIDToPropertyTree(first_data_pageid_));
-    relation.put_child(STR_LAST_DATA_PAGE, PageIDToPropertyTree(last_data_pageid_));
-    relation.put_child(STR_FIRST_EXTENT, PageIDToPropertyTree(first_extent_pageid_));
-    relation.put_child(STR_LAST_EXTENT, PageIDToPropertyTree(last_extent_pageid_));
+    relation.put_child(STR_FIRST_DATA_PAGE,
+                       PageIDToPropertyTree(first_data_pageid_));
+    relation.put_child(STR_LAST_DATA_PAGE,
+                       PageIDToPropertyTree(last_data_pageid_));
+    relation.put_child(STR_FIRST_EXTENT,
+                       PageIDToPropertyTree(first_extent_pageid_));
+    relation.put_child(STR_LAST_EXTENT,
+                       PageIDToPropertyTree(last_extent_pageid_));
     for (size_t i = 0; i < attributes_.size(); i++) {
       std::stringstream ssm;
       ssm << i;
@@ -144,6 +149,31 @@ class Relation {
     boost::property_tree::ptree relation_tree;
     boost::property_tree::read_json(ssm, relation_tree);
     InitByPropertyTree(relation_tree);
+  }
+
+  TupleDesc ToTupleDesc() const {
+    TupleDesc desc;
+    uint32_t off = 0;
+    bool variable = false;
+    for (size_t i = 0; i < attributes_.size(); i++) {
+      const Attribute attr = attributes_[i];
+      desc.data_type_.push_back(attr.GetDataType());
+      if (attr.IsVariable()) { // the following attribute will all be variable length
+        if (variable) {
+          desc.variable_length_slot_begin_ = off;
+          variable = true;
+        }
+        off += sizeof(Slot);
+        desc.variable_length_slot_end_ = off;
+      } else {
+        Slot slot;
+        slot.length_ = attr.GetMaxLength();
+        slot.offset_ = off;
+        desc.fix_length_slot_.push_back(slot);
+        off += attr.GetMaxLength();
+      }
+    }
+    return desc;
   }
 
  private:

@@ -10,7 +10,7 @@ namespace storage {
 class WriteBatchInterface : public IOObjectInterface {
  public:
   virtual ~WriteBatchInterface(){};
-  virtual bool Put(Tuple *tuple) = 0;
+  virtual bool Put(TupleWarpper *tuple) = 0;
 };
 
 }

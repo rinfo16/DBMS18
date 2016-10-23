@@ -15,7 +15,7 @@ enum Status {
 class IteratorInterface : public IOObjectInterface{
  public:
   virtual ~IteratorInterface() {};
-  virtual bool Get(Tuple *tuple) = 0;
+  virtual bool Get(TupleWarpper *tuple) = 0;
   virtual void* Get(uint32_t *length) = 0;
   virtual bool Delete() = 0;
   virtual void SeekToFirst() = 0;

@@ -1,4 +1,4 @@
-#include "meta_data_service.h"
+#include "meta_data_manager.h"
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -9,64 +9,66 @@
 
 namespace storage {
 
-MetaDataService::MetaDataService(BufferManager *buffer_manager, SpaceManager *space_manager) {
+MetaDataManager::MetaDataManager(BufferManager *buffer_manager,
+                                 SpaceManager *space_manager) {
   data_directory_ = config::Setting::instance().data_directory_;
   buffer_manager_ = buffer_manager;
   space_manager_ = space_manager;
 }
 
-MetaDataService::~MetaDataService() {
+MetaDataManager::~MetaDataManager() {
 
 }
 
-void MetaDataService::AddRelation(Relation *rel) {
+void MetaDataManager::AddRelation(Relation *rel) {
   auto ret1 = id_rel_map_.insert(std::make_pair(rel->GetID(), rel));
   if (!ret1.second) {
     return;
   }
-  auto ret2 = id_rel_map_.insert(std::make_pair(rel->GetName(), rel));
+  auto ret2 = name_rel_map_.insert(std::make_pair(rel->GetName(), rel));
   if (ret2.second) {
     return;
   }
   all_relations_.push_back(rel);
 }
 
-Relation* MetaDataService::GetRelationByName(const std::string &name) {
+Relation* MetaDataManager::GetRelationByName(const std::string &name) {
   auto ret = name_rel_map_.find(name);
   if (ret == name_rel_map_.end()) {
     return NULL;
   } else {
-    return ret.second;
+    return ret->second;
   }
 }
 
-Relation* MetaDataService::GetRelationByID(relationid_t id) {
+Relation* MetaDataManager::GetRelationByID(relationid_t id) {
   auto ret = id_rel_map_.find(id);
   if (ret == id_rel_map_.end()) {
     return NULL;
   } else {
-    return ret.second;
+    return ret->second;
   }
 }
 
-virtual bool MetaDataService::RemoveRelationByName(const std::string & name) {
+bool MetaDataManager::RemoveRelationByName(const std::string & name) {
   auto ret = name_rel_map_.find(name);
   if (ret == name_rel_map_.end()) {
     return false;
   }
-  Relation *rel = ret.second;
+  Relation *rel = ret->second;
   name_rel_map_.erase(ret);
   id_rel_map_.erase(rel->GetID());
   std::remove(all_relations_.begin(), all_relations_.end(), rel);
   delete rel;
   return true;
 }
-virtual bool MetaDataService::RemoveRelationByID(relationid_t id) {
+
+bool MetaDataManager::RemoveRelationByID(relationid_t id) {
   auto ret = id_rel_map_.find(id);
   if (ret == id_rel_map_.end()) {
     return false;
   }
-  Relation *rel = ret.second;
+  Relation *rel = ret->second;
   id_rel_map_.erase(ret);
   name_rel_map_.erase(rel->GetName());
   std::remove(all_relations_.begin(), all_relations_.end(), rel);
@@ -74,7 +76,7 @@ virtual bool MetaDataService::RemoveRelationByID(relationid_t id) {
   return true;
 }
 
-bool MetaDataService::Start() {
+bool MetaDataManager::Start() {
   PageID seg_file_hdr_pageid;
   Page *seg_file_hdr_page = buffer_manager_->FixPage(seg_file_hdr_pageid, true);
   SegFileHeader *seg_file_hdr = ToSegFileHeader(seg_file_hdr_page);
@@ -97,7 +99,7 @@ bool MetaDataService::Start() {
   return true;
 }
 
-void MetaDataService::Stop() {
+void MetaDataManager::Stop() {
   for (size_t i = 0; i < all_relations_.size(); i++) {
     Relation *rel = all_relations_[i];
 

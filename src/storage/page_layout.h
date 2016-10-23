@@ -2,6 +2,7 @@
 #define PAGE_H_
 
 #include "common/define.h"
+#include "common/slot.h"
 #include "storage_define.h"
 #include <memory>
 
@@ -34,10 +35,6 @@ typedef struct {
   uint32_t flop_;
 } PageTailer;
 
-typedef struct {
-  uint16_t offset_;
-  uint16_t length_;
-} Slot;
 
 typedef struct {
   uint32_t free_begin_;
@@ -67,7 +64,7 @@ typedef struct {
   PageID first_data_page_id_;
   PageID last_data_page_id_;
   uint32_t schema_data_length_;
-  uint8_t schema_[0];
+  char schema_[0];
 
 } SegmentHeader;
 
