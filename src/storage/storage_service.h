@@ -13,13 +13,16 @@ class StorageService : public StorageServiceInterface {
   StorageService();
   virtual ~StorageService();
   virtual bool Start();
-  virtual RelationHandlerInterface * OpenHandler(relationid_t rel,
-                                                 OpenMode mode);
-  virtual void CloseHandler(RelationHandlerInterface* handler);
+  void Stop();
+  virtual bool CreateRelation(relationid_t rel);
+  virtual bool DropRelation(relationid_t rel);
+  virtual IteratorInterface * NewIterator(relationid_t rel);
+  virtual WriteBatchInterface * NewWriteBatch(relationid_t rel);
+  virtual void DeleteIOObject(IOObjectInterface* io_object);
+
+  void FlushAll();
 
   void InitDB();
-  void FlushAll();
-  void Stop();
  private:
   BufferManager *buffer_manager_;
   SpaceManager *space_manager_;

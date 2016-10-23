@@ -1,6 +1,7 @@
 #ifndef SRC_STORAGE_SPACE_MANAGER_H_
 #define SRC_STORAGE_SPACE_MANAGER_H_
 
+
 #include "buffer_manager.h"
 #include "storage_define.h"
 
@@ -45,6 +46,11 @@ class SpaceManager {
 
   bool LinkPage(PageID left_id, PageID right_id);
 
+  bool ShrinkPage(Page *page);
+
+  void VacuumSegment(segmentno_t no);
+
+  bool RecyclePage(Page *page);
   //---------------------------------------
   //
   BufferManager *buffer_manager_;

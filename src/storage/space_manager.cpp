@@ -372,10 +372,109 @@ bool SpaceManager::LinkPage(PageID left_id, PageID right_id) {
 }
 
 void SpaceManager::Vacuum() {
+  PageID id;
+  Page* seg_file_header_page = buffer_manager_->FixPage(id, false);
+  if (seg_file_header_page == NULL) {
+    return;
+  }
+  SegFileHeader* seg_file_header = ToSegFileHeader(seg_file_header_page);
+  uint32_t seg_count = seg_file_header->segment_count_;
+  for (uint32_t i = 0; i < seg_count; i++) {
+    VacuumSegment(i);
+  }
+}
+
+void SpaceManager::VacuumSegment(segmentno_t no) {
+  PageID segment_pageid;
+  segment_pageid.blockno_ = no;
+  Page* segment_page = buffer_manager_->FixPage(segment_pageid, false);
+  if (segment_page == NULL) {
+    return;
+  }
+  SegmentHeader *segment_header = ToSegmentHeader(segment_page);
+  PageID data_pageid = segment_header->first_data_page_id_;
+  Page *data_page = buffer_manager_->FixPage(data_pageid, false);
+
+  while (data_page) {
+    bool recycle = false;
+    bool shrink = ShrinkPage(data_page);
+    if (shrink) {
+      // next page id should assign before recycle page
+      // recycle page will re-link previous and next page
+      data_pageid = data_page->next_page_;
+      DataHeader* data_header = ToDataHeader(data_page);
+      if (data_header->tuple_count_ == 0) {
+        recycle = RecyclePage(data_page);
+      }
+    }
+    buffer_manager_->UnfixPage(data_page->pageid_);
+    if (data_pageid.Invalid()) {
+      break;
+    }
+    if (recycle) {
+      // TODO ...
+    }
+    data_page = buffer_manager_->FixPage(data_pageid, false);
+  }
+
+  buffer_manager_->UnfixPage(segment_page->pageid_);
 }
 
 void SpaceManager::VacuumAll() {
-}
 
 }
-// namespace storage
+
+bool SpaceManager::ShrinkPage(Page *page) {
+  DataHeader *header = ToDataHeader(page);
+  uint32_t data_region_size = page_size_ - header->free_end_ - PAGE_TAILER_SIZE;
+  if (data_region_size == 0) {
+    return false;
+  }
+  if ((double) (header->total_data_length_) / (double) (data_region_size)
+      > 0.6) {
+    return false;
+  }
+
+  void *ptr = malloc(data_region_size);
+  Slot *slot = ToFirstSlot(header);
+  header->total_data_length_ = 0;
+  header->free_end_ = page_size_ - PAGE_TAILER_SIZE;
+  uint32_t free_end_previous = header->free_end_;
+  memcpy(ptr, (uint8_t*) page + free_end_previous, data_region_size);
+  for (pageno_t no = 0; no < header->tuple_count_; no++) {
+    Slot &s = slot[no];
+    memcpy((uint8_t *) page + header->free_end_ + s.length_,
+           (uint8_t*) ptr + s.length_ - free_end_previous, s.length_);
+
+    // update header ..
+    header->free_end_ += s.length_;
+    header->total_data_length_ += s.length_;
+
+    // update slot
+    s.offset_ = header->free_end_;
+  }
+  free(ptr);
+  PageGetFrame(page)->SetDirty(true);
+
+  return true;
+}
+
+bool SpaceManager::RecyclePage(Page *data_page) {
+  PageID extent_pageid = data_page->pageid_;
+  extent_pageid.blockno_ = (extent_pageid.blockno_ - 1)
+      / page_number_per_extent_ * page_number_per_extent_;
+  Page *extent_header_page = buffer_manager_->FixPage(extent_pageid, false);
+  assert(extent_header_page);
+  ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
+  uint32_t off = data_page->pageid_.blockno_
+      - extent_header_page->pageid_.blockno_ - 1;
+  extent_header->used_[off] = 0;
+  PageGetFrame(extent_header_page)->SetDirty(true);
+
+  // data in this page cannot be usee before it has been written new data ...
+  PageGetFrame(data_page)->SetDirty(false);
+  LinkPage(data_page->prev_page_, data_page->next_page_);
+  buffer_manager_->UnfixPage(extent_pageid);
+  return true;
+}
+}  // namespace storage

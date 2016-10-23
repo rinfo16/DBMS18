@@ -38,7 +38,8 @@ const void *RelationHandler::GetNext(uint32_t *length) {
   return GetNextTuple(length);
 }
 
-bool RelationHandler::Delete(cursor_t cursor) {
+bool RelationHandler::DeleteCurrent() {
+  RemoveTuple(page_, nth_slot_);
   return false;
 }
 bool RelationHandler::Put(void *tuple, uint32_t length) {
@@ -64,7 +65,8 @@ bool RelationHandler::Create() {
 const void *RelationHandler::GetNextTuple(uint32_t *length) {
   const void *tuple = NULL;
   while (page_ != NULL) {
-    tuple = GetTuple(page_, nth_slot_++, length);
+    nth_slot_++;
+    tuple = GetTuple(page_, nth_slot_, length);
     if (tuple != NULL) {
       break;
     } else {
@@ -73,6 +75,7 @@ const void *RelationHandler::GetNextTuple(uint32_t *length) {
       if (data_page_id.Invalid()) {
         break;
       }
+
       page_ = buffer_manager_->FixPage(data_page_id, false);
       nth_slot_ = 0;
     }

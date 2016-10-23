@@ -11,6 +11,8 @@ enum OpenMode {
   kRelationDrop,
   kRelationCreate
 };
+
+
 // TODO
 // read handler/write handler/create handler/....
 
@@ -20,7 +22,7 @@ public:
   virtual const void *GetFirst(uint32_t *length) = 0;
   virtual const void *GetNext(uint32_t *length) = 0;
   virtual bool Put(void *tuple, uint32_t length) = 0;
-  virtual bool Delete(cursor_t tuple) = 0;
+  virtual bool DeleteCurrent() = 0;
   virtual bool Create() = 0;
   virtual bool Drop() = 0;
 };

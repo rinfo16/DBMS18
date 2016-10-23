@@ -45,6 +45,7 @@ void InitDataHeader(DataHeader *header, uint32_t page_size) {
   header->free_begin_ = PAGE_HEADER_SIZE + sizeof(DataHeader);
   header->free_end_ = page_size - PAGE_TAILER_SIZE;
   header->tuple_count_ = 0;
+  header->total_data_length_ = 0;
 }
 
 bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
@@ -61,6 +62,7 @@ bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
   header->free_begin_ += sizeof(slot);
   header->free_end_ -= length;
   header->tuple_count_++;
+  header->total_data_length_ += length;
 
   slot->length_ = length;
   slot->offset_ = header->free_end_;
@@ -84,6 +86,22 @@ const void *GetTuple(Page *data_page, slotno_t no, uint32_t *length) {
   }
 }
 
+bool RemoveTuple(Page *data_page, slotno_t no) {
+  DataHeader *header = ToDataHeader(data_page);
+  if (no >= header->tuple_count_) {
+    return false;
+  } else {
+    Slot *slot_array = ToFirstSlot(header);
+    Slot *slot = slot_array + no;
+    if (no + 1 != header->tuple_count_) {  // not the last slot
+      *slot = slot_array[header->tuple_count_ - 1];
+    }
+    header->total_data_length_ -= slot->length_;
+    --header->tuple_count_;
+    return true;
+  }
+}
+
 void LinkTwoPage(Page*left, Page *right) {
   assert(left != NULL || right != NULL);
   if (left == NULL) {
@@ -95,6 +113,24 @@ void LinkTwoPage(Page*left, Page *right) {
 
   left->next_page_ = right->pageid_;
   right->prev_page_ = left->pageid_;
+}
+
+bool MoveDataToAnother(Page *src, Page *dst) {
+  uint32_t length = 0;
+  slotno_t no = 0;
+  bool ret = true;
+  const void *tuple = GetTuple(src, no, &length);
+  while (tuple == NULL) {
+    bool ok = PutTuple(dst, tuple, length);
+    if (ok) {
+      RemoveTuple(src, no);
+    } else {
+      ret = false;
+      break;
+    }
+    tuple = GetTuple(src, ++no, &length);
+  }
+  return ret;
 }
 
 }  // end namespace storage

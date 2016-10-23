@@ -22,6 +22,9 @@ target_link_libraries (file common storage gtest)
 add_executable (storage_service storage_service.test.cpp)
 target_link_libraries (storage_service storage common gtest)
 
+add_executable (relation relation.test.cpp)
+target_link_libraries (relation storage common gtest)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 include(CodeCoverage)
 

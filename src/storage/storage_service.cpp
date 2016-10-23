@@ -1,5 +1,8 @@
 #include "storage_service.h"
 #include "relation_handler.h"
+#include "write_batch.h"
+#include "iterator.h"
+
 namespace storage {
 
 StorageService::StorageService() {
@@ -15,15 +18,41 @@ bool StorageService::Start() {
   return buffer_manager_->Start();
 }
 
-RelationHandlerInterface * StorageService::OpenHandler(relationid_t rel,
-                                                       OpenMode mode) {
-  RelationHandler *handler = new RelationHandler(rel, mode, buffer_manager_,
+bool StorageService::CreateRelation(relationid_t rel) {
+  RelationHandler *handler = new RelationHandler(rel, kRelationCreate,
+                                                 buffer_manager_,
                                                  space_manager_);
-  return handler;
+  bool ok = handler->Create();
+  delete handler;
+  return ok;
 }
 
-void StorageService::CloseHandler(RelationHandlerInterface* handler) {
+bool StorageService::DropRelation(relationid_t rel) {
+  RelationHandler *handler = new RelationHandler(rel, kRelationDrop,
+                                                 buffer_manager_,
+                                                 space_manager_);
+  bool ok = handler->Drop();
   delete handler;
+  return ok;
+}
+
+IteratorInterface * StorageService::NewIterator(relationid_t rel) {
+  RelationHandler *handler = new RelationHandler(rel, kRelationRead,
+                                                 buffer_manager_,
+                                                 space_manager_);
+  return new Iterator(handler);
+
+}
+
+WriteBatchInterface * StorageService::NewWriteBatch(relationid_t rel) {
+  RelationHandler *handler = new RelationHandler(rel, kRelationWrite,
+                                                 buffer_manager_,
+                                                 space_manager_);
+  return new WriteBatch(handler);
+}
+
+void StorageService::DeleteIOObject(IOObjectInterface* io_object) {
+  delete io_object;
 }
 
 void StorageService::InitDB() {

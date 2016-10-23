@@ -27,7 +27,11 @@ bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
 
 const void *GetTuple(Page *data_page, slotno_t no, uint32_t *length = NULL);
 
+bool RemoveTuple(Page *data_page, slotno_t no);
+
 void LinkTwoPage(Page *left, Page *right);
+
+bool MoveDataToAnother(Page *source, Page *dest);
 
 }  // end namespace storage
 

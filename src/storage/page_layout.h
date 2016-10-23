@@ -43,6 +43,7 @@ typedef struct {
   uint32_t free_begin_;
   uint32_t free_end_;
   uint32_t tuple_count_;
+  uint32_t total_data_length_;
   //Slot slot_[0];
 } DataHeader;
 
@@ -65,6 +66,9 @@ typedef struct {
   PageID last_extent_header_page_id_;
   PageID first_data_page_id_;
   PageID last_data_page_id_;
+  uint32_t schema_data_length_;
+  uint8_t schema_[0];
+
 } SegmentHeader;
 
 typedef struct {

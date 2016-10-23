@@ -7,6 +7,7 @@
 
 namespace storage {
 
+
 class RelationHandler : public RelationHandlerInterface {
  public:
   RelationHandler(relationid_t id, OpenMode mode, BufferManager *buffer_manager,
@@ -14,7 +15,7 @@ class RelationHandler : public RelationHandlerInterface {
   const void *GetFirst(uint32_t *length);
   const void *GetNext(uint32_t *length);
   bool Put(void *tuple, uint32_t length);
-  bool Delete(cursor_t cursor);
+  bool DeleteCurrent();
   bool Create();
   bool Drop();
  private:
@@ -25,7 +26,6 @@ class RelationHandler : public RelationHandlerInterface {
   OpenMode mode_;
   BufferManager *buffer_manager_;
   SpaceManager *space_manager_;
-
 };
 
 }  // namespace storage

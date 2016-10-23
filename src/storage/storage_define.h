@@ -2,29 +2,11 @@
 #define STORAGE_DEFINE_H_
 
 #include "common/define.h"
+#include "common/page_id.h"
 
 typedef size_t buffer_index_t;
 
-struct PageID {
-  fileno_t fileno_;
-  pageno_t blockno_;
 
-  bool Invalid() {
-    return fileno_ == 0 && blockno_ == 0;
-  }
-
-  PageID() {
-    fileno_ = 0;
-    blockno_ = 0;
-  }
-  bool operator <(const PageID id) const {
-    if (fileno_ == id.fileno_) {
-      return blockno_ < id.blockno_;
-    }
-
-    return fileno_ < id.fileno_;
-  }
-};
 
 struct SegmentDescripter {
   segmentno_t segmentno_;
