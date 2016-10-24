@@ -83,6 +83,7 @@ bool Loader::Load() {
             break;
         }
       }
+      assert(off > 0);
       TupleWarpper t(tuple_, off);
       batch_->Put(&t);
 #if OUTPUT

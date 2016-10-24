@@ -52,6 +52,7 @@ void InitDataHeader(DataHeader *header, uint32_t page_size) {
 
 bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
               slotno_t *slotno) {
+  assert(length > 0);
   DataHeader *header = ToDataHeader(data_page);
   if (header->free_end_ - header->free_begin_ < length + sizeof(Slot)) {
     return false;
@@ -61,7 +62,7 @@ bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
   }
   Slot *slot = ToFirstSlot(header);
   slot = slot + header->tuple_count_;
-  header->free_begin_ += sizeof(slot);
+  header->free_begin_ += sizeof(Slot);
   header->free_end_ -= length;
   header->tuple_count_++;
   header->total_data_length_ += length;
@@ -70,7 +71,7 @@ bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
   slot->offset_ = header->free_end_;
 
   memcpy(((uint8_t*) data_page + header->free_end_), tuple, length);
-
+  assert(header->free_begin_ <= header->free_end_);
   return true;
 }
 
@@ -82,6 +83,7 @@ const void *GetTuple(Page *data_page, slotno_t no, uint32_t *length) {
     Slot *slot = ToFirstSlot(header);
     slot = slot + no;
     if (length != NULL) {
+      assert(slot->length_ > 0);
       *length = slot->length_;
     }
     return (uint8_t*) (data_page) + slot->offset_;
