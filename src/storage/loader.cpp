@@ -44,9 +44,9 @@ bool Loader::Load() {
   tuple_ = (Tuple*) malloc(config::Setting::instance().page_size_);
 
   int i = 0;
-  uint32_t off = sizeof(Slot) * desc.column_count_;
   while (is_.read_line()) {
     try {
+      uint32_t off = sizeof(Slot) * desc.column_count_;
       union DataValue value;
       std::string str;
       for (int i = 0; i < desc.column_count_; i++) {
