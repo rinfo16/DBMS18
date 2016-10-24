@@ -121,7 +121,7 @@ int test_load() {
     Tuple *t = (Tuple*)iter->Get(&length);
     for (int i = 0; i < desc.column_count_; i++)
     {
-      Slot *slot = t->Slot(i, &desc);
+      Slot *slot = t->GetSlot(i, &desc);
       switch(desc.GetType(i)) {
          case kDTInteger:
            product.qty = *reinterpret_cast<const int64_t*>(t->GetValue(slot->offset_));
