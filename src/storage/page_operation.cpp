@@ -33,6 +33,8 @@ Slot *ToFirstSlot(DataHeader *header) {
 void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size) {
   memcpy(&page->flip_, "HEAD", 4);
   page->pageid_ = id;
+  page->prev_page_ = PageID();
+  page->next_page_ = PageID();
   page->page_type_ = page_type;
   memcpy((uint8_t*) page + page_size - PAGE_TAILER_SIZE, "TAIL", 4);
 }

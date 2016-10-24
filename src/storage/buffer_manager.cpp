@@ -24,6 +24,7 @@ BufferManager::~BufferManager() {
 
 bool BufferManager::Start() {
   buffer_pool_ = new uint8_t[pool_size_];
+  memset(buffer_pool_, ~0, pool_size_);
   free_buffer_index_.reserve(page_count_);
   for (uint32_t i = 0; i < page_count_; i++) {
     free_buffer_index_.push_back(i);
@@ -36,6 +37,7 @@ void BufferManager::Stop() {
     return;
 
   FlushAll();
+
   for (FileMap::iterator iter = files_.begin(); iter != files_.end(); iter++) {
     delete iter->second;
   }
@@ -186,13 +188,15 @@ Page *BufferManager::BufferAt(buffer_index_t frame_index) {
 }
 
 void BufferManager::FlushAll() {
-  for (int i = 0; i < page_count_; i++) {
-    Page *page = BufferAt(i);
-    Frame *frame = PageGetFrame(page);
-    if (frame && page) {
-      if (frame->IsDirty()) {
-        WritePage(frame->GetPage());
+  for (auto iter = loaded_buffers_.begin(); iter != loaded_buffers_.end(); iter++) {
+    Frame *frame = iter->second;
+    if (frame->GetPage() && frame->IsDirty())
+    {
+      if (frame->GetPage()->pageid_.blockno_ == 0 && frame->GetPage()->pageid_.fileno_ == 0)
+      {
+        int i = 0;
       }
+      WritePage(frame->GetPage());
     }
   }
 }

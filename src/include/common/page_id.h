@@ -6,12 +6,12 @@ struct PageID {
   pageno_t blockno_;
 
   bool Invalid() {
-    return fileno_ == 0 && blockno_ == 0;
+    return fileno_ == ~0 && blockno_ == ~0;
   }
 
   PageID() {
-    fileno_ = 0;
-    blockno_ = 0;
+    fileno_ = ~0;
+    blockno_ = ~0;
   }
   bool operator <(const PageID id) const {
     if (fileno_ == id.fileno_) {

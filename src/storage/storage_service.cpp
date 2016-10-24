@@ -4,6 +4,7 @@
 #include "iterator.h"
 #include "meta_data_manager.h"
 
+
 namespace storage {
 
 StorageService::StorageService() {
@@ -19,43 +20,114 @@ StorageService::~StorageService() {
 }
 
 bool StorageService::Start() {
-  return buffer_manager_->Start();
+  space_manager_->InitDB();
+
+  if (!buffer_manager_->Start()) {
+    return false;
+  }
+
+  if (!meta_data_manager_->Start()) {
+    return false;
+  }
+  return meta_data_manager_->Start();
 }
 
-bool StorageService::CreateRelation(Relation* rel) {
-  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationCreate,
-                                                 buffer_manager_,
-                                                 space_manager_);
-  bool ok = handler->Create();
+void StorageService::Stop() {
+  // Meta data manager must stop first,
+  // Since it call buffer manager to flush its data
+  meta_data_manager_->Stop();
+  buffer_manager_->Stop();
+}
+
+bool StorageService::CreateRelation(const TableSchema & schema) {
+  PageID id;
+  bool ok = space_manager_->CreateSegment(&id);
   if (ok) {
+    Relation* rel = new Relation();
+    rel->SetName(schema.name_);
+    rel->SetID(id.blockno_);
+    std::vector<std::pair<Column, int> > columns;
+    for (int i = 0; i < schema.column_list_.size(); i++) {
+      columns.push_back(std::make_pair(schema.column_list_[i], i));
+    }
+
+    std::sort(
+        columns.begin(), columns.end(),
+        [](const std::pair<Column, int> & x, const std::pair<Column, int> & y)
+        { return x.first.data_type_ < y.first.data_type_;});
+
+    for (size_t i = 0; i < columns.size(); i++) {
+      Column & col = columns[i].first;
+      Attribute attribute;
+      attribute.SetName(col.name_);
+      attribute.SetID(columns[i].second);
+      attribute.SetDataType(col.data_type_);
+      attribute.SetNull(col.is_null_);
+      uint32_t size = 0;
+      bool variable = false;
+      switch (col.data_type_) {
+        case kDTInteger:
+          size = sizeof(int64_t);
+          break;
+        case kDTFloat:
+          size = sizeof(int64_t);
+          break;
+        case kDTVarchar:
+          variable = true;
+          size = col.length_;
+          break;
+        case kDTDate:
+          size = sizeof(int64_t);
+          break;
+        default:
+          assert(false);
+          break;
+      }
+      attribute.SetMaxLength(size);
+      attribute.SetVariable(variable);
+
+      rel->AddAttribute(attribute);
+    }
     meta_data_manager_->AddRelation(rel);
   }
-  delete handler;
+
   return ok;
 }
 
-bool StorageService::DropRelation(relationid_t rel) {
-  RelationHandler *handler = new RelationHandler(rel, kRelationDrop,
+bool StorageService::DropRelation(const std::string & rel_name) {
+  Relation *rel = meta_data_manager_->GetRelationByName(rel_name);
+  if (rel == NULL) {
+    return false;
+  }
+  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationDrop,
                                                  buffer_manager_,
                                                  space_manager_);
   bool ok = handler->Drop();
   if (ok) {
-    meta_data_manager_->RemoveRelationByID(rel);
+    meta_data_manager_->RemoveRelationByID(rel->GetID());
   }
   delete handler;
   return ok;
 }
 
-IteratorInterface * StorageService::NewIterator(relationid_t rel) {
-  RelationHandler *handler = new RelationHandler(rel, kRelationRead,
+IteratorInterface * StorageService::NewIterator(const std::string & rel_name) {
+  Relation *rel = meta_data_manager_->GetRelationByName(rel_name);
+  if (rel == NULL) {
+    return NULL;
+  }
+  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationRead,
                                                  buffer_manager_,
                                                  space_manager_);
   return new Iterator(handler);
-
 }
 
-WriteBatchInterface * StorageService::NewWriteBatch(relationid_t rel) {
-  RelationHandler *handler = new RelationHandler(rel, kRelationWrite,
+WriteBatchInterface * StorageService::NewWriteBatch(
+    const std::string & rel_name) {
+  Relation *rel = meta_data_manager_->GetRelationByName(rel_name);
+  if (rel == NULL) {
+    return NULL;
+  }
+  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationWrite,
                                                  buffer_manager_,
                                                  space_manager_);
   return new WriteBatch(handler);
@@ -71,10 +143,6 @@ void StorageService::InitDB() {
 
 void StorageService::FlushAll() {
   buffer_manager_->FlushAll();
-}
-
-void StorageService::Stop() {
-  buffer_manager_->Stop();
 }
 
 }  // namespace storage

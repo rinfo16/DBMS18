@@ -41,6 +41,6 @@ typedef uint32_t pageno_t;
 typedef uint32_t slotno_t;
 typedef uint32_t relationid_t;
 typedef uint32_t attributeid_t;
-
+typedef double double_t;
 
 #endif // DEFINE_H_

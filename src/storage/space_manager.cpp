@@ -1,7 +1,4 @@
 #include "space_manager.h"
-#include <memory.h>
-#include <string.h>
-#include <sstream>
 #include "common/define.h"
 #include "common/config.h"
 #include "common/bitmap.h"
@@ -10,11 +7,16 @@
 #include "page_operation.h"
 #include "buffer_manager.h"
 #include "space_manager.h"
+#include <memory.h>
+#include <string.h>
+#include <sstream>
+#include <fstream>
 
 namespace storage {
 
 SpaceManager::SpaceManager(BufferManager *buffer_manager)
-    : buffer_manager_(buffer_manager) {
+    : buffer_manager_(buffer_manager),
+      append_(false) {
   page_size_ = config::Setting::instance().page_size_;
   extent_number_per_file_ = config::Setting::instance().extent_number_per_file_;
   data_directory_ = config::Setting::instance().data_directory_;
@@ -25,7 +27,9 @@ SpaceManager::~SpaceManager() {
 }
 
 bool SpaceManager::InitDB() {
-  return CreateFile(SEGMENT_DESCRIPT_FILE_NO);
+  if (!Exists())
+    return CreateFile(SEGMENT_DESCRIPT_FILE_NO);
+  return true;
 }
 
 bool SpaceManager::CreateDataFile(fileno_t *no) {
@@ -107,8 +111,10 @@ bool SpaceManager::CreateFile(fileno_t fileno) {
 }
 
 bool SpaceManager::CreateSegment(PageID *segment_header_page) {
-  PageID file_header_pageid;
-  Page *page = buffer_manager_->FixPage(file_header_pageid, false);
+  PageID seg_file_header_pageid;
+  seg_file_header_pageid.blockno_ = 0;
+  seg_file_header_pageid.fileno_ = 0;
+  Page *page = buffer_manager_->FixPage(seg_file_header_pageid, false);
   if (page == NULL) {
     return false;
   }
@@ -117,12 +123,16 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
 
   PageID seg_header_pageid;
   seg_header_pageid.blockno_ = ++seg_file_header->page_count_;
-  seg_header_pageid.fileno_ = file_header_pageid.fileno_;
+  seg_header_pageid.fileno_ = seg_file_header_pageid.fileno_;
   Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, true);
   if (seg_hdr_page) {
     InitPage(seg_hdr_page, seg_header_pageid, kPageSegmentHeader, page_size_);
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;
+    segment_header->first_data_page_id_ = PageID();
+    segment_header->last_data_page_id_ = PageID();
+    segment_header->first_extent_header_page_id_ = PageID();
+    segment_header->last_extent_header_page_id_ = PageID();
     if (!AllocateExtentInSegment(seg_hdr_page, NULL)) {
       buffer_manager_->UnfixPage(seg_hdr_page->pageid_);
       buffer_manager_->UnfixPage(page->pageid_);
@@ -134,15 +144,20 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   PageGetFrame(seg_hdr_page)->SetDirty(true);
   PageGetFrame(page)->SetDirty(true);
   buffer_manager_->UnfixPage(seg_header_pageid);
-  buffer_manager_->UnfixPage(file_header_pageid);
+  buffer_manager_->UnfixPage(seg_file_header_pageid);
   return true;
 }
 
+bool SpaceManager::DropSegment(PageID *pageid) {
+  return false;
+}
 bool SpaceManager::AllocateExtentInSegment(Page* segment_header_page,
                                            PageID *extent_header_pageid) {
   bool ret = false;
   PageID new_externt_header_pageid;
   PageID seg_file_header_pageid;
+  seg_file_header_pageid.blockno_ = 0;
+  seg_file_header_pageid.fileno_ = 0;
   Page*segment_header_file_page = buffer_manager_->FixPage(
       seg_file_header_pageid, false);
   if (segment_header_file_page == NULL) {
@@ -238,7 +253,7 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
 }
 
 bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
-                              uint32_t length) {
+                              uint32_t length, bool bulk) {
   bool ok = false;
   if (length
       > page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE - sizeof(DataHeader)) {
@@ -254,7 +269,12 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
   SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
   assert(!segment_header->first_extent_header_page_id_.Invalid());
 
-  PageID extent_header_pageid = segment_header->first_extent_header_page_id_;
+  PageID extent_header_pageid;
+  if (bulk)
+    extent_header_pageid = segment_header->last_extent_header_page_id_;
+  else
+    extent_header_pageid = segment_header->first_extent_header_page_id_;
+
   while (!extent_header_pageid.Invalid()) {
     Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid,
                                                         false);
@@ -386,6 +406,7 @@ void SpaceManager::Vacuum() {
 
 void SpaceManager::VacuumSegment(segmentno_t no) {
   PageID segment_pageid;
+  segment_pageid.fileno_ = SEGMENT_DESCRIPT_FILE_NO;
   segment_pageid.blockno_ = no;
   Page* segment_page = buffer_manager_->FixPage(segment_pageid, false);
   if (segment_page == NULL) {
@@ -477,4 +498,12 @@ bool SpaceManager::RecyclePage(Page *data_page) {
   buffer_manager_->UnfixPage(extent_pageid);
   return true;
 }
+
+bool SpaceManager::Exists() {
+  std::stringstream ssm;
+  ssm << data_directory_ << "/nutshell.data." << 0;
+  std::ifstream infile(ssm.str().c_str());
+  return infile.good();
+}
+
 }  // namespace storage

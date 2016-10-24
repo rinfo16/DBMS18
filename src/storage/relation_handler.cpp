@@ -16,6 +16,8 @@ RelationHandler::RelationHandler(relationid_t relation_id, OpenMode mode,
 
 const void *RelationHandler::GetFirst(uint32_t *length) {
   PageID segment_header_pageid;
+  segment_header_pageid.blockno_ = 0;
+  segment_header_pageid.fileno_ = 0;
   void *tuple = NULL;
   segment_header_pageid.blockno_ = relation_id_;
   Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid,
@@ -46,6 +48,7 @@ bool RelationHandler::Put(void *tuple, uint32_t length) {
   if (mode_ != kRelationWrite)
     return false;
   PageID id;
+  id.fileno_ = 0;
   id.blockno_ = relation_id_;
 // TODO  read/write meta data ...
   return space_manager_->WriteTuple(id, tuple, length);
@@ -58,6 +61,7 @@ bool RelationHandler::Create() {
   if (mode_ != kRelationCreate)
     return false;
   PageID id;
+  id.fileno_ = 0;
   id.blockno_ = relation_id_;
 // TODO  read/write meta data ...
   return space_manager_->CreateSegment(&id);

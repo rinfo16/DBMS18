@@ -3,6 +3,8 @@
 
 #include "storage/storage_service_interface.h"
 #include "common/singleton.hpp"
+
+
 namespace storage {
 
 class BufferManager;
@@ -14,10 +16,10 @@ class StorageService : public StorageServiceInterface {
   virtual ~StorageService();
   virtual bool Start();
   void Stop();
-  virtual bool CreateRelation(Relation* rel);
-  virtual bool DropRelation(relationid_t rel);
-  virtual IteratorInterface * NewIterator(relationid_t rel);
-  virtual WriteBatchInterface * NewWriteBatch(relationid_t rel);
+  virtual bool CreateRelation(const TableSchema & schema);
+  virtual bool DropRelation(const std::string & rel_name);
+  virtual IteratorInterface * NewIterator(const std::string & rel_name);
+  virtual WriteBatchInterface * NewWriteBatch(const std::string & rel_name);
   virtual void DeleteIOObject(IOObjectInterface* io_object);
 
   void FlushAll();

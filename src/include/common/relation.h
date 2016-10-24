@@ -155,23 +155,12 @@ class Relation {
     TupleDesc desc;
     uint32_t off = 0;
     bool variable = false;
+    desc.mapping_.resize(attributes_.size(), 0);
     for (size_t i = 0; i < attributes_.size(); i++) {
       const Attribute attr = attributes_[i];
       desc.data_type_.push_back(attr.GetDataType());
-      if (attr.IsVariable()) { // the following attribute will all be variable length
-        if (variable) {
-          desc.variable_length_slot_begin_ = off;
-          variable = true;
-        }
-        off += sizeof(Slot);
-        desc.variable_length_slot_end_ = off;
-      } else {
-        Slot slot;
-        slot.length_ = attr.GetMaxLength();
-        slot.offset_ = off;
-        desc.fix_length_slot_.push_back(slot);
-        off += attr.GetMaxLength();
-      }
+      desc.mapping_[attr.GetID()] = i;
+      desc.column_count_ ++;
     }
     return desc;
   }

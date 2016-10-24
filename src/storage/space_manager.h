@@ -19,9 +19,11 @@ class SpaceManager {
 
   void VacuumAll();
 
-  bool WriteTuple(PageID segment_header_pageid, void *tuple, uint32_t length);
+  bool WriteTuple(PageID segment_header_pageid, void *tuple, uint32_t length, bool bulk = false);
 
   bool CreateSegment(PageID *segment_header_pageid /*OUT*/);
+
+  bool DropSegment(PageID *pageid);
 
  private:
   SpaceManager();
@@ -51,6 +53,8 @@ class SpaceManager {
   void VacuumSegment(segmentno_t no);
 
   bool RecyclePage(Page *page);
+
+  bool Exists();
   //---------------------------------------
   //
   BufferManager *buffer_manager_;
@@ -59,6 +63,9 @@ class SpaceManager {
   uint32_t extent_number_per_file_;
   uint32_t page_number_per_extent_;
   std::string data_directory_;
+  bool append_;
+
+
 };
 
 }  // namespace storage

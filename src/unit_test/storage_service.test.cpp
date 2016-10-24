@@ -5,13 +5,46 @@
 
 void test1() {
   storage::Storage::instance().Start();
-  Relation *rel1 = new Relation();
-  Relation *rel2 = new Relation();
-  Relation *rel3 = new Relation();
-  bool ret = storage::Storage::instance().CreateRelation(rel1);
-  ret = storage::Storage::instance().CreateRelation(rel2);
-  ret = storage::Storage::instance().CreateRelation(rel3);
-  storage::Storage::instance().FlushAll();
+  TableSchema sch1;
+  TableSchema sch2;
+  TableSchema sch3;
+
+  Column column;
+  column.data_type_ = kDTVarchar;
+  column.is_null_ = false;
+  column.length_ = 32;
+  column.name_ = "COLUMN_A";
+  sch1.column_list_.push_back(column);
+
+  column.data_type_ = kDTFloat;
+  column.is_null_ = false;
+  column.name_ = "COLUMN_B";
+  sch1.column_list_.push_back(column);
+
+  column.data_type_ = kDTInteger;
+  column.is_null_ = false;
+  column.name_ = "COLUMN_C";
+  sch1.column_list_.push_back(column);
+
+  column.data_type_ = kDTFloat;
+  column.is_null_ = false;
+  column.name_ = "COLUMN_D";
+  sch1.column_list_.push_back(column);
+
+  column.data_type_ = kDTInteger;
+  column.is_null_ = false;
+  column.name_ = "COLUMN_E";
+  sch1.column_list_.push_back(column);
+
+  sch3 = sch2 = sch1;
+
+  sch1.name_ = "TABLE_1";
+  sch2.name_ = "TABLE_2";
+  sch3.name_ = "TABLE_3";
+
+  bool ret = storage::Storage::instance().CreateRelation(sch1);
+  ret = storage::Storage::instance().CreateRelation(sch2);
+  ret = storage::Storage::instance().CreateRelation(sch3);
   storage::Storage::instance().Stop();
 }
 
@@ -19,35 +52,42 @@ void test2() {
   storage::Storage::instance().Start();
 
   // write to relation 1
-  storage::WriteBatchInterface *write_batch = storage::Storage::instance().NewWriteBatch(1);
+  storage::WriteBatchInterface *write_batch = storage::Storage::instance()
+      .NewWriteBatch("TABLE_1");
 
   char buff[64];
   for (int i = 0; i < 50000; i++) {
     memset(buff, 0, sizeof(buff));
     sprintf(buff, "TUPLE_%d", i);
-    TupleWarpper tuple((const uint8_t*)buff, sizeof(buff));
+    sprintf(buff, "TUPLE_%d", i);
+    if (i == 35800)
+      int t = 0;
+    if (i % 100 == 0)
+      std::cout << buff << std::endl;
+    TupleWarpper tuple((const uint8_t*) buff, sizeof(buff));
     write_batch->Put(&tuple);
   }
   storage::Storage::instance().DeleteIOObject(write_batch);
 
   // write to relation 2
-  write_batch = storage::Storage::instance().NewWriteBatch(2);
+  write_batch = storage::Storage::instance().NewWriteBatch("TABLE_2");
 
   for (int i = 0; i < 50000; i++) {
     memset(buff, 0, sizeof(buff));
     sprintf(buff, "TUPLE_%d", i);
-    TupleWarpper tuple((uint8_t*)buff, sizeof(buff));
+    if (i % 100 == 0)
+      std::cout << buff << std::endl;
+    TupleWarpper tuple((uint8_t*) buff, sizeof(buff));
     write_batch->Put(&tuple);
   }
   storage::Storage::instance().DeleteIOObject(write_batch);
-
-  storage::Storage::instance().FlushAll();
   storage::Storage::instance().Stop();
 }
 
 void test3() {
   storage::Storage::instance().Start();
-  storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(1);
+  storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(
+      "TABLE_1");
 
   uint32_t length = 0;
   iter->SeekToFirst();
@@ -56,7 +96,7 @@ void test3() {
     iter->Get(&tuple);
     std::string str((const char *) tuple.Data(), tuple.Size());
     std::cout << str << std::endl;
-    free((void*)tuple.Data());
+    free((void*) tuple.Data());
     iter->Next();
   }
   storage::Storage::instance().DeleteIOObject(iter);
@@ -69,6 +109,6 @@ int main(int argc, char* argv[]) {
   storage::Storage::instance().Start();
   test1();
   test2();
-  test3();
+  //test3();
   return 0;
 }

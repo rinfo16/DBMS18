@@ -1,16 +1,30 @@
 #ifndef TUPLE_H_
 #define TUPLE_H_
 
-#include "common/define.h"
+
 #include <assert.h>
-
 #include <string.h>
+#include <memory.h>
 #include <string>
+#include "common/tuple_desc.h"
+#include "common/define.h"
+#include "common/slot.h"
 
+union ItemValue {
+
+};
 class Tuple {
  public:
-  void *GetData(uint32_t offset) {
-    return reinterpret_cast<uint8_t*>(this) + offset;
+  const void *GetValue(uint32_t offset) const{
+    return reinterpret_cast<const uint8_t*>(this) + offset;
+  }
+
+  void SetValue(uint32_t offset, const void *data, size_t length) {
+    memcpy(reinterpret_cast<uint8_t*>(this) + offset, data, length);
+  }
+
+  Slot *Slot(size_t nth, TupleDesc *desc) {
+    return reinterpret_cast<::Slot *>(this) + desc->mapping_[nth];
   }
 };
 

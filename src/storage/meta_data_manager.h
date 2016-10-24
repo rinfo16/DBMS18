@@ -7,7 +7,6 @@
 #include "buffer_manager.h"
 #include "space_manager.h"
 
-
 namespace storage {
 
 class MetaDataManager : public MetaDataManagerInterface {

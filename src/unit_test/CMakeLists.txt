@@ -25,10 +25,15 @@ target_link_libraries (storage_service storage common gtest)
 add_executable (relation relation.test.cpp)
 target_link_libraries (relation storage common gtest)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
-include(CodeCoverage)
+add_executable (csv.test csv.test.cpp)
+target_link_libraries (csv.test common)
+
+add_executable (loader.test loader.test.cpp)
+target_link_libraries (loader.test common storage)
 
 if (ENABLE_CODE_COVERAGE)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+  include(CodeCoverage)
   setup_target_for_coverage(coverage storage_service coverage)
 endif()
 
