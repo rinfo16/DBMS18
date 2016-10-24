@@ -4,7 +4,7 @@
 #include "storage/storage_service.h"
 #include <iostream>
 #include <math.h>
-#include <iostream>
+#include <sstream>
 
 #define CSV_FILE_PATH "/tmp/products.csv"
 #define NAME_LENGTH 128
@@ -51,9 +51,11 @@ int create_csv() {
 
   for (int i = 0; i < TEST_ROWS; i++) {
 
-    gen_random(buffer, rand() % NAME_LENGTH);
+    gen_random(buffer, rand() % (NAME_LENGTH / 2));
 
-    Product product(buffer, rand() % 20000, (double) rand() / (double) 10000);
+    stringstream ssm;
+    ssm << "NAME__" << i << "__" << buffer << "__" << i;
+    Product product(ssm.str().c_str(), rand() % 20000, (double) rand() / (double) 10000);
     os << product.name << product.qty << product.price << NEWLINE;
   }
 
@@ -114,11 +116,14 @@ int test_load() {
   TupleDesc desc = rel->ToTupleDesc();
   storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(sch.name_);
   iter->SeekToFirst();
+  uint32_t slot_length = sizeof(Slot) * desc.column_count_;
   while (iter->GetStatus() == storage::kStatusOK)
   {
     uint32_t length = 0;
     Product product;
     Tuple *t = (Tuple*)iter->Get(&length);
+    std::string s((const char*)t + slot_length, length - slot_length);
+    std::cout << s << std::endl;
     for (int i = 0; i < desc.column_count_; i++)
     {
       Slot *slot = t->GetSlot(i, &desc);

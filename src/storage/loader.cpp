@@ -44,9 +44,10 @@ bool Loader::Load() {
   tuple_ = (Tuple*) malloc(config::Setting::instance().page_size_);
 
   int i = 0;
+  uint32_t slot_length = sizeof(Slot) * desc.column_count_;
   while (is_.read_line()) {
     try {
-      uint32_t off = sizeof(Slot) * desc.column_count_;
+      uint32_t off = slot_length;
       union DataValue value;
       std::string str;
       for (int i = 0; i < desc.column_count_; i++) {
@@ -84,9 +85,14 @@ bool Loader::Load() {
       }
       TupleWarpper t(tuple_, off);
       batch_->Put(&t);
+#if OUTPUT
+      std::string tuple_string((const char*)t.Data() + slot_length, t.Size() - slot_length);
+      std::cout << tuple_string << std::endl;
+#endif
       if (i != 0 && i % 10000 == 0) {
         std::cout << "write " << i << " rows ..." << std::endl;
       }
+
       i++;
     } catch (std::runtime_error& e) {
       std::cerr << e.what() << std::endl;

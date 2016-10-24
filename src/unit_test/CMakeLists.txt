@@ -29,7 +29,7 @@ add_executable (csv.test csv.test.cpp)
 target_link_libraries (csv.test common)
 
 add_executable (loader.test loader.test.cpp)
-target_link_libraries (loader.test common storage)
+target_link_libraries (loader.test storage common)
 
 if (ENABLE_CODE_COVERAGE)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
