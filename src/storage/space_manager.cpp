@@ -353,6 +353,7 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
       segment_header->first_data_page_id_ = data_page->pageid_;
     } else {
       LinkPage(segment_header->last_data_page_id_, data_page->pageid_);
+      segment_header->last_data_page_id_ = data_page->pageid_;
     }
     PageGetFrame(segment_header_page)->SetDirty(true);
     PageGetFrame(data_page)->SetDirty(true);
