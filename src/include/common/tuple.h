@@ -23,9 +23,14 @@ class Tuple {
     memcpy(reinterpret_cast<uint8_t*>(this) + offset, data, length);
   }
 
-  Slot *Slot(size_t nth, TupleDesc *desc) {
-    return reinterpret_cast<::Slot *>(this) + desc->mapping_[nth];
+  Slot *GetSlot(size_t nth, TupleDesc *desc) {
+    return reinterpret_cast<Slot *>(this) + desc->mapping_[nth];
   }
+
+  const Slot *GetSlot(size_t nth, TupleDesc *desc) const {
+    return reinterpret_cast<const Slot *>(this) + desc->mapping_[nth];
+  }
+
 };
 
 class TupleWarpper {
