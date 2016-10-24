@@ -50,7 +50,7 @@ bool Loader::Load() {
       union DataValue value;
       std::string str;
       for (int i = 0; i < desc.column_count_; i++) {
-        Slot *slot = tuple_->Slot(i, &desc);
+        Slot *slot = tuple_->GetSlot(i, &desc);
         switch (desc.data_type_[desc.mapping_[i]]) {
           case kDTInteger:
             is_ >> value.integer_;
