@@ -2,7 +2,6 @@
 #define SRC_STORAGE_WRITE_BATCH_H_
 
 #include "storage/write_batch_interface.h"
-#include "relation_handler_interface.h"
 #include "space_manager.h"
 
 namespace storage {

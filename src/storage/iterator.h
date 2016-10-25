@@ -2,10 +2,9 @@
 #define ITERATOR_H_
 
 #include "storage_define.h"
-
-
 #include "storage/iterator_interface.h"
-#include "relation_handler.h"
+#include "storage/buffer_manager.h"
+
 namespace storage {
 
 class Iterator : public IteratorInterface {

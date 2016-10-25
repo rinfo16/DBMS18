@@ -1,5 +1,4 @@
 #include "storage_service.h"
-#include "relation_handler.h"
 #include "write_batch.h"
 #include "iterator.h"
 #include "meta_data_manager.h"
@@ -99,15 +98,11 @@ bool StorageService::DropRelation(const std::string & rel_name) {
   if (rel == NULL) {
     return false;
   }
-  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationDrop,
-                                                 buffer_manager_,
-                                                 space_manager_);
-  bool ok = handler->Drop();
-  if (ok) {
-    meta_data_manager_->RemoveRelationByID(rel->GetID());
-  }
-  delete handler;
-  return ok;
+  // TODO ..
+
+  meta_data_manager_->RemoveRelationByID(rel->GetID());
+
+  return true;
 }
 
 IteratorInterface * StorageService::NewIterator(const std::string & rel_name) {
