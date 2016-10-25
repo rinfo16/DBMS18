@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <deque>
 #include <assert.h>
+#include "common/list.hpp"
 #include "common/hash.h"
 #include "storage_define.h"
 #include "frame.h"
@@ -22,7 +23,7 @@ struct HashFunction {
 
 struct EqualTo {
   bool operator()(const PageID & id1, const PageID & id2) const {
-    return id1.blockno_ == id2.blockno_ && id1.fileno_ == id2.fileno_;
+    return id1.pageno_ == id2.pageno_ && id1.fileno_ == id2.fileno_;
   }
 };
 
@@ -65,6 +66,7 @@ class BufferManager {
 
   Page *Victim();
 
+#if LIRS
   bool RemoveFromStackS(Frame *frame);
 
   bool RemoveFromStackQ(Frame *frame);
@@ -72,6 +74,7 @@ class BufferManager {
   void SHeadToQTail();
 
   void RemoveUnResidentHIRPage();
+#endif // LIRS
 
   uint8_t *buffer_pool_;
   uint32_t pool_size_;
@@ -90,6 +93,7 @@ class BufferManager {
   FrameStack stack_q_;
 
   FileMap files_;
+  utils::List<PageFrame> *lru_list_;
 };
 
 }  // namespace storage

@@ -16,10 +16,10 @@ RelationHandler::RelationHandler(relationid_t relation_id, OpenMode mode,
 
 const void *RelationHandler::GetFirst(uint32_t *length) {
   PageID segment_header_pageid;
-  segment_header_pageid.blockno_ = 0;
+  segment_header_pageid.pageno_ = 0;
   segment_header_pageid.fileno_ = 0;
   void *tuple = NULL;
-  segment_header_pageid.blockno_ = relation_id_;
+  segment_header_pageid.pageno_ = relation_id_;
   Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid,
                                                        false);
   if (segment_header_page == NULL) {
@@ -41,18 +41,19 @@ const void *RelationHandler::GetNext(uint32_t *length) {
 }
 
 bool RelationHandler::DeleteCurrent() {
-  RemoveTuple(page_, nth_slot_);
-  return false;
+  return RemoveTuple(page_, nth_slot_ - 1);
 }
+
 bool RelationHandler::Put(void *tuple, uint32_t length) {
   if (mode_ != kRelationWrite)
     return false;
   PageID id;
   id.fileno_ = 0;
-  id.blockno_ = relation_id_;
+  id.pageno_ = relation_id_;
 // TODO  read/write meta data ...
   return space_manager_->WriteTuple(id, tuple, length);
 }
+
 bool RelationHandler::Drop() {
   return false;
 }
@@ -62,18 +63,15 @@ bool RelationHandler::Create() {
     return false;
   PageID id;
   id.fileno_ = 0;
-  id.blockno_ = relation_id_;
+  id.pageno_ = relation_id_;
 // TODO  read/write meta data ...
   return space_manager_->CreateSegment(&id);
 }
 const void *RelationHandler::GetNextTuple(uint32_t *length) {
   const void *tuple = NULL;
   while (page_ != NULL) {
-    nth_slot_++;
-    tuple = GetTuple(page_, nth_slot_, length);
-    if (tuple != NULL) {
-      break;
-    } else {
+    DataHeader *hdr = ToDataHeader(page_);
+    if (nth_slot_ >= hdr->tuple_count_) {
       PageID data_page_id = page_->next_page_;
       buffer_manager_->UnfixPage(page_->pageid_);
       if (data_page_id.Invalid()) {
@@ -82,6 +80,12 @@ const void *RelationHandler::GetNextTuple(uint32_t *length) {
 
       page_ = buffer_manager_->FixPage(data_page_id, false);
       nth_slot_ = 0;
+    }
+    else  {
+      tuple = GetTuple(page_, nth_slot_++, length);
+      if (tuple != NULL) { // tuple was deleted
+        break;
+      }
     }
   }
   return tuple;

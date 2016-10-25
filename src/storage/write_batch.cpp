@@ -2,17 +2,22 @@
 
 namespace storage {
 
-WriteBatch::WriteBatch(RelationHandlerInterface *rel_handler):rel_handler_(rel_handler) {
-  // TODO Auto-generated constructor stub
-
+WriteBatch::WriteBatch(relationid_t rel_id, SpaceManager *space_manager)
+    : rel_id_(rel_id),
+      space_manager_(space_manager) {
 }
 
 WriteBatch::~WriteBatch() {
-  delete rel_handler_;
+
 }
 
 bool WriteBatch::Put(TupleWarpper *tuple) {
-  return rel_handler_->Put((void*)tuple->Data(), (uint32_t)tuple->Size());
+  PageID segment_header_pageid;
+  segment_header_pageid.fileno_ = 0;
+  segment_header_pageid.pageno_ = rel_id_;
+  return space_manager_->WriteTuple(segment_header_pageid,
+                                    (void*) tuple->Data(),
+                                    (uint32_t) tuple->Size());
 }
 
 }  // namespace storage

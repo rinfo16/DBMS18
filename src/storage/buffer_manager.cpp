@@ -4,7 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include "common/config.h"
-
+#include "page_operation.h"
 #define LIRS 0
 namespace storage {
 
@@ -17,6 +17,7 @@ BufferManager::BufferManager() {
   pool_size_ = page_count_ * page_size_;
   frame_count_ = 0;
   frame_size_ = 0;
+  lru_list_ = NULL;
 }
 
 BufferManager::~BufferManager() {
@@ -30,6 +31,7 @@ bool BufferManager::Start() {
   for (uint32_t i = 0; i < page_count_; i++) {
     free_buffer_index_.push_back(i);
   }
+  lru_list_ = new utils::List<PageFrame>();
   return true;
 }
 
@@ -49,6 +51,8 @@ void BufferManager::Stop() {
   loaded_buffers_.clear();
   stack_s_.clear();
   stack_q_.clear();
+  delete lru_list_;
+  lru_list_ = NULL;
 }
 
 Page* BufferManager::FixPage(PageID id, bool is_new) {
@@ -64,7 +68,7 @@ Page* BufferManager::FixPage(PageID id, bool is_new) {
     non_resident = true;
     page = GetFreePage();
     assert(page);
-    frame = new Frame();  // TODO delete this ???
+    frame = new Frame();// TODO delete this ???
     frame->SetPage(page);
     frame->SetHIR();
     loaded_buffers_.insert(std::make_pair(id, frame));
@@ -113,10 +117,13 @@ Page* BufferManager::FixPage(PageID id, bool is_new) {
     }
     frame = new Frame();
     frame->SetPage(page);
+
     loaded_buffers_.insert(std::make_pair(id, frame));
   } else {
     frame = frame_iter->second;
     page = frame->GetPage();
+    assert(id == page->pageid_);
+    lru_list_->Remove(frame);
   }
 #endif
   PageSetFrame(page, frame);
@@ -135,9 +142,9 @@ bool BufferManager::UnfixPage(PageID id) {
 
     if (frame->FixCount() == 0) {
       stack_q_.erase(std::remove(stack_q_.begin(), stack_q_.end(), frame),
-                     stack_q_.end());
+          stack_q_.end());
       stack_s_.erase(std::remove(stack_s_.begin(), stack_s_.end(), frame),
-                     stack_s_.end());
+          stack_s_.end());
       if (frame->IsLIR()) {
         assert(frame->GetPage() && frame->IsLIR());
         stack_s_.push_back(frame);
@@ -157,6 +164,9 @@ bool BufferManager::UnfixPage(PageID id) {
   if (iter != loaded_buffers_.end()) {
     Frame *frame = iter->second;
     frame->UnfixPage();
+    if (frame->FixCount() == 0) {
+      lru_list_->PushBack(frame);
+    }
   } else {
     assert(false);
     return false;
@@ -203,10 +213,6 @@ void BufferManager::FlushAll() {
       iter++) {
     Frame *frame = iter->second;
     if (frame->GetPage() && frame->IsDirty()) {
-      if (frame->GetPage()->pageid_.blockno_ == 0
-          && frame->GetPage()->pageid_.fileno_ == 0) {
-        int i = 0;
-      }
       WritePage(frame->GetPage());
     }
   }
@@ -215,7 +221,7 @@ void BufferManager::FlushAll() {
 void BufferManager::ReadPage(PageID pageid, Page *page) {
   File *f = GetFile(pageid.fileno_);
   if (f != NULL) {
-    f->Read(pageid.blockno_ * page_size_, page, page_size_);
+    f->Read(pageid.pageno_ * page_size_, page, page_size_);
   }
 }
 
@@ -224,7 +230,7 @@ void BufferManager::WritePage(Page *page) {
   if (f != NULL) {
     Frame *frame = PageGetFrame(page);
     PageSetFrame(page, NULL);
-    f->Write(page->pageid_.blockno_ * page_size_, page, page_size_);
+    f->Write(page->pageid_.pageno_ * page_size_, page, page_size_);
     frame->SetDirty(false);
     PageSetFrame(page, frame);
   }
@@ -248,6 +254,47 @@ File* BufferManager::GetFile(fileno_t no) {
   return f;
 }
 
+Page* BufferManager::Victim() {
+  Page *page = NULL;
+#if LIRS
+  if (stack_q_.empty()) {
+    assert(false);
+    return NULL;
+  }
+  Frame *frame = stack_q_.front();
+  if (frame->FixCount() > 0) {
+    // Logic error, should not be here
+    return NULL;
+  }
+  page = frame->GetPage();
+  if (frame->IsDirty()) {
+    WritePage(page);
+  }
+  frame->SetPage(NULL);
+  stack_q_.pop_front();
+  FrameStack::iterator iter = std::find(stack_s_.begin(), stack_s_.end(),
+      frame);
+  if (iter == stack_s_.end()) {
+    size_t ret = loaded_buffers_.erase(frame->GetPageID());
+    assert(ret == 1);
+    delete frame;
+  }
+#else
+  Frame *frame = lru_list_->PopFront();
+  page = frame->GetPage();
+  loaded_buffers_.erase(page->pageid_);
+  assert(frame->FixCount() == 0);
+  if (frame->IsDirty()) {
+    WritePage(page);
+    frame->SetDirty(false);
+  }
+  PageSetFrame(page, NULL);
+  delete frame;
+#endif
+  return page;
+}
+
+#if LIRS
 bool BufferManager::RemoveFromStackS(Frame *frame) {
   FrameStack::iterator iter = std::find(stack_s_.begin(), stack_s_.end(),
                                         frame);
@@ -295,7 +342,7 @@ void BufferManager::RemoveUnResidentHIRPage() {
   FrameStack::iterator iter;
   for (iter = stack_s_.begin(); iter != stack_s_.end(); iter++) {
     Frame *f = *iter;
-    if (FrameToPage(f) == NULL) {
+    if (f->GetPage() == NULL) {
       size_t ret = loaded_buffers_.erase(f->GetPageID());
       assert(ret == 1);
       delete f;
@@ -305,50 +352,7 @@ void BufferManager::RemoveUnResidentHIRPage() {
     }
   }
 }
-
-Page* BufferManager::Victim() {
-  Page *page = NULL;
-#if LIRS
-  if (stack_q_.empty()) {
-    assert(false);
-    return NULL;
-  }
-  Frame *frame = stack_q_.front();
-  if (frame->FixCount() > 0) {
-    // Logic error, should not be here
-    return NULL;
-  }
-  page = frame->GetPage();
-  if (frame->IsDirty()) {
-    WritePage(page);
-  }
-  frame->SetPage(NULL);
-  stack_q_.pop_front();
-  FrameStack::iterator iter = std::find(stack_s_.begin(), stack_s_.end(),
-                                        frame);
-  if (iter == stack_s_.end()) {
-    size_t ret = loaded_buffers_.erase(frame->GetPageID());
-    assert(ret == 1);
-    delete frame;
-  }
-#else
-  for (LoadedBufferMap::iterator iter = loaded_buffers_.begin();
-      iter != loaded_buffers_.end(); iter++) {
-    Frame *frame = (iter->second);
-    if (frame->FixCount() == 0) {
-      if (frame->IsDirty()) {
-        WritePage(frame->GetPage());
-        frame->SetDirty(false);
-      }
-      page = frame->GetPage();
-      loaded_buffers_.erase(iter);
-      delete frame;
-      break;
-    }
-  }
 #endif
-  return page;
-}
 
 }
 // namespace storage

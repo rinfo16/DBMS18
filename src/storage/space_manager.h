@@ -19,7 +19,7 @@ class SpaceManager {
 
   void VacuumAll();
 
-  bool WriteTuple(PageID segment_header_pageid, void *tuple, uint32_t length, bool bulk = false);
+  bool WriteTuple(PageID segment_header_pageid, void *tuple, uint32_t length, bool bulk = true);
 
   bool CreateSegment(PageID *segment_header_pageid /*OUT*/);
 

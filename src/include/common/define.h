@@ -9,7 +9,7 @@
 #define PAGE_NUMBER_PER_EXTENT    320
 #define MAX_PAGE_NUMBER_PER_FILE  8192000
 #define MAX_EXTENT_COUNT          40000
-#define BUFFER_POOL_SIZE          800000000
+#define BUFFER_POOL_SIZE          819200
 #define DATA_DIRECTORY            "/tmp"
 #define FLIP_NUMBER               20161012
 #define SEGMENT_DESCRIPT_FILE_NO  0

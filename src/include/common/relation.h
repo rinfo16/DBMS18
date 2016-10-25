@@ -111,19 +111,19 @@ class Relation {
     boost::property_tree::ptree id_tree;
     id_tree = tree.get_child(STR_FIRST_DATA_PAGE);
     first_data_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    first_data_pageid_.blockno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    first_data_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
 
     id_tree = tree.get_child(STR_LAST_DATA_PAGE);
     last_data_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    last_data_pageid_.blockno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    last_data_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
 
     id_tree = tree.get_child(STR_FIRST_EXTENT);
     first_extent_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    first_extent_pageid_.blockno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    first_extent_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
 
     id_tree = tree.get_child(STR_LAST_EXTENT);
     last_extent_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    last_extent_pageid_.blockno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    last_extent_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
 
     boost::property_tree::ptree attributes_tree;
     attributes_tree = tree.get_child(STR_ATTRIBUTE_LIST);

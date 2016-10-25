@@ -2,7 +2,6 @@
 #define PAGE_H_
 
 #include "common/define.h"
-#include "common/slot.h"
 #include "storage_define.h"
 #include <memory>
 

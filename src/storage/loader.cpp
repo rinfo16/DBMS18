@@ -1,8 +1,9 @@
 #include "storage/loader.h"
+#include <iostream>
 #include "common/minicsv.h"
 #include "common/config.h"
+#include "common/datetime.h"
 #include "storage_service.h"
-#include <iostream>
 
 namespace storage {
 
@@ -56,27 +57,32 @@ bool Loader::Load() {
           case kDTInteger:
             is_ >> value.integer_;
             slot->offset_ = off;
+            slot->length_ = sizeof(value.integer_);
             tuple_->SetValue(off, &value.integer_, sizeof(value.integer_));
             off += sizeof(value.integer_);
             break;
           case kDTFloat:
             is_ >> value.float_;
             slot->offset_ = off;
+            slot->length_ = sizeof(value.float_);
             tuple_->SetValue(off, &value.float_, sizeof(value.float_));
             off += sizeof(value.float_);
             break;
           case kDTVarchar:
             is_ >> str;
             slot->offset_ = off;
+            slot->length_ = str.size();
             tuple_->SetValue(off, str.c_str(), str.size());
             off += str.size();
             break;
-          case kDTDate:
+          case kDTDate: {
             is_ >> str;
-            // TODO ...
+            value.date_ = DateSimpleString2Subsec(str);
+            slot->length_ = sizeof(value.date_);
             slot->offset_ = off;
             tuple_->SetValue(off, &value.date_, sizeof(value.date_));
             off += sizeof(value.date_);
+          }
             break;
           default:
             assert(false);

@@ -17,12 +17,12 @@ TEST_F(RelationTest, TestJSON) {
   rel1.SetName("TABLE1");
 
   PageID pageid;
-  pageid.blockno_ = 2;
+  pageid.pageno_ = 2;
   pageid.fileno_ = 1;
   rel1.SetFirstDataPageID(pageid);
   rel1.SetLastDataPageID(pageid);
 
-  pageid.blockno_ = 1;
+  pageid.pageno_ = 1;
   pageid.fileno_ = 1;
   rel1.SetFirstExtentPageID(pageid);
   rel1.SetLastExtentPageID(pageid);

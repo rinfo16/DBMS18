@@ -16,7 +16,7 @@ class ListNode : public T {
 
 //judge if node is the first one
   bool IsFirst() const {
-      return false;
+    return false;
   }
 
 //judge if the node is the last one
@@ -31,34 +31,29 @@ class ListNode : public T {
 
   }
 
-
-
-
 //insert node on the left end
-  void LinkToLeft(ListNode <T> *left_node) {
-    left_node->next_=this;
-    this->prev_=left_node;
+  void LinkToLeft(ListNode<T> *left_node) {
+    left_node->next_ = this;
+    this->prev_ = left_node;
   }
 
 //return the first node
   ListNode<T>* First() {
-    ListNode <T> * p;
-    p=this;
-    while (p->prev_!=NULL)
-    {
-       p=p->prev_;
-     }
-     return p;
+    ListNode<T> * p;
+    p = this;
+    while (p->prev_ != NULL) {
+      p = p->prev_;
+    }
+    return p;
   }
 
 //return the last node
   ListNode<T>* Last() {
-   ListNode <T> * p;
-   while (p->next_!=NULL)
-     {
-       p=p->next_;
-     }
-     return p;
+    ListNode<T> * p;
+    while (p->next_ != NULL) {
+      p = p->next_;
+    }
+    return p;
   }
 
 //delete one node
@@ -67,11 +62,11 @@ class ListNode : public T {
       prev_->next_ = next_;
     }
     if (next_ != NULL) {
-      next_->prev = prev_;
+      next_->prev_ = prev_;
     }
-
+    prev_ = NULL;
+    next_ = NULL;
   }
-
 
 //return the next node
 
@@ -81,22 +76,22 @@ class ListNode : public T {
   }
 
 //return the prev node
-  ListNode <T> * Prev(){
+  ListNode<T> * Prev() {
     return this->prev_;
   }
 
  private:
-  ListNode <T> *prev_;
-  ListNode <T> *next_;
+  ListNode<T> *prev_;
+  ListNode<T> *next_;
 };
 
-template <typename T>
-class List:public T {
+template<typename T>
+class List {
  public:
   List()
-       :head_(NULL),
+      : head_(NULL),
         tail_(NULL) {
-    }
+  }
 
   void PushBack(ListNode<T> *node) {
     if (tail_ == NULL) {
@@ -128,25 +123,26 @@ class List:public T {
     } else {
       head_ = head_->Next();
     }
-
+    if (node) {
+      node->Remove();
+    }
     return node;
   }
 
   ListNode<T>* PopBack() {
-    ListNode <T> * node =tail_;
-    if (head_==tail_){
+    ListNode<T> * node = tail_;
+    if (head_ == tail_) {
       assert(tail_==NULL || tail_->Prev()==NULL);
-      assret(head_==NULL || head_->Next()==NULL);
-      tail_=NULL;
-      head_=NULL;
+      assert(head_==NULL || head_->Next()==NULL);
+      tail_ = NULL;
+      head_ = NULL;
+    } else {
+      tail_ = tail_->Prev();
     }
-    else{
-      tail_=tail_->prev_;
-    }
-
+    if (node)
+      node->Remove();
     return node;
   }
-
 
   void Remove(ListNode<T> *node) {
     if (node == head_) {
@@ -157,9 +153,9 @@ class List:public T {
     }
     node->Remove();
   }
-private:
-  ListNode <T> * head_;
-  ListNode <T> * tail_;
+ private:
+  ListNode<T> * head_;
+  ListNode<T> * tail_;
 };
 }  // namespace utils
 

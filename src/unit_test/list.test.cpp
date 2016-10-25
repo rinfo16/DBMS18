@@ -16,11 +16,12 @@ int main(int argc, const char* argv[]) {
     node->append(ssm.str());
     list.PushBack(node);
   }
-  utils::ListNode<std::string> *node = list.PopFront();
+
+  utils::ListNode<std::string> *node = list.PopBack();
   for (int i = 0; node != NULL; i++)
   {
     std::cout << i << " " << *node << std::endl;
-    node = list.PopFront();
+    node = list.PopBack();
   }
   return 0;
 }

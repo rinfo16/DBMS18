@@ -10,10 +10,10 @@ namespace storage {
 
 class Iterator : public IteratorInterface {
  public:
-  Iterator(RelationHandlerInterface *rel_handler);
+  Iterator(relationid_t rel_id, BufferManager *buffer_manager);
   ~Iterator();
   virtual bool Get(TupleWarpper *tuple);
-  virtual void* Get(uint32_t *length);
+  virtual const void* Get(uint32_t *length);
   virtual bool Delete();
   virtual void SeekToFirst();
   virtual void SeekToLast();
@@ -21,10 +21,14 @@ class Iterator : public IteratorInterface {
   virtual void Prev();
   virtual Status GetStatus();
 private:
-  RelationHandlerInterface *rel_handler_;
+  void SeekNext();
+  relationid_t relation_id_;
   Status status_;
-  void* tuple_data_;
+  const void* tuple_data_;
   uint32_t tuple_length_;
+  Page *page_;
+  uint32_t nth_slot_;
+  BufferManager *buffer_manager_;
 };
 
 

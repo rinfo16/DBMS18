@@ -1,6 +1,7 @@
 #ifndef PAGE_OPERATION_H_
 #define PAGE_OPERATION_H_
 #include "page_layout.h"
+#include "tuple_header.h"
 
 namespace storage {
 
@@ -14,7 +15,7 @@ DataFileHeader *ToDataFileHeader(Page *page);
 
 ExtentHeader *ToExtentHeader(Page *page);
 
-Slot *ToFirstSlot(DataHeader *header);
+TupleHeader *ToOffsetTable(DataHeader *header);
 
 void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size);
 

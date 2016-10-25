@@ -5,7 +5,7 @@ boost::property_tree::ptree PageIDToPropertyTree(PageID pageid)
 {
   boost::property_tree::ptree tree;
   tree.put(STR_FILE_NO, pageid.fileno_);
-  tree.put(STR_PAGE_NO, pageid.blockno_);
+  tree.put(STR_PAGE_NO, pageid.pageno_);
 
   return tree;
 }
@@ -18,7 +18,7 @@ PageID PropertyTreeToPageID(boost::property_tree::ptree tree)
   ssm >> pageid.fileno_;
   ssm.clear();
   ssm << tree.get<pageno_t>(STR_PAGE_NO);
-  ssm >> pageid.blockno_;
+  ssm >> pageid.pageno_;
 
   return pageid;
 }

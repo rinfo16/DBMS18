@@ -45,7 +45,7 @@ bool StorageService::CreateRelation(const TableSchema & schema) {
   if (ok) {
     Relation* rel = new Relation();
     rel->SetName(schema.name_);
-    rel->SetID(id.blockno_);
+    rel->SetID(id.pageno_);
     std::vector<std::pair<Column, int> > columns;
     for (int i = 0; i < schema.column_list_.size(); i++) {
       columns.push_back(std::make_pair(schema.column_list_[i], i));
@@ -115,10 +115,7 @@ IteratorInterface * StorageService::NewIterator(const std::string & rel_name) {
   if (rel == NULL) {
     return NULL;
   }
-  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationRead,
-                                                 buffer_manager_,
-                                                 space_manager_);
-  return new Iterator(handler);
+  return new Iterator(rel->GetID(),  buffer_manager_ );
 }
 
 WriteBatchInterface * StorageService::NewWriteBatch(
@@ -127,10 +124,7 @@ WriteBatchInterface * StorageService::NewWriteBatch(
   if (rel == NULL) {
     return NULL;
   }
-  RelationHandler *handler = new RelationHandler(rel->GetID(), kRelationWrite,
-                                                 buffer_manager_,
-                                                 space_manager_);
-  return new WriteBatch(handler);
+  return new WriteBatch(rel->GetID(), space_manager_);
 }
 
 void StorageService::DeleteIOObject(IOObjectInterface* io_object) {

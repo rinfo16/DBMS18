@@ -79,13 +79,13 @@ bool MetaDataManager::RemoveRelationByID(relationid_t id) {
 bool MetaDataManager::Start() {
   PageID seg_file_hdr_pageid;
   seg_file_hdr_pageid.fileno_ = 0;
-  seg_file_hdr_pageid.blockno_ = 0;
+  seg_file_hdr_pageid.pageno_ = 0;
   Page *seg_file_hdr_page = buffer_manager_->FixPage(seg_file_hdr_pageid, false);
   SegFileHeader *seg_file_hdr = ToSegFileHeader(seg_file_hdr_page);
   for (uint32_t i = 1; i <= seg_file_hdr->page_count_; i++) {
     PageID pageid;
     pageid.fileno_ = 0;
-    pageid.blockno_ = i;
+    pageid.pageno_ = i;
     Page *segment_desc_page = buffer_manager_->FixPage(pageid, false);
 
     SegmentHeader *seg_hdr = ToSegmentHeader(segment_desc_page);
@@ -107,7 +107,7 @@ void MetaDataManager::Stop() {
 
     // write to page ...
     PageID pageid;
-    pageid.blockno_ = rel->GetID();
+    pageid.pageno_ = rel->GetID();
     pageid.fileno_ = SEGMENT_DESCRIPT_FILE_NO;
     Page* page = buffer_manager_->FixPage(pageid, false);
     SegmentHeader *seg_hdr = ToSegmentHeader(page);

@@ -7,6 +7,7 @@
 namespace storage {
 
 enum Status {
+  kStatusInit,
   kStatusEOF,
   kStatusOK
 };
@@ -16,7 +17,7 @@ class IteratorInterface : public IOObjectInterface{
  public:
   virtual ~IteratorInterface() {};
   virtual bool Get(TupleWarpper *tuple) = 0;
-  virtual void* Get(uint32_t *length) = 0;
+  virtual const void* Get(uint32_t *length) = 0;
   virtual bool Delete() = 0;
   virtual void SeekToFirst() = 0;
   virtual void SeekToLast() = 0;

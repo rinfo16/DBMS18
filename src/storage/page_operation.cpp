@@ -1,5 +1,6 @@
 #include "page_operation.h"
 #include "common/bitmap.h"
+#include "tuple_header.h"
 #include <assert.h>
 #include <memory.h>
 #include <string.h>
@@ -27,8 +28,8 @@ ExtentHeader *ToExtentHeader(Page *page) {
   return (ExtentHeader*) ((uint8_t*) page + PAGE_HEADER_SIZE);
 }
 
-Slot *ToFirstSlot(DataHeader *header) {
-  return (Slot *) ((uint8_t*) header + sizeof(DataHeader));
+TupleHeader *ToOffsetTable(DataHeader *header) {
+  return (TupleHeader *) ((uint8_t*) header + sizeof(DataHeader));
 }
 void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size) {
   memcpy(&page->flip_, "HEAD", 4);
@@ -54,21 +55,26 @@ bool PutTuple(Page *data_page, const void *tuple, uint32_t length,
               slotno_t *slotno) {
   assert(length > 0);
   DataHeader *header = ToDataHeader(data_page);
-  if (header->free_end_ - header->free_begin_ < length + sizeof(Slot)) {
+  if (header->free_end_ - header->free_begin_ < length + sizeof(TupleHeader)) {
     return false;
   }
   if (slotno != NULL) {
     *slotno = header->tuple_count_;
   }
-  Slot *slot = ToFirstSlot(header);
+  TupleHeader *slot = ToOffsetTable(header);
   slot = slot + header->tuple_count_;
-  header->free_begin_ += sizeof(Slot);
+
+  header->free_begin_ += sizeof(TupleHeader);
   header->free_end_ -= length;
   header->tuple_count_++;
   header->total_data_length_ += length;
 
   slot->length_ = length;
   slot->offset_ = header->free_end_;
+
+  // TODO timestamp when transaction begin
+  slot->create_trans_ = 1;
+  slot->delete_trans_ = 0;
 
   memcpy(((uint8_t*) data_page + header->free_end_), tuple, length);
   assert(header->free_begin_ <= header->free_end_);
@@ -80,8 +86,11 @@ const void *GetTuple(Page *data_page, slotno_t no, uint32_t *length) {
   if (no >= header->tuple_count_) {
     return NULL;
   } else {
-    Slot *slot = ToFirstSlot(header);
+    TupleHeader *slot = ToOffsetTable(header);
     slot = slot + no;
+    if (slot->delete_trans_) {
+      return NULL;
+    }
     if (length != NULL) {
       assert(slot->length_ > 0);
       *length = slot->length_;
@@ -95,26 +104,26 @@ bool RemoveTuple(Page *data_page, slotno_t no) {
   if (no >= header->tuple_count_) {
     return false;
   } else {
-    Slot *slot_array = ToFirstSlot(header);
-    Slot *slot = slot_array + no;
-    if (no + 1 != header->tuple_count_) {  // not the last slot
-      *slot = slot_array[header->tuple_count_ - 1];
-    }
-    header->total_data_length_ -= slot->length_;
-    --header->tuple_count_;
+    TupleHeader *slot_array = ToOffsetTable(header);
+    TupleHeader *slot = slot_array + no;
+    // TODO transaction id or ...
+    slot->delete_trans_ = 1;
+    /*
+     header->total_data_length_ -= slot->length_;
+     --header->tuple_count_;
+     if (no + 1 != header->tuple_count_) {  // not the last slot
+     *slot = slot_array[header->tuple_count_ - 1];
+     }*/
+
     return true;
   }
 }
 
 void LinkTwoPage(Page*left, Page *right) {
-  assert(left != NULL || right != NULL);
-  if (left == NULL) {
-    right->prev_page_ = PageID();
-  }
-  if (right == NULL) {
-    left->next_page_ = PageID();
-  }
-
+  assert(left != right);
+  assert(!(left->pageid_.pageno_ == right->pageid_.pageno_
+          && left->pageid_.fileno_ == right->pageid_.pageno_));
+  assert(left != NULL && right != NULL);
   left->next_page_ = right->pageid_;
   right->prev_page_ = left->pageid_;
 }
