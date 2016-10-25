@@ -2,10 +2,16 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include "storage/storage_service.h"
+#include "common/config.h"
 
 using namespace boost::program_options;
 
 int main(int argc, const char *argv[]) {
+  config::Setting::instance().buffer_pool_size_ = 16 * 1024 * 100000;
+  config::Setting::instance().data_directory_ = "/tmp";
+  config::Setting::instance().extent_number_per_file_ = 10000;
+  config::Setting::instance().page_number_per_extent_ = 32;
+
   std::string path;
   int rows = 0;
   std::string table;
@@ -15,10 +21,10 @@ int main(int argc, const char *argv[]) {
 
   try {
     options_description desc { "Options" };
-    desc.add_options()("--help,-h", "Help screen\n"
-                       "--csv --path=PATH --rows=ROW\n"
-                       "--import --table=TABLE --path=PATH\n"
-                       "--export --table=TABLE --path=PATH\n")(
+    desc.add_options()("help", "Help screen\n"
+        "--csv --path=PATH --rows=ROW\n"
+        "--import --table=TABLE --path=PATH\n"
+        "--export --table=TABLE --path=PATH\n")(
         "rows", value<int>()->default_value(100000), "rows to output")(
         "path", value<std::string>(), "csv file path")("csv", "create csv file")(
         "import", "import csv file")("export", "export csv file")(
@@ -31,15 +37,15 @@ int main(int argc, const char *argv[]) {
     if (vm.count("help"))
       std::cout << desc << '\n';
     if (vm.count("rows")) {
-      std::cout << vm["rows"].as<int>() << std::endl;
+      //std::cout << vm["rows"].as<int>() << std::endl;
       rows = vm["rows"].as<int>();
     }
     if (vm.count("path")) {
-      std::cout << vm["path"].as<std::string>() << std::endl;
+      //std::cout << vm["path"].as<std::string>() << std::endl;
       path = vm["path"].as<std::string>();
     }
     if (vm.count("csv")) {
-      std::cout << "create test data ..." << std::endl;
+      //std::cout << "create test data ..." << std::endl;
       create_test_csv_file = true;
     }
     if (vm.count("import")) {
