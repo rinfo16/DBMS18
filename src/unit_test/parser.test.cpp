@@ -5,8 +5,8 @@
 int main(int argc, char *argv[]) {
 
   const char *sql[] = {
-      "SELECT name,country FROM Websites",
-      "SELECT name,country FROM Websites WHERE country='CN'",
+      "SELECT name,country FROM Websites;",
+      "SELECT name,country FROM Websites WHERE country='CN';",
       "SELECT name,country FROM Websites WHERE country='CN' AND alexa > 50;",
       "SELECT name,country FROM Websites WHERE country='USA' OR country='CN';",
       "SELECT name,country FROM Websites WHERE alexa > 15 AND (country='CN' OR country='USA');",
@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
   };
   for (int i = 0; i < sizeof(sql) / sizeof(const char *); i++) {
     std::string sql_str = sql[i];
+    std::cout << sql_str << std::endl;
     ParserContext ctx;
     bool result = ctx.driver_.parse_string(ctx, sql_str, "input");
     if (result) {

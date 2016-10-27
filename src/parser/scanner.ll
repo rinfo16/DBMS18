@@ -77,7 +77,16 @@ ASC { return token::ASC; }
 BETWEEN { BEGIN BTWMODE; return token::BETWEEN; }
 INT8|BIGINT { return token::BIGINT; }
 BOTH { return token::BOTH; }
+BY { return token::BY; }
+CASCADE { return token::CASCADE; }
+CASE { return token::CASE; }
+CHANGE { return token::CHANGE; }
+CHAR(ACTER)? { return token::CHAR; }
 COLUMN { return token::COLUMN; }
+COMMENT { return token::COMMENT; }
+CONDITION { return token::CONDITION; }
+CONSTRAINT { return token::CONSTRAINT; }
+CONTINUE { return token::CONTINUE; }
 CREATE { return token::CREATE; }
 CROSS { return token::CROSS; }
 DATABASE { return token::DATABASE; }
@@ -117,7 +126,7 @@ GROUP { return token::GROUP; }
 HAVING { return token::HAVING; }
 IN { return token::IN; }
 INSERT { return token::INSERT; }
-INT4?|INTEGER { return token::INTEGER; }
+INT|INTEGER { return token::INTEGER; }
 INTO { return token::INTO; }
 IS { return token::IS; }
 JOIN { return token::JOIN; }
@@ -132,28 +141,52 @@ NO_WRITE_TO_BINLOG { return token::NO_WRITE_TO_BINLOG; }
 NULL { return token::NULLX; }
 NUMBER { return token::NUMBER; }
 ON { return token::ON; }
-ON[ \t\n]+DUPLICATE { return token::ONDUPLICATE; }
 OR { return token::OR; }
+ORDER { return token::ORDER; }
 OUT { return token::OUT; }
 OUTER { return token::OUTER; }
-READS { return token::READS; }
 REAL { return token::REAL; }
+REFERENCES { return token::REFERENCES; }
 SCHEMA { return token::SCHEMA; }
+SCHEMAS { return token::SCHEMAS; }
+SELECT { return token::SELECT; }
 SET { return token::SET; }
 SHOW { return token::SHOW; }
-INT2|SMALLINT { return token::SMALLINT; }
 SOME { return token::SOME; }
 SQL { return token::SQL; }
 TABLE { return token::TABLE; }
+TEMPORARY { return token::TEMPORARY; }
+TEXT { return token::TEXT; }
+TIME { return token::TIME; }
 TIMESTAMP { return token::TIMESTAMP; }
-INT1|TINYINT { return token::TINYINT; }
-TINYTEXT { return token::TINYTEXT; }
+TO { return token::TO; }
+TRAILING { return token::TRAILING; }
+TRIGGER { return token::TRIGGER; }
+UNDO { return token::UNDO; }
+UNION { return token::UNION; }
+UNIQUE { return token::UNIQUE; }
+UNLOCK { return token::UNLOCK; }
+UNSIGNED { return token::UNSIGNED; }
+UPDATE { return token::UPDATE; }
+USAGE { return token::USAGE; }
+USE { return token::USE; }
 USING { return token::USING; }
+UTC_DATE { return token::UTC_DATE; }
+UTC_TIME { return token::UTC_TIME; }
+UTC_TIMESTAMP { return token::UTC_TIMESTAMP; }
 VALUES? { return token::VALUES; }
 VARBINARY { return token::VARBINARY; }
 VARCHAR(ACTER)? { return token::VARCHAR; }
 VARYING { return token::VARYING; }
+WHEN { return token::WHEN; }
+WHERE { return token::WHERE; }
+WHILE { return token::WHILE; }
+WITH { return token::WITH; }
+WRITE { return token::WRITE; }
 XOR { return token::XOR; }
+YEAR { return token::YEAR; }
+YEAR_MONTH { return token::YEAR_MONTH; }
+ZEROFILL { return token::ZEROFILL; }
 
 -?[0-9]+ { yylval->intval = atoi(yytext); return token::INTNUM; }
 -?[0-9]+"."[0-9]* |

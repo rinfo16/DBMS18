@@ -361,8 +361,8 @@ start:
 ;
 
 stmt_list:
-  stmt { $$ = $1; }
-  | stmt_list stmt {}
+  stmt SEMICOLON { $$ = $1; }
+  | stmt_list stmt SEMICOLON {}
 ;
 
 expr: 
