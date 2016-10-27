@@ -10,7 +10,7 @@ find_program(BISON bison DOC "Path to the bison parser generator.")
 
 set(BISON_DEBUG "")
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
-  set(BISON_DEBUG --verbose --debug --locations --graph)
+  set(BISON_DEBUG --verbose --debug)
 endif()
 
 set (FLEX_OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/lex.parser.cpp)
