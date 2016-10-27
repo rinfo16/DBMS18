@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 add_executable (hello hello.test.cpp)
 include_directories(../third_party/googletest/include)
@@ -33,6 +33,9 @@ target_link_libraries (loader.test storage common boost_program_options boost_da
 
 add_executable (cmd.test cmd.test.cpp storage.test.cpp)
 target_link_libraries (cmd.test storage common boost_program_options boost_date_time)
+
+add_executable (parser.test parser.test.cpp)
+target_link_libraries (parser.test parser common)
 
 if (ENABLE_CODE_COVERAGE)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
