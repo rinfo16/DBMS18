@@ -63,7 +63,6 @@ TEST_F(RelationTest, TestJSON) {
   EXPECT_EQ(attr1.GetID(), attr2.GetID());
 }
 
-
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();

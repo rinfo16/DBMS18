@@ -80,13 +80,13 @@ bool MetaDataManager::Start() {
   PageID seg_file_hdr_pageid;
   seg_file_hdr_pageid.fileno_ = 0;
   seg_file_hdr_pageid.pageno_ = 0;
-  Page *seg_file_hdr_page = buffer_manager_->FixPage(seg_file_hdr_pageid, false);
+  Page *seg_file_hdr_page = buffer_manager_->FixPage(seg_file_hdr_pageid);
   SegFileHeader *seg_file_hdr = ToSegFileHeader(seg_file_hdr_page);
   for (uint32_t i = 1; i <= seg_file_hdr->page_count_; i++) {
     PageID pageid;
     pageid.fileno_ = 0;
     pageid.pageno_ = i;
-    Page *segment_desc_page = buffer_manager_->FixPage(pageid, false);
+    Page *segment_desc_page = buffer_manager_->FixPage(pageid);
 
     SegmentHeader *seg_hdr = ToSegmentHeader(segment_desc_page);
     std::string json(seg_hdr->schema_, seg_hdr->schema_data_length_);
@@ -95,9 +95,9 @@ bool MetaDataManager::Start() {
     rel->InitByJSON(json);
     AddRelation(rel);
 
-    buffer_manager_->UnfixPage(segment_desc_page->pageid_);
+    buffer_manager_->UnfixPage(segment_desc_page);
   }
-  buffer_manager_->UnfixPage(seg_file_hdr_page->pageid_);
+  buffer_manager_->UnfixPage(seg_file_hdr_page);
   return true;
 }
 
@@ -109,13 +109,13 @@ void MetaDataManager::Stop() {
     PageID pageid;
     pageid.pageno_ = rel->GetID();
     pageid.fileno_ = SEGMENT_DESCRIPT_FILE_NO;
-    Page* page = buffer_manager_->FixPage(pageid, false);
+    Page* page = buffer_manager_->FixPage(pageid);
     SegmentHeader *seg_hdr = ToSegmentHeader(page);
     std::string schema_json = rel->ToJSON();
     seg_hdr->schema_data_length_ = (uint32_t) schema_json.size();
     memcpy(seg_hdr->schema_, schema_json.c_str(), schema_json.size());
     PageGetFrame(page)->SetDirty(true);
-    buffer_manager_->UnfixPage(pageid);
+    buffer_manager_->UnfixPage(page);
 
     delete rel;
   }

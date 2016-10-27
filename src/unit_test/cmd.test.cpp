@@ -22,9 +22,9 @@ int main(int argc, const char *argv[]) {
   try {
     options_description desc { "Options" };
     desc.add_options()("help", "Help screen\n"
-        "--csv --path=PATH --rows=ROW\n"
-        "--import --table=TABLE --path=PATH\n"
-        "--export --table=TABLE --path=PATH\n")(
+                       "--csv --path=PATH --rows=ROW\n"
+                       "--import --table=TABLE --path=PATH\n"
+                       "--export --table=TABLE --path=PATH\n")(
         "rows", value<int>()->default_value(100000), "rows to output")(
         "path", value<std::string>(), "csv file path")("csv", "create csv file")(
         "import", "import csv file")("export", "export csv file")(

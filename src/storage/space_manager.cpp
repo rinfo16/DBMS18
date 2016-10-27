@@ -38,7 +38,7 @@ bool SpaceManager::CreateDataFile(fileno_t *no) {
   pageid.fileno_ = 0;
   pageid.pageno_ = 0;
 
-  Page *page = buffer_manager_->FixPage(pageid, false);
+  Page *page = buffer_manager_->FixPage(pageid);
   if (page == NULL) {
     return false;
   }
@@ -53,7 +53,7 @@ bool SpaceManager::CreateDataFile(fileno_t *no) {
     *no = ++header->data_file_count_;
   }
   PageGetFrame(page)->SetDirty(true);
-  buffer_manager_->UnfixPage(pageid);
+  buffer_manager_->UnfixPage(page);
 
   CreateFile(*no);
   return true;
@@ -116,7 +116,7 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   PageID seg_file_header_pageid;
   seg_file_header_pageid.pageno_ = 0;
   seg_file_header_pageid.fileno_ = 0;
-  Page *page = buffer_manager_->FixPage(seg_file_header_pageid, false);
+  Page *page = buffer_manager_->FixPage(seg_file_header_pageid);
   if (page == NULL) {
     return false;
   }
@@ -126,9 +126,10 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   PageID seg_header_pageid;
   seg_header_pageid.pageno_ = ++seg_file_header->page_count_;
   seg_header_pageid.fileno_ = seg_file_header_pageid.fileno_;
-  Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, true);
+  PageCreateStruct create_struct;
+  create_struct.page_type_ = kPageSegmentHeader;
+  Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, kWrite, &create_struct);
   if (seg_hdr_page) {
-    InitPage(seg_hdr_page, seg_header_pageid, kPageSegmentHeader, page_size_);
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;
     segment_header->first_data_page_id_ = PageID();
@@ -136,8 +137,8 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
     segment_header->first_extent_header_page_id_ = PageID();
     segment_header->last_extent_header_page_id_ = PageID();
     if (!AllocateExtentInSegment(seg_hdr_page, NULL)) {
-      buffer_manager_->UnfixPage(seg_hdr_page->pageid_);
-      buffer_manager_->UnfixPage(page->pageid_);
+      buffer_manager_->UnfixPage(seg_hdr_page);
+      buffer_manager_->UnfixPage(page);
       return false;
     }
   }
@@ -145,8 +146,8 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
     *segment_header_page = seg_header_pageid;
   PageGetFrame(seg_hdr_page)->SetDirty(true);
   PageGetFrame(page)->SetDirty(true);
-  buffer_manager_->UnfixPage(seg_header_pageid);
-  buffer_manager_->UnfixPage(seg_file_header_pageid);
+  buffer_manager_->UnfixPage(seg_hdr_page);
+  buffer_manager_->UnfixPage(page);
   return true;
 }
 
@@ -161,7 +162,7 @@ bool SpaceManager::AllocateExtentInSegment(Page* segment_header_page,
   seg_file_header_pageid.pageno_ = 0;
   seg_file_header_pageid.fileno_ = 0;
   Page*segment_header_file_page = buffer_manager_->FixPage(
-      seg_file_header_pageid, false);
+      seg_file_header_pageid);
   if (segment_header_file_page == NULL) {
     assert(false);
     return false;
@@ -178,7 +179,7 @@ bool SpaceManager::AllocateExtentInSegment(Page* segment_header_page,
       break;
     }
   }
-  buffer_manager_->UnfixPage(seg_file_header_pageid);
+  buffer_manager_->UnfixPage(segment_header_file_page);
 
   if (!ret) {
     fileno_t new_created = 0;
@@ -203,7 +204,7 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
   data_file_header_pageid.pageno_ = 0;
   data_file_header_pageid.fileno_ = data_file_no;
   Page *data_file_header_page = buffer_manager_->FixPage(
-      data_file_header_pageid, false);
+      data_file_header_pageid);
   if (data_file_header_page == NULL) {
     assert(false);
     return false;
@@ -213,7 +214,7 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
   utils::Bitmap *bitmap = (utils::Bitmap*) (data_file_header->bits);
   uint32_t nth = bitmap->FindFirstZeroBit();
   if (nth >= bitmap->BitCount()) {
-    buffer_manager_->UnfixPage(data_file_header_pageid);
+    buffer_manager_->UnfixPage(data_file_header_page);
     return false;
   }
   bitmap->SetBit(nth, true);
@@ -222,13 +223,14 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
   extent_header_pageid.fileno_ = data_file_no;
   extent_header_pageid.pageno_ = 1 + nth * page_number_per_extent_;
 
-  Page *page = buffer_manager_->FixPage(extent_header_pageid, true);
+  PageCreateStruct create_struct;
+  create_struct.page_type_ = kPageExtentHeader;
+  Page *page = buffer_manager_->FixPage(extent_header_pageid, kWrite, &create_struct);
   if (page == NULL) {
     assert(false);
-    buffer_manager_->UnfixPage(data_file_header_pageid);
+    buffer_manager_->UnfixPage(page);
     return false;
   }
-  InitPage(page, extent_header_pageid, kPageExtentHeader, page_size_);
 
   ExtentHeader *header = ToExtentHeader(page);
   InitExtentHeader(header, config::Setting::instance().page_number_per_extent_);
@@ -246,8 +248,8 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
   PageGetFrame(data_file_header_page)->SetDirty(true);
   PageGetFrame(segment_page)->SetDirty(true);
 
-  buffer_manager_->UnfixPage(page->pageid_);
-  buffer_manager_->UnfixPage(data_file_header_page->pageid_);
+  buffer_manager_->UnfixPage(page);
+  buffer_manager_->UnfixPage(data_file_header_page);
   if (extent_header_page_id != NULL) {
     *extent_header_page_id = extent_header_pageid;
   }
@@ -262,8 +264,8 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
     return false;
   }
 
-  Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid,
-                                                       false);
+  Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid
+                                  );
   if (segment_header_page == NULL) {
     return false;
   }
@@ -278,35 +280,35 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
     extent_header_pageid = segment_header->first_extent_header_page_id_;
 
   while (!extent_header_pageid.Invalid()) {
-    Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid,
-                                                        false);
+    Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid
+                                                        );
     if (extent_header_page == NULL) {
-      buffer_manager_->UnfixPage(segment_header_pageid);
+      buffer_manager_->UnfixPage(segment_header_page);
       return false;
     }
     if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple,
                            length)) {
-      buffer_manager_->UnfixPage(extent_header_page->pageid_);
+      buffer_manager_->UnfixPage(extent_header_page);
       ok = true;
       break;
     }
     extent_header_pageid = extent_header_page->next_page_;
-    buffer_manager_->UnfixPage(extent_header_page->pageid_);
+    buffer_manager_->UnfixPage(extent_header_page);
   }
   if (!ok) {
     PageID extent_header_pageid;
     if (AllocateExtentInSegment(segment_header_page, &extent_header_pageid)) {
-      Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid,
-                                                          false);
+      Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid
+                                                          );
       if (extent_header_page != NULL) {
         if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple,
                                length)) {
           ok = true;
         }
       }
-      buffer_manager_->UnfixPage(extent_header_page->pageid_);
+      buffer_manager_->UnfixPage(extent_header_page);
     }
-    buffer_manager_->UnfixPage(segment_header_page->pageid_);
+    buffer_manager_->UnfixPage(segment_header_page);
   }
   return ok;
 }
@@ -345,10 +347,11 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
   if (extent_header->used_[off] == 0) {
     new_page = true;
   }
-  Page *data_page = buffer_manager_->FixPage(data_pageid, new_page);
+  Page *data_page = NULL;
   if (new_page) {
-    InitPage(data_page, data_pageid, kPageData, page_size_);
-    InitDataHeader(ToDataHeader(data_page), page_size_);
+    PageCreateStruct create_struct;
+    create_struct.page_type_ = kPageData;
+    data_page = buffer_manager_->FixPage(data_pageid, kWrite, &create_struct);
     SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
     if (segment_header->last_data_page_id_.Invalid()) {
       segment_header->last_data_page_id_ = data_page->pageid_;
@@ -359,6 +362,9 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
     }
     PageGetFrame(segment_header_page)->SetDirty(true);
     PageGetFrame(data_page)->SetDirty(true);
+  }
+  else{
+    data_page = buffer_manager_->FixPage(data_pageid);
   }
 
   DataHeader *hdr = ToDataHeader(data_page);
@@ -373,31 +379,31 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
   } else {
     ok = false;
   }
-  buffer_manager_->UnfixPage(data_page->pageid_);
+  buffer_manager_->UnfixPage(data_page);
   return ok;
 }
 
 bool SpaceManager::LinkPage(PageID left_id, PageID right_id) {
-  Page *left = buffer_manager_->FixPage(left_id, false);
-  Page *right = buffer_manager_->FixPage(right_id, false);
+  Page *left = buffer_manager_->FixPage(left_id);
+  Page *right = buffer_manager_->FixPage(right_id);
   if (left == NULL || right == NULL) {
     if (left != NULL)
-      buffer_manager_->UnfixPage(left->pageid_);
+      buffer_manager_->UnfixPage(left);
     if (right != NULL)
-      buffer_manager_->UnfixPage(right->pageid_);
+      buffer_manager_->UnfixPage(right);
     return false;
   }
   LinkTwoPage(left, right);
   PageGetFrame(left)->SetDirty(true);
   PageGetFrame(right)->SetDirty(true);
-  buffer_manager_->UnfixPage(left->pageid_);
-  buffer_manager_->UnfixPage(right->pageid_);
+  buffer_manager_->UnfixPage(left);
+  buffer_manager_->UnfixPage(right);
   return true;
 }
 
 void SpaceManager::Vacuum() {
   PageID id;
-  Page* seg_file_header_page = buffer_manager_->FixPage(id, false);
+  Page* seg_file_header_page = buffer_manager_->FixPage(id);
   if (seg_file_header_page == NULL) {
     return;
   }
@@ -412,13 +418,13 @@ void SpaceManager::VacuumSegment(segmentno_t no) {
   PageID segment_pageid;
   segment_pageid.fileno_ = SEGMENT_DESCRIPT_FILE_NO;
   segment_pageid.pageno_ = no;
-  Page* segment_page = buffer_manager_->FixPage(segment_pageid, false);
+  Page* segment_page = buffer_manager_->FixPage(segment_pageid);
   if (segment_page == NULL) {
     return;
   }
   SegmentHeader *segment_header = ToSegmentHeader(segment_page);
   PageID data_pageid = segment_header->first_data_page_id_;
-  Page *data_page = buffer_manager_->FixPage(data_pageid, false);
+  Page *data_page = buffer_manager_->FixPage(data_pageid);
 
   while (data_page) {
     bool recycle = false;
@@ -432,17 +438,17 @@ void SpaceManager::VacuumSegment(segmentno_t no) {
         recycle = RecyclePage(data_page);
       }
     }
-    buffer_manager_->UnfixPage(data_page->pageid_);
+    buffer_manager_->UnfixPage(data_page);
     if (data_pageid.Invalid()) {
       break;
     }
     if (recycle) {
       // TODO ...
     }
-    data_page = buffer_manager_->FixPage(data_pageid, false);
+    data_page = buffer_manager_->FixPage(data_pageid);
   }
 
-  buffer_manager_->UnfixPage(segment_page->pageid_);
+  buffer_manager_->UnfixPage(segment_page);
 }
 
 void SpaceManager::VacuumAll() {
@@ -488,7 +494,7 @@ bool SpaceManager::RecyclePage(Page *data_page) {
   PageID extent_pageid = data_page->pageid_;
   extent_pageid.pageno_ = (extent_pageid.pageno_ - 1) / page_number_per_extent_
       * page_number_per_extent_;
-  Page *extent_header_page = buffer_manager_->FixPage(extent_pageid, false);
+  Page *extent_header_page = buffer_manager_->FixPage(extent_pageid);
   assert(extent_header_page);
   ExtentHeader *extent_header = ToExtentHeader(extent_header_page);
   uint32_t off = data_page->pageid_.pageno_
@@ -496,10 +502,10 @@ bool SpaceManager::RecyclePage(Page *data_page) {
   extent_header->used_[off] = 0;
   PageGetFrame(extent_header_page)->SetDirty(true);
 
-  // data in this page cannot be usee before it has been written new data ...
+  // data in this page cannot be used before it has been written new data ...
   PageGetFrame(data_page)->SetDirty(false);
   LinkPage(data_page->prev_page_, data_page->next_page_);
-  buffer_manager_->UnfixPage(extent_pageid);
+  buffer_manager_->UnfixPage(extent_header_page);
   return true;
 }
 

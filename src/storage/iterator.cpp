@@ -16,7 +16,7 @@ Iterator::Iterator(relationid_t id, BufferManager *buffer_manager)
 
 Iterator::~Iterator() {
   if (page_ != NULL)
-    buffer_manager_->UnfixPage(page_->pageid_);
+    buffer_manager_->UnfixPage(page_);
 }
 
 bool Iterator::Get(TupleWarpper *tuple) {
@@ -48,16 +48,15 @@ void Iterator::SeekToFirst() {
   segment_header_pageid.fileno_ = 0;
   void *tuple = NULL;
   segment_header_pageid.pageno_ = relation_id_;
-  Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid,
-                                                       false);
+  Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid);
   if (segment_header_page == NULL) {
     return;
   }
   SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
   PageID data_page_id = segment_header->first_data_page_id_;
-  buffer_manager_->UnfixPage(segment_header_page->pageid_);
+  buffer_manager_->UnfixPage(segment_header_page);
 
-  page_ = buffer_manager_->FixPage(data_page_id, false);
+  page_ = buffer_manager_->FixPage(data_page_id);
   if (page_ == NULL) {
     return;
   }
@@ -87,7 +86,7 @@ void Iterator::SeekNext() {
   while (page_ != NULL) {
     if (nth_slot_ >= hdr->tuple_count_) {
       PageID data_page_id = page_->next_page_;
-      buffer_manager_->UnfixPage(page_->pageid_);
+      buffer_manager_->UnfixPage(page_);
       if (data_page_id.Invalid()) {
         page_ = NULL;
         tuple_data_ = NULL;
@@ -96,7 +95,7 @@ void Iterator::SeekNext() {
         break;
       }
 
-      page_ = buffer_manager_->FixPage(data_page_id, false);
+      page_ = buffer_manager_->FixPage(data_page_id);
       hdr = ToDataHeader(page_);
       nth_slot_ = 0;
     } else {

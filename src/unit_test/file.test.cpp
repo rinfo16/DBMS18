@@ -7,7 +7,7 @@ class FileTest : public testing::Test {
  protected:
   virtual void SetUp() {
     std::string path;
-    path = std::string() + std::string("/tmp/file.0") ;
+    path = std::string() + std::string("/tmp/file.0");
     file1_ = new storage::File(path);
   }
   storage::File *file1_;

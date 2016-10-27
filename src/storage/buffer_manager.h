@@ -15,6 +15,15 @@
 
 namespace storage {
 
+enum ReadWriteMode {
+  kRead,
+  kWrite
+};
+
+struct PageCreateStruct {
+  PageType page_type_;
+};
+
 struct HashFunction {
   size_t operator ()(const PageID &id) const {
     return (size_t) (*(size_t*) (&id));
@@ -44,9 +53,10 @@ class BufferManager {
 
   void Stop();
 
-  Page* FixPage(PageID id, bool is_new);
+  Page* FixPage(PageID id, ReadWriteMode mode = kRead,
+                PageCreateStruct *create_struct = NULL);
 
-  bool UnfixPage(PageID id);
+  bool UnfixPage(Page *page);
 
   void FlushAll();
 

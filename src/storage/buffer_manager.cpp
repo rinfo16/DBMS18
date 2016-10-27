@@ -55,7 +55,8 @@ void BufferManager::Stop() {
   lru_list_ = NULL;
 }
 
-Page* BufferManager::FixPage(PageID id, bool is_new) {
+Page* BufferManager::FixPage(PageID id, ReadWriteMode mode,
+                             PageCreateStruct *create_struct) {
 
   LoadedBufferMap::iterator frame_iter = loaded_buffers_.find(id);
   Page *page = NULL;
@@ -111,9 +112,12 @@ Page* BufferManager::FixPage(PageID id, bool is_new) {
   }
 #else
   if (frame_iter == loaded_buffers_.end()) {
-    page = LocatePage(id, is_new);
+    page = LocatePage(id, create_struct != NULL);
     if (page == NULL) {
       return NULL;
+    }
+    if (create_struct) {
+      InitPage(page, id, create_struct->page_type_, page_size_);
     }
     frame = new Frame();
     frame->SetPage(page);
@@ -133,7 +137,7 @@ Page* BufferManager::FixPage(PageID id, bool is_new) {
 
 }
 
-bool BufferManager::UnfixPage(PageID id) {
+bool BufferManager::UnfixPage(Page* page) {
 #if LIRS
   LoadedBufferMap::iterator iter = loaded_buffers_.find(id);
   if (iter != loaded_buffers_.end()) {
@@ -160,16 +164,12 @@ bool BufferManager::UnfixPage(PageID id) {
   }
   return true;
 #else
-  LoadedBufferMap::iterator iter = loaded_buffers_.find(id);
-  if (iter != loaded_buffers_.end()) {
-    Frame *frame = iter->second;
-    frame->UnfixPage();
-    if (frame->FixCount() == 0) {
-      lru_list_->PushBack(frame);
-    }
-  } else {
-    assert(false);
-    return false;
+  assert(loaded_buffers_.find(page->pageid_) != loaded_buffers_.end());
+
+  Frame *frame = PageGetFrame(page);
+  frame->UnfixPage();
+  if (frame->FixCount() == 0) {
+    lru_list_->PushBack(frame);
   }
   return true;
 #endif
@@ -297,7 +297,7 @@ Page* BufferManager::Victim() {
 #if LIRS
 bool BufferManager::RemoveFromStackS(Frame *frame) {
   FrameStack::iterator iter = std::find(stack_s_.begin(), stack_s_.end(),
-                                        frame);
+      frame);
   bool ret = false;
   if (iter != stack_s_.end()) {
     if (iter == stack_s_.begin()) {
@@ -313,7 +313,7 @@ bool BufferManager::RemoveFromStackS(Frame *frame) {
 
 bool BufferManager::RemoveFromStackQ(Frame *frame) {
   FrameStack::iterator iter = std::find(stack_q_.begin(), stack_q_.end(),
-                                        frame);
+      frame);
   bool ret = false;
   if (iter != stack_q_.end()) {
     stack_q_.erase(iter);
@@ -332,7 +332,7 @@ void BufferManager::SHeadToQTail() {
     assert(frame->GetPage());
     stack_s_.erase(iter);
     stack_q_.erase(std::remove(stack_q_.begin(), stack_q_.end(), frame),
-                   stack_q_.end());
+        stack_q_.end());
     stack_q_.push_back(frame);
     RemoveUnResidentHIRPage();
   }

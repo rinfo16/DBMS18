@@ -37,7 +37,10 @@ void InitPage(Page *page, PageID id, PageType page_type, uint32_t page_size) {
   page->prev_page_ = PageID();
   page->next_page_ = PageID();
   page->page_type_ = page_type;
-  memcpy((uint8_t*) page + page_size - PAGE_TAILER_SIZE, "TAIL", 4);
+  if (page_type == kPageData) {
+    memcpy((uint8_t*) page + page_size - PAGE_TAILER_SIZE, "TAIL", 4);
+    InitDataHeader(ToDataHeader(page), page_size);
+  }
 }
 
 void InitExtentHeader(ExtentHeader *header, uint32_t extent_count_per_page) {
@@ -121,7 +124,8 @@ bool RemoveTuple(Page *data_page, slotno_t no) {
 
 void LinkTwoPage(Page*left, Page *right) {
   assert(left != right);
-  assert(!(left->pageid_.pageno_ == right->pageid_.pageno_
+  assert(
+      !(left->pageid_.pageno_ == right->pageid_.pageno_
           && left->pageid_.fileno_ == right->pageid_.pageno_));
   assert(left != NULL && right != NULL);
   left->next_page_ = right->pageid_;
