@@ -45,8 +45,8 @@ void yyerror(const char *s, ...);
 %locations
 %initial-action
 {
-	// initialize the initial location object
-	@$.begin.filename = @$.end.filename = &ctx.driver_.streamname;
+  // initialize the initial location object
+  @$.begin.filename = @$.end.filename = &ctx.driver_.streamname;
 };
 
 /* The driver is passed by reference to the parser and to the scanner. This
@@ -60,13 +60,13 @@ void yyerror(const char *s, ...);
  /*** BEGIN PARSER - Change the parser grammar's tokens below ***/
 %union 
 {
-	int intval;
-	double floatval;
-	char *strval;
-	int subtok;
-	class select_stmt *selstmt_ptr;
-	class name *name_ptr;
-	class ASTBase *astbase_ptr;
+  int intval;
+  double floatval;
+  char *strval;
+  int subtok;
+  class select_stmt *selstmt_ptr;
+  class name *name_ptr;
+  class ASTBase *astbase_ptr;
 }
 
 /* names and literal values */
@@ -97,7 +97,7 @@ void yyerror(const char *s, ...);
 %nonassoc UMINUS
 
 /* tokens */
-%token SQLEND	0	"sql end"
+%token SQLEND 0 "sql end"
 %token ADD
 %token ALL
 %token ALTER
@@ -357,146 +357,146 @@ void yyerror(const char *s, ...);
 
 
 start:
-	stmt_list SQLEND { ctx.root_ = $1; }
+  stmt_list SQLEND { ctx.root_ = $1; }
 ;
 
 stmt_list:
-	stmt { $$ = $1; }
-	| stmt_list stmt {}
+  stmt { $$ = $1; }
+  | stmt_list stmt {}
 ;
 
 expr: 
-	NAME		  
-	{ 
-		$$ = ctx.new_name($1);
-		free($1); 
-	}
+  NAME      
+  { 
+    $$ = ctx.new_name($1);
+    free($1); 
+  }
 
-	| NAME '.' NAME 
-	{
-		
-		free($1);
-		free($3); 
-	}
-	
-	| USERVAR	   
-	{
-		 
-		free($1); 
-	}
+  | NAME '.' NAME 
+  {
+    
+    free($1);
+    free($3); 
+  }
+  
+  | USERVAR    
+  {
+     
+    free($1); 
+  }
 
-	| STRING		{ free($1);  yyerror("not implement"); }
-	| INTNUM		{  }
-	| APPROXNUM	 {  }
-	| BOOL		  {   }
+  | STRING    { free($1);  yyerror("not implement"); }
+  | INTNUM    {  }
+  | APPROXNUM  {  }
+  | BOOL      {   }
 ;
 
 expr: expr '+' expr { yyerror("not implement"); YYERROR; }
-	| expr '-' expr { yyerror("not implement"); YYERROR; }
-	| expr '*' expr { yyerror("not implement"); YYERROR; }
-	| expr '/' expr {  }
-	| expr '%' expr { }
-	| expr MOD expr { }
-	| '-' expr %prec UMINUS { }
-	| expr ANDOP expr { }
-	| expr OR expr { }
-	| expr XOR expr { }
-	| expr '|' expr { }
-	| expr '&' expr { }
-	| expr '^' expr { }
-	| expr SHIFT expr { }
-	| NOT expr { }
-	| '!' expr { }
-	| expr COMPARISON expr { }
-	/* recursive selects and comparisons thereto */
-	| expr COMPARISON PAREN_LEFT select_stmt PAREN_RIGHT { }
-	| expr COMPARISON ANY PAREN_LEFT select_stmt PAREN_RIGHT { }
-	| expr COMPARISON SOME PAREN_LEFT select_stmt PAREN_RIGHT { }
-	| expr COMPARISON ALL PAREN_LEFT select_stmt PAREN_RIGHT { }
+  | expr '-' expr { yyerror("not implement"); YYERROR; }
+  | expr '*' expr { yyerror("not implement"); YYERROR; }
+  | expr '/' expr {  }
+  | expr '%' expr { }
+  | expr MOD expr { }
+  | '-' expr %prec UMINUS { }
+  | expr ANDOP expr { }
+  | expr OR expr { }
+  | expr XOR expr { }
+  | expr '|' expr { }
+  | expr '&' expr { }
+  | expr '^' expr { }
+  | expr SHIFT expr { }
+  | NOT expr { }
+  | '!' expr { }
+  | expr COMPARISON expr { }
+  /* recursive selects and comparisons thereto */
+  | expr COMPARISON PAREN_LEFT select_stmt PAREN_RIGHT { }
+  | expr COMPARISON ANY PAREN_LEFT select_stmt PAREN_RIGHT { }
+  | expr COMPARISON SOME PAREN_LEFT select_stmt PAREN_RIGHT { }
+  | expr COMPARISON ALL PAREN_LEFT select_stmt PAREN_RIGHT { }
 ;
 
 expr: expr IS NULLX { }
-	| expr IS NOT NULLX { }
-	| expr IS BOOL { }
-	| expr IS NOT BOOL { }
-	| USERVAR ASSIGN expr { }
+  | expr IS NOT NULLX { }
+  | expr IS BOOL { }
+  | expr IS NOT BOOL { }
+  | USERVAR ASSIGN expr { }
 ;
 
 expr: expr BETWEEN expr AND expr %prec BETWEEN { }
 ;
 
 val_list: expr { }
-	| expr COMMA val_list { }
+  | expr COMMA val_list { }
 ;
 
 opt_val_list: { }
-	| val_list
+  | val_list
 ;
 
 expr: expr IN PAREN_LEFT val_list PAREN_RIGHT { }
-	| expr NOT IN PAREN_LEFT val_list PAREN_RIGHT { }
-	| expr IN PAREN_LEFT select_stmt PAREN_RIGHT  { }
-	| expr NOT IN PAREN_LEFT select_stmt PAREN_RIGHT { }
-	| EXISTS PAREN_LEFT select_stmt PAREN_RIGHT { }
+  | expr NOT IN PAREN_LEFT val_list PAREN_RIGHT { }
+  | expr IN PAREN_LEFT select_stmt PAREN_RIGHT  { }
+  | expr NOT IN PAREN_LEFT select_stmt PAREN_RIGHT { }
+  | EXISTS PAREN_LEFT select_stmt PAREN_RIGHT { }
 ;
 
 expr: NAME PAREN_LEFT opt_val_list PAREN_RIGHT { free($1); }
 ;
 
 expr: FCOUNT PAREN_LEFT '*' PAREN_RIGHT { }
-	| FCOUNT PAREN_LEFT expr PAREN_RIGHT { }
+  | FCOUNT PAREN_LEFT expr PAREN_RIGHT { }
 ;
 
 expr: FSUBSTRING PAREN_LEFT val_list PAREN_RIGHT  { }
-	| FSUBSTRING PAREN_LEFT expr FROM expr PAREN_RIGHT { }
-	| FSUBSTRING PAREN_LEFT expr FROM expr FOR expr PAREN_RIGHT {}
+  | FSUBSTRING PAREN_LEFT expr FROM expr PAREN_RIGHT { }
+  | FSUBSTRING PAREN_LEFT expr FROM expr FOR expr PAREN_RIGHT {}
 ;
 
 expr: FTRIM PAREN_LEFT val_list PAREN_RIGHT { }
-	| FTRIM PAREN_LEFT trim_ltb expr FROM val_list PAREN_RIGHT { }
+  | FTRIM PAREN_LEFT trim_ltb expr FROM val_list PAREN_RIGHT { }
 ;
 
 trim_ltb: LEADING { }
-		| TRAILING { }
-		| BOTH { }
+    | TRAILING { }
+    | BOTH { }
 ;
 
 expr: FDATE_ADD PAREN_LEFT expr COMMA interval_exp PAREN_RIGHT { }
-	| FDATE_SUB PAREN_LEFT expr COMMA interval_exp PAREN_RIGHT { }
+  | FDATE_SUB PAREN_LEFT expr COMMA interval_exp PAREN_RIGHT { }
 ;
 
 interval_exp: INTERVAL expr DAY_HOUR {  }
-	| INTERVAL expr DAY_MICROSECOND {  }
-	| INTERVAL expr DAY_MINUTE {  }
-	| INTERVAL expr DAY_SECOND {  }
-	| INTERVAL expr YEAR_MONTH {  }
-	| INTERVAL expr YEAR {  }
-	| INTERVAL expr HOUR_MICROSECOND {  }
-	| INTERVAL expr HOUR_MINUTE {  }
-	| INTERVAL expr HOUR_SECOND {  }
+  | INTERVAL expr DAY_MICROSECOND {  }
+  | INTERVAL expr DAY_MINUTE {  }
+  | INTERVAL expr DAY_SECOND {  }
+  | INTERVAL expr YEAR_MONTH {  }
+  | INTERVAL expr YEAR {  }
+  | INTERVAL expr HOUR_MICROSECOND {  }
+  | INTERVAL expr HOUR_MINUTE {  }
+  | INTERVAL expr HOUR_SECOND {  }
 ;
 
 expr: CASE expr case_list END {  }
-	| CASE expr case_list ELSE expr END {  }
-	| CASE case_list END {  }
-	| CASE case_list ELSE expr END {  }
+  | CASE expr case_list ELSE expr END {  }
+  | CASE case_list END {  }
+  | CASE case_list ELSE expr END {  }
 ;
 
 case_list: WHEN expr THEN expr { $$ = 1; }
-	| case_list WHEN expr THEN expr { $$ = $1+1; }
+  | case_list WHEN expr THEN expr { $$ = $1+1; }
 ;
 
 expr: expr LIKE expr {  }
-	| expr NOT LIKE expr {  }
+  | expr NOT LIKE expr {  }
 ;
 
 expr: expr REGEXP expr {  }
-	| expr NOT REGEXP expr {  }
+  | expr NOT REGEXP expr {  }
 ;
 
 expr: CURRENT_TIMESTAMP {  }
-	| CURRENT_DATE {  }
-	| CURRENT_TIME {  }
+  | CURRENT_DATE {  }
+  | CURRENT_TIME {  }
 ;
 
 expr: BINARY expr %prec UMINUS {  }
@@ -507,101 +507,101 @@ stmt: select_stmt { $$ = $1; }
 
 /* simple select with no tables */
 select_stmt:
-	SELECT select_opts select_expr_list 
-	{
-		 
-		$$ = NULL;
-	}
-	
-	| SELECT select_opts select_expr_list FROM table_references 
-		opt_where opt_groupby opt_having opt_orderby opt_limit opt_into_list
-	{ 
-		$$ = ctx.new_select_stmt($3, $5, $6, $7, $8, $9);
-	}
+  SELECT select_opts select_expr_list 
+  {
+     
+    $$ = NULL;
+  }
+  
+  | SELECT select_opts select_expr_list FROM table_references 
+    opt_where opt_groupby opt_having opt_orderby opt_limit opt_into_list
+  { 
+    $$ = ctx.new_select_stmt($3, $5, $6, $7, $8, $9);
+  }
 ;
 
 opt_where:
-	{ $$ = NULL; }
+  { $$ = NULL; }
 
-	| WHERE expr 
-	{ $$ = $2; }
+  | WHERE expr 
+  { $$ = $2; }
 ;
 
 opt_groupby:
-	/* nil */ { $$ = NULL; }
+  /* nil */ { $$ = NULL; }
 
-	| GROUP BY groupby_list opt_with_rollup 
-	{ $$ = $3; }
+  | GROUP BY groupby_list opt_with_rollup 
+  { $$ = $3; }
 ;
 
 groupby_list: 
-	expr opt_asc_desc 
-	{
-		$$ = ctx.new_orderby($1, $2); 
-	}
-	
-	| groupby_list COMMA expr opt_asc_desc 
-	{ 
-		ASTBase *ptr = ctx.new_orderby($3, $4);
-		$1->rappend(ptr);
-		$$ = $1;
-	}
+  expr opt_asc_desc 
+  {
+    $$ = ctx.new_orderby($1, $2); 
+  }
+  
+  | groupby_list COMMA expr opt_asc_desc 
+  { 
+    ASTBase *ptr = ctx.new_orderby($3, $4);
+    $1->rappend(ptr);
+    $$ = $1;
+  }
 ;
 
 opt_asc_desc: 
-	/* nil */ { $$ = ORD_ASC; }
-	| ASC { $$ = ORD_ASC; }
-	| DESC { $$ = ORD_DESC; }
+  /* nil */ { $$ = ORD_ASC; }
+  | ASC { $$ = ORD_ASC; }
+  | DESC { $$ = ORD_DESC; }
 ;
 
 opt_with_rollup:
-	/* nil */ { $$ = NULL; }
-	| WITH ROLLUP { $$ = NULL; }
+  /* nil */ { $$ = NULL; }
+  | WITH ROLLUP { $$ = NULL; }
 ;
 
 opt_having: 
-	/* nil */ 
-	{ $$ = NULL; }
+  /* nil */ 
+  { $$ = NULL; }
 
-	| HAVING expr 
-	{ $$ = $2; }
+  | HAVING expr 
+  { $$ = $2; }
 ;
 
 opt_orderby: 
-	/* nil */
-	{ $$ = NULL; }
+  /* nil */
+  { $$ = NULL; }
 
-	| ORDER BY groupby_list
-	{ $$ = $3; }
+  | ORDER BY groupby_list
+  { $$ = $3; }
 ;
 
 opt_limit:
-	/* nil */ 
-	| LIMIT expr {  }
-	| LIMIT expr COMMA expr {  }
+  /* nil */ 
+  | LIMIT expr {  }
+  | LIMIT expr COMMA expr {  }
 ;
 
 opt_into_list: 
-	/* nil */
-	| INTO column_list {  }
+  /* nil */
+  | INTO column_list {  }
 ;
 
 column_list:
-	NAME 
-	{
-	    
-	   $$ = ctx.new_name($1);
-	   free($1); 
-	}
-	
-	| column_list COMMA NAME 
-	{
-		ASTBase *l = $1;
-		l->rappend(ctx.new_name($3));
-		
-		free($3);
-		$$ = l;
-	}
+  NAME 
+  {
+      
+     $$ = ctx.new_name($1);
+     free($1); 
+  }
+  
+  | column_list COMMA NAME 
+  {
+    ASTBase *l = $1;
+    l->rappend(ctx.new_name($3));
+    
+    free($3);
+    $$ = l;
+  }
 ;
 
 select_opts: { $$ = 0; }
@@ -616,276 +616,276 @@ select_opts: { $$ = 0; }
 ;
 
 select_expr_list:
-	select_expr 
-	{
-		$$ = $1;
-	}
-	
-	| select_expr_list COMMA select_expr 
-	{ 
-		 
-		$1->rappend($3); $$ = $1; 
-	}
-	
-	| '*' {  $$ = NULL; }
+  select_expr 
+  {
+    $$ = $1;
+  }
+  
+  | select_expr_list COMMA select_expr 
+  { 
+     
+    $1->rappend($3); $$ = $1; 
+  }
+  
+  | '*' {  $$ = NULL; }
 ;
 
 select_expr:
-	expr opt_as_alias 
-	{ 
-	  $$ = $1;
-	};
+  expr opt_as_alias 
+  { 
+    $$ = $1;
+  };
 
 opt_as_alias: 
-	AS NAME { $$ = $2; }
-	| NAME { $$ = $1; }
-	| /* nil */ { $$ = NULL; }
+  AS NAME { $$ = $2; }
+  | NAME { $$ = $1; }
+  | /* nil */ { $$ = NULL; }
 ;
 
 table_references: table_reference 
-	{ 
-		$$  = $1 ;
-	}
-	
-	| table_references COMMA table_reference 
-	{ 
-		ASTBase *l = $1;
-		l->rappend($3);
-		$$ = l; 
-	}
+  { 
+    $$  = $1 ;
+  }
+  
+  | table_references COMMA table_reference 
+  { 
+    ASTBase *l = $1;
+    l->rappend($3);
+    $$ = l; 
+  }
 ;
 
 table_reference:
-	table_factor { $$ = $1; }
-	| join_table { $$ = $1; }
+  table_factor { $$ = $1; }
+  | join_table { $$ = $1; }
 ;
 
 table_factor: NAME opt_as_alias index_hint 
-	{
-		$$ = ctx.new_table_factor($1, $2, NULL);
-			free($1); free($2); 
-	}
+  {
+    $$ = ctx.new_table_factor($1, $2, NULL);
+      free($1); free($2); 
+  }
 
-	| NAME '.' NAME opt_as_alias index_hint 
-	{ 
-		/* TODO DB name ...*/
-		$$ = ctx.new_table_factor($3, $4, NULL); 
-		free($3); free($4); 
-	}
+  | NAME '.' NAME opt_as_alias index_hint 
+  { 
+    /* TODO DB name ...*/
+    $$ = ctx.new_table_factor($3, $4, NULL); 
+    free($3); free($4); 
+  }
 
-	| table_subquery opt_as NAME 
-	{ 
-		$$ = ctx.new_table_factor(NULL, $3, $1);
-		free($3); 
-	}
+  | table_subquery opt_as NAME 
+  { 
+    $$ = ctx.new_table_factor(NULL, $3, $1);
+    free($3); 
+  }
 
-	| PAREN_LEFT table_references PAREN_RIGHT 
-	{ 
-		$$ = ctx.new_table_factor(NULL, NULL, $2);
-	}
+  | PAREN_LEFT table_references PAREN_RIGHT 
+  { 
+    $$ = ctx.new_table_factor(NULL, NULL, $2);
+  }
 ;
 
 opt_as: AS
-	  | /* nil */
+    | /* nil */
 ;
 
 join_table: 
-	table_reference opt_inner_cross JOIN table_factor opt_join_condition 
-	{
-		$$ = ctx.new_join_table($1, $4, $5, $2); 
-	}
+  table_reference opt_inner_cross JOIN table_factor opt_join_condition 
+  {
+    $$ = ctx.new_join_table($1, $4, $5, $2); 
+  }
 
-	| table_reference STRAIGHT_JOIN table_factor 
-	{ 
-		$$ = ctx.new_join_table($1, $3, NULL, JOIN_STRAIGHT);
-	}
+  | table_reference STRAIGHT_JOIN table_factor 
+  { 
+    $$ = ctx.new_join_table($1, $3, NULL, JOIN_STRAIGHT);
+  }
 
-	| table_reference STRAIGHT_JOIN table_factor ON expr 
-	{ 
-		$$ = ctx.new_join_table($1, $3, $5, JOIN_STRAIGHT); 
-	}
-	
-	| table_reference left_or_right opt_outer JOIN table_factor join_condition
-	{
-		$$ = ctx.new_join_table($1, $5, $6, $2); 
-	}
+  | table_reference STRAIGHT_JOIN table_factor ON expr 
+  { 
+    $$ = ctx.new_join_table($1, $3, $5, JOIN_STRAIGHT); 
+  }
+  
+  | table_reference left_or_right opt_outer JOIN table_factor join_condition
+  {
+    $$ = ctx.new_join_table($1, $5, $6, $2); 
+  }
 
-	
-	| table_reference NATURAL opt_left_or_right_outer JOIN table_factor 
-	{
-		$$ = ctx.new_join_table($1, $5, NULL, $3); 
-	}
+  
+  | table_reference NATURAL opt_left_or_right_outer JOIN table_factor 
+  {
+    $$ = ctx.new_join_table($1, $5, NULL, $3); 
+  }
 
 ;
 
 opt_inner_cross: /* nil */ { $$ = JOIN_NONE; }
-	| INNER { $$ = JOIN_INNER; }
-	| CROSS { $$ = JOIN_CROSS; }
+  | INNER { $$ = JOIN_INNER; }
+  | CROSS { $$ = JOIN_CROSS; }
 ;
 
 opt_outer:
-	/* nil */ { }
-	| OUTER { }
+  /* nil */ { }
+  | OUTER { }
 ;
 
 left_or_right: LEFT { $$ = JOIN_LEFT; }
-	| RIGHT { $$ = JOIN_RIGHT; }
+  | RIGHT { $$ = JOIN_RIGHT; }
 ;
 
 opt_left_or_right_outer: LEFT opt_outer { $$ = JOIN_NATURAL_LEFT; }
-	| RIGHT opt_outer { $$ = JOIN_NATURAL_RIGHT; }
-	| /* nil */ { $$ = JOIN_NATURAL_INNER; }
+  | RIGHT opt_outer { $$ = JOIN_NATURAL_RIGHT; }
+  | /* nil */ { $$ = JOIN_NATURAL_INNER; }
 ;
 
 opt_join_condition: 
-	/* nil */ { $$ = NULL; }
-	| join_condition { $$ = $1; };
+  /* nil */ { $$ = NULL; }
+  | join_condition { $$ = $1; };
 
 join_condition: 
-	ON expr { $$ = $2; }
-	| USING PAREN_LEFT column_list PAREN_RIGHT { $$ = $3; }
+  ON expr { $$ = $2; }
+  | USING PAREN_LEFT column_list PAREN_RIGHT { $$ = $3; }
 ;
 
 index_hint: 
-	USE KEY opt_for_join PAREN_LEFT index_list PAREN_RIGHT {  }
-	| IGNORE KEY opt_for_join PAREN_LEFT index_list PAREN_RIGHT {  }
-	| FORCE KEY opt_for_join PAREN_LEFT index_list PAREN_RIGHT {  }
-	| /* nil */
+  USE KEY opt_for_join PAREN_LEFT index_list PAREN_RIGHT {  }
+  | IGNORE KEY opt_for_join PAREN_LEFT index_list PAREN_RIGHT {  }
+  | FORCE KEY opt_for_join PAREN_LEFT index_list PAREN_RIGHT {  }
+  | /* nil */
 ;
 
 opt_for_join: FOR JOIN { $$ = 1; }
-		| /* nil */ { $$ = 0; }
+    | /* nil */ { $$ = 0; }
 ;
 
 index_list:
-	NAME {  $$ = 1; }
-	| index_list COMMA NAME {  $$ = $1 + 1; }
+  NAME {  $$ = 1; }
+  | index_list COMMA NAME {  $$ = $1 + 1; }
 ;
 
 table_subquery:
-	PAREN_LEFT select_stmt PAREN_RIGHT { $$ = $2; }
+  PAREN_LEFT select_stmt PAREN_RIGHT { $$ = $2; }
 ;
 
 stmt:
-	delete_stmt {  }
+  delete_stmt {  }
 ;
 
 delete_stmt:
-	DELETE delete_opts FROM NAME opt_where opt_orderby opt_limit {  } //means one table
+  DELETE delete_opts FROM NAME opt_where opt_orderby opt_limit {  } //means one table
 ;
 
 delete_opts:
-	delete_opts LOW_PRIORITY { $$ = $1 + 01; }
-	| delete_opts QUICK { $$ = $1 + 02; }
-	| delete_opts IGNORE { $$ = $1 + 04; }
-	| { $$ = 0; }
+  delete_opts LOW_PRIORITY { $$ = $1 + 01; }
+  | delete_opts QUICK { $$ = $1 + 02; }
+  | delete_opts IGNORE { $$ = $1 + 04; }
+  | { $$ = 0; }
 ;
 
 delete_stmt:
-	DELETE delete_opts delete_list FROM table_references opt_where {  }
+  DELETE delete_opts delete_list FROM table_references opt_where {  }
 ;
 
 delete_list:
-	NAME opt_dot_star {  }
-	| delete_list COMMA NAME opt_dot_star {  $$ = $1 + 1; }
+  NAME opt_dot_star {  }
+  | delete_list COMMA NAME opt_dot_star {  $$ = $1 + 1; }
 ;
 
 opt_dot_star:
-	| '.' '*';
+  | '.' '*';
 
 delete_stmt:
-	DELETE delete_opts
-	FROM delete_list
-	USING table_references opt_where {  }
+  DELETE delete_opts
+  FROM delete_list
+  USING table_references opt_where {  }
 ;
 
 stmt:
-	insert_stmt {  }
+  insert_stmt {  }
 ;
 
 insert_stmt:
-	INSERT insert_opts opt_into NAME opt_col_names VALUES insert_vals_list opt_ondupupdate {  }
+  INSERT insert_opts opt_into NAME opt_col_names VALUES insert_vals_list opt_ondupupdate {  }
 ;
 
 opt_ondupupdate: 
-	/* nil */
-	| ONDUPLICATE KEY UPDATE insert_asgn_list {  }
+  /* nil */
+  | ONDUPLICATE KEY UPDATE insert_asgn_list {  }
 ;
 
 insert_opts:
-	/* nil */ { $$ = 0; }
-	| insert_opts LOW_PRIORITY { $$ = $1 | 01 ; }
-	| insert_opts DELAYED { $$ = $1 | 02 ; }
-	| insert_opts HIGH_PRIORITY { $$ = $1 | 04 ; }
-	| insert_opts IGNORE { $$ = $1 | 010 ; }
+  /* nil */ { $$ = 0; }
+  | insert_opts LOW_PRIORITY { $$ = $1 | 01 ; }
+  | insert_opts DELAYED { $$ = $1 | 02 ; }
+  | insert_opts HIGH_PRIORITY { $$ = $1 | 04 ; }
+  | insert_opts IGNORE { $$ = $1 | 010 ; }
 ;
 
 opt_into:
-	INTO | /* nil */
+  INTO | /* nil */
 ;
 
 opt_col_names: /* nil */
-	| PAREN_LEFT column_list PAREN_RIGHT {  }
+  | PAREN_LEFT column_list PAREN_RIGHT {  }
 ;
 
 insert_vals_list:
-	PAREN_LEFT insert_vals PAREN_RIGHT {  $$ = 1; }
-	| insert_vals_list COMMA PAREN_LEFT insert_vals PAREN_RIGHT {  $$ = $1 + 1; }
+  PAREN_LEFT insert_vals PAREN_RIGHT {  $$ = 1; }
+  | insert_vals_list COMMA PAREN_LEFT insert_vals PAREN_RIGHT {  $$ = $1 + 1; }
 ;
 
 insert_vals:
-	expr { $$ = 1; }
-	| DEFAULT {  $$ = 1; }
-	| insert_vals COMMA expr { $$ = $1 + 1; }
-	| insert_vals COMMA DEFAULT {  $$ = $1 + 1; }
+  expr { $$ = 1; }
+  | DEFAULT {  $$ = 1; }
+  | insert_vals COMMA expr { $$ = $1 + 1; }
+  | insert_vals COMMA DEFAULT {  $$ = $1 + 1; }
 ;
 
 insert_stmt:
-	INSERT insert_opts opt_into NAME SET insert_asgn_list opt_ondupupdate
-	{  }
+  INSERT insert_opts opt_into NAME SET insert_asgn_list opt_ondupupdate
+  {  }
 ;
 
 insert_asgn_list:
-	NAME COMPARISON expr 
-	{
-		if ($2 != 4)
-		{ 
-			yyerror("bad insert assignment to %s", $1); YYERROR; 
-		}
-		$$ = 1;
-	}
-	
-	| NAME COMPARISON DEFAULT
-	{
-		if ($2 != 4)
-		{
-			yyerror("bad insert assignment to %s", $1); YYERROR; 
-		}
-								   
-		free($1); $$ = 1; 
-	}
+  NAME COMPARISON expr 
+  {
+    if ($2 != 4)
+    { 
+      yyerror("bad insert assignment to %s", $1); YYERROR; 
+    }
+    $$ = 1;
+  }
+  
+  | NAME COMPARISON DEFAULT
+  {
+    if ($2 != 4)
+    {
+      yyerror("bad insert assignment to %s", $1); YYERROR; 
+    }
+                   
+    free($1); $$ = 1; 
+  }
 
-	| insert_asgn_list COMMA NAME COMPARISON expr 
-	{
-		if ($4 != 4)
-		{
-			yyerror("bad insert assignment to %s", $1); YYERROR; 
-		}
-		$$ = $1 + 1;
-	}
-	
-	| insert_asgn_list COMMA NAME COMPARISON DEFAULT
-	{
-		if ($4 != 4)
-		{ 
-			yyerror("bad insert assignment to %s", $1); YYERROR; 
-		}
-		$$ = $1 + 1;
-	}
+  | insert_asgn_list COMMA NAME COMPARISON expr 
+  {
+    if ($4 != 4)
+    {
+      yyerror("bad insert assignment to %s", $1); YYERROR; 
+    }
+    $$ = $1 + 1;
+  }
+  
+  | insert_asgn_list COMMA NAME COMPARISON DEFAULT
+  {
+    if ($4 != 4)
+    { 
+      yyerror("bad insert assignment to %s", $1); YYERROR; 
+    }
+    $$ = $1 + 1;
+  }
 ;
 
 insert_stmt:
-	INSERT insert_opts opt_into NAME opt_col_names select_stmt opt_ondupupdate {  }
+  INSERT insert_opts opt_into NAME opt_col_names select_stmt opt_ondupupdate {  }
 ;
 
 /* simple replace 'insert' with 'replace' */
@@ -893,124 +893,124 @@ insert_stmt:
 stmt: replace_stmt {  };
 
 replace_stmt:
-	REPLACE insert_opts opt_into NAME opt_col_names 
-			VALUES insert_vals_list opt_ondupupdate {  }
+  REPLACE insert_opts opt_into NAME opt_col_names 
+      VALUES insert_vals_list opt_ondupupdate {  }
 ;
 
 replace_stmt:
-	REPLACE insert_opts opt_into NAME SET insert_asgn_list opt_ondupupdate
-	{  }
+  REPLACE insert_opts opt_into NAME SET insert_asgn_list opt_ondupupdate
+  {  }
 ;
 
 replace_stmt:
-	REPLACE insert_opts opt_into NAME opt_col_names select_stmt opt_ondupupdate 
-	{  }
+  REPLACE insert_opts opt_into NAME opt_col_names select_stmt opt_ondupupdate 
+  {  }
 ;
 
 /** update **/
 stmt:
-	update_stmt {  };
+  update_stmt {  };
 
 update_stmt:
-	UPDATE update_opts table_references SET update_asgn_list opt_where opt_orderby opt_limit 
-	{  }
+  UPDATE update_opts table_references SET update_asgn_list opt_where opt_orderby opt_limit 
+  {  }
 ;
 
 update_opts:
-	/* nil */ { $$ = 0; }
-	| insert_opts LOW_PRIORITY { $$ = $1 | 01 ; }
-	| insert_opts IGNORE { $$ = $1 | 010 ; }
+  /* nil */ { $$ = 0; }
+  | insert_opts LOW_PRIORITY { $$ = $1 | 01 ; }
+  | insert_opts IGNORE { $$ = $1 | 010 ; }
 ;
 
 update_asgn_list:
-	NAME COMPARISON expr { if ($2 != 4)
-	{ yyerror("bad update assignment to %s", $1); YYERROR; }
-										  $$ = 1; }
-	
-	| NAME '.' NAME COMPARISON expr { if ($4 != 4) { yyerror("bad update assignment to %s", $1); YYERROR; }
-										   $$ = 1; }
-		| update_asgn_list COMMA NAME COMPARISON expr { if ($4 != 4) { yyerror("bad update assignment to %s", $3); YYERROR; }
-													   $$ = $1 + 1; }
-		| update_asgn_list COMMA NAME '.' NAME COMPARISON expr { if ($6 != 4) { yyerror("bad update assignment to %s.$s", $3, $5);
-															   YYERROR; }
-															    $$ = 1; }
+  NAME COMPARISON expr { if ($2 != 4)
+  { yyerror("bad update assignment to %s", $1); YYERROR; }
+                      $$ = 1; }
+  
+  | NAME '.' NAME COMPARISON expr { if ($4 != 4) { yyerror("bad update assignment to %s", $1); YYERROR; }
+                       $$ = 1; }
+    | update_asgn_list COMMA NAME COMPARISON expr { if ($4 != 4) { yyerror("bad update assignment to %s", $3); YYERROR; }
+                             $$ = $1 + 1; }
+    | update_asgn_list COMMA NAME '.' NAME COMPARISON expr { if ($6 != 4) { yyerror("bad update assignment to %s.$s", $3, $5);
+                                 YYERROR; }
+                                  $$ = 1; }
 ;
 
 stmt: create_database_stmt {  };
 
 create_database_stmt: CREATE DATABASE NAME
-			{ free($3); }
-		| CREATE SCHEMA NAME
-			{ free($3); }
+      { free($3); }
+    | CREATE SCHEMA NAME
+      { free($3); }
 ;
 
 
 stmt: create_table_stmt { }
-	;
+  ;
 
 create_table_stmt: 
-	CREATE opt_table_scope TABLE NAME  PAREN_LEFT  create_col_list PAREN_RIGHT
-	{
-		$$ = ctx.new_create_table_stmt($4, $2, $6);
-		free($4);
-	}
-	
-	| CREATE opt_table_scope TABLE NAME opt_column_list AS table_subquery
-	{
-		$$ = ctx.new_create_table_as_stmt($4, $2, $5, $7);
-		free($4);
-	}
+  CREATE opt_table_scope TABLE NAME  PAREN_LEFT  create_col_list PAREN_RIGHT
+  {
+    $$ = ctx.new_create_table_stmt($4, $2, $6);
+    free($4);
+  }
+  
+  | CREATE opt_table_scope TABLE NAME opt_column_list AS table_subquery
+  {
+    $$ = ctx.new_create_table_as_stmt($4, $2, $5, $7);
+    free($4);
+  }
 ;
 
 opt_table_scope: 
-	/* nil */ { $$ = 0; }
-	| TEMPORARY { $$ = TABLE_SCOPE_TMP; }
+  /* nil */ { $$ = 0; }
+  | TEMPORARY { $$ = TABLE_SCOPE_TMP; }
 ;
 
 opt_column_list:
-	/* nil */ { $$ = NULL; }
-	| PAREN_LEFT column_list PAREN_RIGHT 
-	{ $$ = $2; }
+  /* nil */ { $$ = NULL; }
+  | PAREN_LEFT column_list PAREN_RIGHT 
+  { $$ = $2; }
 
 
 create_col_list:
-		create_definition { $$ = $1; }
-		| create_col_list COMMA create_definition { $$ = $1; $1->rappend($3); }
+    create_definition { $$ = $1; }
+    | create_col_list COMMA create_definition { $$ = $1; $1->rappend($3); }
 ;
 
 create_definition: /* not support */
-	PRIMARY KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-	| KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-	| INDEX PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-	| FULLTEXT INDEX PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-	| FULLTEXT KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
+  PRIMARY KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
+  | KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
+  | INDEX PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
+  | FULLTEXT INDEX PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
+  | FULLTEXT KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
 ;
 
 create_definition:
-	NAME data_type column_atts
-	{ $$ = ctx.new_column_def($1, $2); }
+  NAME data_type column_atts
+  { $$ = ctx.new_column_def($1, $2); }
 ;
 
 column_atts:
-	/* nil */ { $$ = 0; }
-	| column_atts NOT NULLX {}
-	| column_atts NULLX {}
-	| column_atts DEFAULT STRING {}
-	| column_atts DEFAULT INTNUM {}
-	| column_atts DEFAULT APPROXNUM {}
-	| column_atts DEFAULT BOOL {}
-	| column_atts AUTO_INCREMENT {}
-	| column_atts UNIQUE PAREN_LEFT column_list PAREN_RIGHT {}
-	| column_atts UNIQUE KEY {}
-	| column_atts PRIMARY KEY {}
-	| column_atts KEY {}
-	| column_atts COMMENT STRING {}
+  /* nil */ { $$ = 0; }
+  | column_atts NOT NULLX {}
+  | column_atts NULLX {}
+  | column_atts DEFAULT STRING {}
+  | column_atts DEFAULT INTNUM {}
+  | column_atts DEFAULT APPROXNUM {}
+  | column_atts DEFAULT BOOL {}
+  | column_atts AUTO_INCREMENT {}
+  | column_atts UNIQUE PAREN_LEFT column_list PAREN_RIGHT {}
+  | column_atts UNIQUE KEY {}
+  | column_atts PRIMARY KEY {}
+  | column_atts KEY {}
+  | column_atts COMMENT STRING {}
 ;
 
 
 data_type:
-	INTEGER { $$ = DATA_TYPE_INTEGER; }
-	| FLOAT { $$ = DATA_TYPE_FLOAT; }
+  INTEGER { $$ = DATA_TYPE_INTEGER; }
+  | FLOAT { $$ = DATA_TYPE_FLOAT; }
 ;
 
 
@@ -1023,7 +1023,7 @@ set_stmt: SET set_list ;
 set_list: set_expr | set_list COMMA set_expr ;
 
 set_expr: USERVAR COMPARISON expr { if ($2 != 4) { yyerror("bad set to @%s", $1); YYERROR; }  }
-	| USERVAR ASSIGN expr {  }
+  | USERVAR ASSIGN expr {  }
 ;
 
  /*** END PARSER - Change the parser grammar rules above ***/
@@ -1031,18 +1031,18 @@ set_expr: USERVAR COMPARISON expr { if ($2 != 4) { yyerror("bad set to @%s", $1)
 %% /*** Additional Code ***/
 
 void parser::Parser::error(const Parser::location_type& l,
-				const std::string& m)
+        const std::string& m)
 {
-	ctx.driver_.error(l, m);
+  ctx.driver_.error(l, m);
 }
 
 void yyerror(const char* s,...)
 { 
-	int yylineno;
-	va_list ap;
-	va_start(ap,s);
-	fprintf(stderr,"%d: error: ",yylineno);
-	vfprintf(stderr,s,ap);
-	fprintf(stderr,"\n");
+  int yylineno;
+  va_list ap;
+  va_start(ap,s);
+  fprintf(stderr,"%d: error: ",yylineno);
+  vfprintf(stderr,s,ap);
+  fprintf(stderr,"\n");
 }
 

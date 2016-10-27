@@ -244,7 +244,7 @@ COUNT { int c; // = input(); unput(c);
 namespace parser {
 
 Scanner::Scanner(std::istream* in,
-		 std::ostream* out)
+     std::ostream* out)
     : SQLFlexLexer(in, out)
 {
 }
