@@ -25,4 +25,11 @@ typedef int join_type_t;
 typedef int table_scope_t;
 typedef int data_type_t;
 
+enum Operator {
+  kAssign,
+  kEqual,
+  kLessOrEqual,
+  kGreaterOrEaual,
+};
+
 #endif // __AST_DEF_H__

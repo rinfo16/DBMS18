@@ -9,6 +9,7 @@
 #include <string>
 
 #include "parser/ast_base.h"
+#include "parser/ast_def.h"
 #include "driver.h"
 #include "select_stmt.h"
 
