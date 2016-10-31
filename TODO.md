@@ -3,6 +3,7 @@
 
 ### Deadline 2016.10.23 实验1完成  
 
+
 ### 部署开发环境;  
 
 ### 熟悉技术栈:  
@@ -40,3 +41,19 @@ hash函数实现，寻找几个不同的Hash实现方式
 
 ##### 5.singleton
 实现单体模式，不需考虑多线程竞争条件(在更高层次上处理)  
+
+
+### Deadline 2016.11.13 实验2完成  
+####1. 实现B+树索引  
+####2. Parser Interface SELECT/INSERT/DELETE/UPDATE/CREATE ...
+####3. Client && Server Protocal
+####4. Executer Interface
+
+实现B+树时可参考的代码   
+[Tokyo Cabinet] (http://fallabs.com/tokyocabinet/)  
+[SQLite] (http://sqlite.org/version3.html)  
+[BerkeleyDB] (http://www.oracle.com/technetwork/database/database-technologies/berkeleydb/downloads/index.html)  
+[MySQL InnoDB] (http://www.mysql.com/)  
+[PostgreSQL] (https://www.postgresql.org/)  
+
+

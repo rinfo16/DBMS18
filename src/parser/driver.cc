@@ -44,7 +44,7 @@ bool Driver::parse_string(ParserContext & ctx, const std::string &input,
 }
 
 void Driver::error(const class location& l, const std::string& m) {
-  std::cerr << l << ": " << m << std::endl;
+  std::cerr << l << " error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
 }
 
 void Driver::error(const std::string& m) {

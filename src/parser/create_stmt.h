@@ -25,7 +25,7 @@ class CreateStmt : public ASTBase {
   TRACE_FUNC_DECLARE;
 };
 
-class column_def : public ASTBase {
+class ColumnDef : public ASTBase {
  public:
   string column_name_;
   data_type_t data_type_;

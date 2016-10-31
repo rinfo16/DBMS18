@@ -1,5 +1,5 @@
-#ifndef __NAME_H__
-#define __NAME_H__
+#ifndef VALUE_H__
+#define VALUE_H__
 
 #include <string>
 
@@ -7,7 +7,7 @@
 
 using std::string;
 
-class Name : public ASTBase {
+class Value : public ASTBase {
  public:
 
   string str_val_;
@@ -15,4 +15,4 @@ class Name : public ASTBase {
   TRACE_FUNC_DECLARE;
 };
 
-#endif //__NAME_H__
+#endif // VALUE_H__

@@ -3,11 +3,14 @@
 #include <iostream>
 #include "parser/ast_base.h"
 #include "create_stmt.h"
+#include "update_stmt.h"
 #include "insert_stmt.h"
 #include "join_table.h"
 #include "name.h"
 #include "select_stmt.h"
 #include "table_factor.h"
+#include "value.h"
+#include "expression.h"
 
 #ifdef TRACE_AST
 
@@ -17,7 +20,7 @@ void ASTBase::trace(int depth) {
   }
 }
 
-void name::trace(int depth) {
+void Name::trace(int depth) {
   depth++;
   ASTBase::trace(depth);
   std::cout << "NAME : " << str_val_ << std::endl;
@@ -128,8 +131,9 @@ void JoinTable::trace(int depth) {
 void InsertStmt::trace(int depth) {
   depth++;
   ASTBase::trace(depth);
-  std::cout << "INSERT STMT" << table_name_ << std::endl;
-
+  std::cout << "INSERT STMT:" << std::endl;
+  ASTBase::trace(++depth);
+  std::cout << "TABLE NAME:" << table_name_ << std::endl;
   ASTBase * t = opt_column_names_;
 
   while (t != NULL) {
@@ -168,7 +172,7 @@ void CreateStmt::trace(int depth) {
 
 }
 
-void column_def::trace(int depth) {
+void ColumnDef::trace(int depth) {
   depth++;
   ASTBase::trace(depth);
 
@@ -176,4 +180,46 @@ void column_def::trace(int depth) {
             << " " << std::endl;
 
 }
+
+void Value::trace(int depth) {
+  depth++;
+  ASTBase::trace(depth);
+  std::cout << "VALUE : " << str_val_ << " " << std::endl;
+}
+
+void Expression::trace(int depth) {
+  depth++;
+  ASTBase::trace(depth);
+  std::cout << "OPERATOR : " << operator_ << std::endl;
+  std::cout << "LEFT : " << std::endl;
+  if (left_ != NULL)
+    left_->trace(depth);
+  std::cout << "RIGHT : " << std::endl;
+  if (right_ != NULL)
+    right_->trace(depth);
+}
+
+void UpdateStmt::trace(int depth) {
+  depth++;
+  ASTBase::trace(depth);
+  std::cout << "TABLE NAME : " << std::endl;
+  table_name_->trace(depth);
+
+  if (set_clause_list_) {
+    std::cout << "SET CLAUSE LIST : " << std::endl;
+    set_clause_list_->trace(depth);
+  }
+  if (opt_from_clause_) {
+    std::cout << "OPT FROM CLAUSE : " << std::endl;
+    opt_from_clause_->trace(depth);
+  }
+
+  if (opt_where_) {
+    std::cout << "OPT WHERE : " << std::endl;
+    opt_where_->trace(depth);
+  }
+
+}
+
+
 #endif

@@ -96,6 +96,9 @@ class FlexLexer {
   int debug() const {return yy_flex_debug;}
   void set_debug(int flag) {yy_flex_debug = flag;}
 
+
+  void LexError(const std::string &s)  { std::cerr << s << std::endl; }
+
 protected:
   char* yytext;
   int yyleng;

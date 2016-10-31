@@ -9,7 +9,10 @@
 #include <stdarg.h>
 #include <string.h>
 
-void yyerror(const char *s, ...);
+#define unput(c) yyunput( c, yytext_ptr )
+#define input() yyinput()
+
+#define yyerror(s) LexerError(s)
 int oldstate;
 
 /* import the parser's token type into a local typedef */
@@ -200,30 +203,26 @@ TRUE { yylval->intval = 1; return token::BOOL; }
 UNKNOWN { yylval->intval = -1; return token::BOOL; }
 FALSE { yylval->intval = 0; return token::BOOL; }
 
-'(\\.|''|[^'\n])*' |
-\"(\\.|\"\"|[^"\n])*\" { yylval->strval = strdup(yytext); return token::STRING; }
+'[^'\n]*' { 
+      int c = input();
+      unput(c);
+      if (c != '\'') 
+        return token::STRING;
+      else
+        yymore();
+     }
 
-'(\\.|[^'\n])*$ { yyerror("Unterminated string %s", yytext); }
 
-\"(\\.|[^"\n])*$ { yyerror("Unterminated string %s", yytext); }
+'(\\.|[^'\n])*$ { }
 
-X'[0-9A-F]+' |
-0X[0-9A-F]+ { yylval->strval = strdup(yytext); return token::STRING; }
-0B[01]+ |
-B'[01]+' { yylval->strval = strdup(yytext); return token::STRING; }
+\"(\\.|[^"\n])*$ { }
+
 
 
 "&&" { return token::ANDOP; }
 "||" { return token::OR; }
 
-"=" { yylval->subtok = 4; return token::COMPARISON; }
-"<=>" { yylval->subtok = 12; return token::COMPARISON; }
-">=" { yylval->subtok = 6; return token::COMPARISON; }
-">" { yylval->subtok = 2; return token::COMPARISON; }
-"<=" { yylval->subtok = 5; return token::COMPARISON; }
-"<" { yylval->subtok = 1; return token::COMPARISON; }
 
-"!="|"<>" { yylval->subtok = 3; return token::COMPARISON; }
 "<<" { yylval->subtok = 1; return token::SHIFT; }
 ">>" { yylval->subtok = 2; return token::SHIFT; }
 ":=" { return token::ASSIGN; }
@@ -246,7 +245,7 @@ COUNT { int c; // = input(); unput(c);
 
 `[^`/\\.\n]+` { yylval->strval = strdup(yytext+1); yylval->strval[yyleng-2] = 0; return token::NAME; }
 
-`[^`\n]*$ { yyerror("unterminated quoted name %s", yytext); }
+`[^`\n]*$ { }
 
 @[0-9a-z_.$]+ |
 @\"[^"\n]+\" |
@@ -255,7 +254,7 @@ COUNT { int c; // = input(); unput(c);
 
 @\"[^"\n]*\n |
 @`[^`\n]*\n |
-@'[^'\n]*\n { yyerror("unterminated quoted user variable %s", yytext); }
+@'[^'\n]*\n { }
 
 #.* ;
 "--"[ \t].* ;
@@ -267,7 +266,7 @@ COUNT { int c; // = input(); unput(c);
 <CCOMMENT><<EOF>> { yyerror("unclosed comment"); }
 
 [ \t\n] /* whitespace */
-. { /*yyerror("mystery character '%c'", *yytext);*/ }
+. { }
 
 
  /*** END PARSER - Change the parser lexer rules above ***/

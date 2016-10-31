@@ -1,8 +1,9 @@
 #include "parser_context.h"
-
 #include "name.h"
+#include "value.h"
+#include "expression.h"
 #include "create_stmt.h"
-#include "create_stmt.h"
+#include "update_stmt.h"
 #include "insert_stmt.h"
 #include "join_table.h"
 #include "select_stmt.h"
@@ -68,7 +69,16 @@ ASTBase * ParserContext::new_select_stmt(ASTBase* sel_list,
 }
 
 ASTBase *ParserContext::new_name(const char *str) {
-  name *nm = new name;
+  Name *nm = new Name;
+  ast_node_list_.push_back(nm);
+
+  nm->str_val_ = str;
+
+  return nm;
+}
+
+ASTBase *ParserContext::new_value(const char *str) {
+  Value *nm = new Value;
   ast_node_list_.push_back(nm);
 
   nm->str_val_ = str;
@@ -112,11 +122,33 @@ ASTBase * ParserContext::new_join_table(ASTBase *left, ASTBase *right,
 }
 
 ASTBase *ParserContext::new_column_def(const char *col_name, data_type_t type) {
-  column_def *col_def = new column_def;
+  ColumnDef *col_def = new ColumnDef;
   ast_node_list_.push_back(col_def);
 
   col_def->column_name_ = col_name;
   col_def->data_type_ = type;
 
   return col_def;
+}
+
+ASTBase *ParserContext::new_expression(Operator op, ASTBase *left,
+                                       ASTBase *right) {
+  Expression *expression = new Expression;
+  ast_node_list_.push_back(expression);
+  expression->left_ = left;
+  expression->right_ = right;
+  expression->operator_ = op;
+  return expression;
+}
+
+ASTBase *ParserContext::NewUpdateStmt(ASTBase *table_name,
+                                      ASTBase * set_clause_list,
+                                      ASTBase * opt_from_clause,
+                                      ASTBase * opt_where) {
+  UpdateStmt *update_stmt = new UpdateStmt();
+  update_stmt->table_name_ = table_name;
+  update_stmt->set_clause_list_ = set_clause_list;
+  update_stmt->opt_from_clause_ = opt_from_clause;
+  update_stmt->opt_where_ = opt_where;
+  return update_stmt;
 }

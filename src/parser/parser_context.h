@@ -15,7 +15,7 @@
 using std::vector;
 using std::string;
 
-/** Calculator context used to save the parsed expressions. This context is
+/** Parser context used to save the parsed SQL. This context is
  * passed along to the parser::Driver class and fill during parsing via bison
  * actions. */
 class ParserContext {
@@ -41,6 +41,8 @@ class ParserContext {
 
   ASTBase *new_name(const char* str);
 
+  ASTBase *new_value(const char *str);
+
   ASTBase *new_orderby(ASTBase *expr, order_t ord);
 
   ASTBase *new_table_factor(const char* tbl, const char* alias, ASTBase *sub);
@@ -49,6 +51,11 @@ class ParserContext {
                           join_type_t type);
 
   ASTBase *new_column_def(const char *col_name, data_type_t type);
+
+  ASTBase *new_expression(Operator op, ASTBase *left, ASTBase *right);
+
+  ASTBase *NewUpdateStmt(ASTBase *table_name, ASTBase * set_clause_list,
+                         ASTBase * opt_from_clause, ASTBase * opt_where);
 
   /// type of the variable storage
   typedef std::map<std::string, double> variablemap_type;

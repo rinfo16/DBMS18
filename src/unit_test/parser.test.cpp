@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     ParserContext ctx;
     bool result = ctx.driver_.parse_string(ctx, sql_str, "input");
     if (result) {
-      std::cout << "parse SQL:[" << sql[i] << "] success:" << std::endl;
+      std::cout << "parse SQL: success ............." << std::endl;
       ctx.root_->trace(1);
     }
   }

@@ -13,16 +13,16 @@
 #include "name.h"
 #include "parser_context.h"
 
-void yyerror(const char *s, ...);
-
+#define yyerror(s) error(yyloc, s)
 #define YYDEBUG 1
+
 
 %}
 
 /*** yacc/bison Declarations ***/
 
-/* Require bison 2.3 or later */
-%require "2.3"
+/* Require bison 2.1 or later */
+%require "2.1"
 
 /* add debug output code to generated parser. disable this for release
  * versions. */
@@ -57,6 +57,7 @@ void yyerror(const char *s, ...);
 /* verbose error messages */
 %error-verbose
 
+
  /*** BEGIN PARSER - Change the parser grammar's tokens below ***/
 %union 
 {
@@ -72,7 +73,7 @@ void yyerror(const char *s, ...);
 /* names and literal values */
 %token <strval> NAME
 %token <strval> STRING
-%token <intval> INTNUM
+%token <strval> INTNUM
 %token <intval> BOOL
 %token <floatval> APPROXNUM
 
@@ -321,24 +322,23 @@ void yyerror(const char *s, ...);
 %token FDATE_SUB
 %token FCOUNT
 
-%type <strval> opt_as_alias 
+%type <strval> opt_as_alias
 %type <intval> select_opts
 %type <intval> val_list opt_val_list case_list
 %type <intval> opt_asc_desc opt_table_scope
 %type <intval> opt_inner_cross opt_outer
 %type <intval> left_or_right opt_left_or_right_outer 
 %type <intval> index_list opt_for_join
-%type <intval> delete_opts delete_list
-%type <intval> insert_opts insert_vals insert_vals_list
-%type <intval> insert_asgn_list update_opts update_asgn_list
-
 %type <intval> column_atts data_type 
+
+%type <astbase_ptr> talbe_name column_name
 %type <astbase_ptr> select_stmt opt_where opt_groupby opt_having opt_orderby groupby_list 
 %type <astbase_ptr>  select_expr select_expr_list 
-%type <astbase_ptr> table_factor join_table table_reference column_list table_references expr
+%type <astbase_ptr> table_factor join_table table_reference table_references expr
 %type <astbase_ptr> opt_join_condition join_condition opt_with_rollup
 %type <astbase_ptr> stmt stmt_list create_table_stmt create_col_list table_subquery create_definition opt_column_list
-
+%type <astbase_ptr> insert_stmt ctext_row ctext_expr_list ctext_expr column_list
+%type <astbase_ptr> update_stmt set_clause_list set_clause set_target opt_from_caluse
 %{
 
 #include "parser_context.h"
@@ -365,32 +365,6 @@ stmt_list:
   | stmt_list stmt SEMICOLON {}
 ;
 
-expr: 
-  NAME      
-  { 
-    $$ = ctx.new_name($1);
-    free($1); 
-  }
-
-  | NAME '.' NAME 
-  {
-    
-    free($1);
-    free($3); 
-  }
-  
-  | USERVAR    
-  {
-     
-    free($1); 
-  }
-
-  | STRING    { free($1);  yyerror("not implement"); }
-  | INTNUM    {  }
-  | APPROXNUM  {  }
-  | BOOL      {   }
-;
-
 expr: expr '+' expr { yyerror("not implement"); YYERROR; }
   | expr '-' expr { yyerror("not implement"); YYERROR; }
   | expr '*' expr { yyerror("not implement"); YYERROR; }
@@ -413,18 +387,39 @@ expr: expr '+' expr { yyerror("not implement"); YYERROR; }
   | expr COMPARISON ANY PAREN_LEFT select_stmt PAREN_RIGHT { }
   | expr COMPARISON SOME PAREN_LEFT select_stmt PAREN_RIGHT { }
   | expr COMPARISON ALL PAREN_LEFT select_stmt PAREN_RIGHT { }
-;
-
-expr: expr IS NULLX { }
+  | expr IS NULLX { }
   | expr IS NOT NULLX { }
   | expr IS BOOL { }
   | expr IS NOT BOOL { }
   | USERVAR ASSIGN expr { }
-;
+  |expr BETWEEN expr AND expr %prec BETWEEN 
+  {
+  }
+  
+  | NAME      
+  { 
+    $$ = ctx.new_name($1);
+    free($1); 
+  }
 
-expr: expr BETWEEN expr AND expr %prec BETWEEN { }
-;
+  | NAME '.' NAME 
+  {
+    
+    free($1);
+    free($3); 
+  }
+  
+  | USERVAR    
+  {
+     
+    free($1); 
+  }
 
+  | STRING    { $$ = ctx.new_value($1);free($1); }
+  | INTNUM    { $$ = ctx.new_value($1);free($1); }
+  | APPROXNUM  {  }
+  | BOOL      {   }
+;
 val_list: expr { }
   | expr COMMA val_list { }
 ;
@@ -514,7 +509,7 @@ select_stmt:
   }
   
   | SELECT select_opts select_expr_list FROM table_references 
-    opt_where opt_groupby opt_having opt_orderby opt_limit opt_into_list
+    opt_where opt_groupby opt_having opt_orderby opt_limit
   { 
     $$ = ctx.new_select_stmt($3, $5, $6, $7, $8, $9);
   }
@@ -579,11 +574,6 @@ opt_limit:
   /* nil */ 
   | LIMIT expr {  }
   | LIMIT expr COMMA expr {  }
-;
-
-opt_into_list: 
-  /* nil */
-  | INTO column_list {  }
 ;
 
 column_list:
@@ -771,171 +761,74 @@ stmt:
 ;
 
 delete_stmt:
-  DELETE delete_opts FROM NAME opt_where opt_orderby opt_limit {  } //means one table
+  DELETE FROM table_references opt_where {  }
 ;
 
-delete_opts:
-  delete_opts LOW_PRIORITY { $$ = $1 + 01; }
-  | delete_opts QUICK { $$ = $1 + 02; }
-  | delete_opts IGNORE { $$ = $1 + 04; }
-  | { $$ = 0; }
-;
-
-delete_stmt:
-  DELETE delete_opts delete_list FROM table_references opt_where {  }
-;
-
-delete_list:
-  NAME opt_dot_star {  }
-  | delete_list COMMA NAME opt_dot_star {  $$ = $1 + 1; }
-;
-
-opt_dot_star:
-  | '.' '*';
-
-delete_stmt:
-  DELETE delete_opts
-  FROM delete_list
-  USING table_references opt_where {  }
-;
 
 stmt:
-  insert_stmt {  }
+  insert_stmt { $$ = $1; }
 ;
 
 insert_stmt:
-  INSERT insert_opts opt_into NAME opt_col_names VALUES insert_vals_list opt_ondupupdate {  }
-;
-
-opt_ondupupdate: 
-  /* nil */
-  | ONDUPLICATE KEY UPDATE insert_asgn_list {  }
-;
-
-insert_opts:
-  /* nil */ { $$ = 0; }
-  | insert_opts LOW_PRIORITY { $$ = $1 | 01 ; }
-  | insert_opts DELAYED { $$ = $1 | 02 ; }
-  | insert_opts HIGH_PRIORITY { $$ = $1 | 04 ; }
-  | insert_opts IGNORE { $$ = $1 | 010 ; }
-;
-
-opt_into:
-  INTO | /* nil */
-;
-
-opt_col_names: /* nil */
-  | PAREN_LEFT column_list PAREN_RIGHT {  }
-;
-
-insert_vals_list:
-  PAREN_LEFT insert_vals PAREN_RIGHT {  $$ = 1; }
-  | insert_vals_list COMMA PAREN_LEFT insert_vals PAREN_RIGHT {  $$ = $1 + 1; }
-;
-
-insert_vals:
-  expr { $$ = 1; }
-  | DEFAULT {  $$ = 1; }
-  | insert_vals COMMA expr { $$ = $1 + 1; }
-  | insert_vals COMMA DEFAULT {  $$ = $1 + 1; }
-;
-
-insert_stmt:
-  INSERT insert_opts opt_into NAME SET insert_asgn_list opt_ondupupdate
-  {  }
-;
-
-insert_asgn_list:
-  NAME COMPARISON expr 
+  INSERT INTO NAME opt_column_list VALUES ctext_row
   {
-    if ($2 != 4)
+      $$ = ctx.new_insert_stmt($3,$4,$6);
+  }
+;
+
+ctext_row:
+  PAREN_LEFT ctext_expr_list PAREN_RIGHT {  $$ = $2; }
+;
+
+ctext_expr_list:
+  ctext_expr { $$ = $1; }
+  | ctext_expr_list COMMA ctext_expr { $1->rappend($3); $$ = $1; }
+;
+
+ctext_expr: 
+  STRING { $$ = ctx.new_value($1); };
+
+set_clause_list:
+  set_clause_list COMMA set_clause
+  {
+    $1->rappend($3);
+    $$ = $1;
+  }
+;
+
+set_clause:
+  set_target COMPARISON expr 
+  {
+    if ($2 != kAssign)
     { 
-      yyerror("bad insert assignment to %s", $1); YYERROR; 
+      
     }
-    $$ = 1;
+    $$ = ctx.new_expression(kAssign, $1, $3);
   }
-  
-  | NAME COMPARISON DEFAULT
-  {
-    if ($2 != 4)
-    {
-      yyerror("bad insert assignment to %s", $1); YYERROR; 
-    }
-                   
-    free($1); $$ = 1; 
-  }
-
-  | insert_asgn_list COMMA NAME COMPARISON expr 
-  {
-    if ($4 != 4)
-    {
-      yyerror("bad insert assignment to %s", $1); YYERROR; 
-    }
-    $$ = $1 + 1;
-  }
-  
-  | insert_asgn_list COMMA NAME COMPARISON DEFAULT
-  {
-    if ($4 != 4)
-    { 
-      yyerror("bad insert assignment to %s", $1); YYERROR; 
-    }
-    $$ = $1 + 1;
-  }
-;
-
-insert_stmt:
-  INSERT insert_opts opt_into NAME opt_col_names select_stmt opt_ondupupdate {  }
-;
-
-/* simple replace 'insert' with 'replace' */
-
-stmt: replace_stmt {  };
-
-replace_stmt:
-  REPLACE insert_opts opt_into NAME opt_col_names 
-      VALUES insert_vals_list opt_ondupupdate {  }
-;
-
-replace_stmt:
-  REPLACE insert_opts opt_into NAME SET insert_asgn_list opt_ondupupdate
-  {  }
-;
-
-replace_stmt:
-  REPLACE insert_opts opt_into NAME opt_col_names select_stmt opt_ondupupdate 
-  {  }
 ;
 
 /** update **/
 stmt:
-  update_stmt {  };
+  update_stmt { $$ = $1; };
 
 update_stmt:
-  UPDATE update_opts table_references SET update_asgn_list opt_where opt_orderby opt_limit 
-  {  }
+  UPDATE talbe_name SET set_clause_list opt_from_caluse opt_where
+  {
+      $$ = ctx.NewUpdateStmt($2, $4, $5, $6); 
+  }
 ;
 
-update_opts:
-  /* nil */ { $$ = 0; }
-  | insert_opts LOW_PRIORITY { $$ = $1 | 01 ; }
-  | insert_opts IGNORE { $$ = $1 | 010 ; }
-;
-
-update_asgn_list:
-  NAME COMPARISON expr { if ($2 != 4)
-  { yyerror("bad update assignment to %s", $1); YYERROR; }
-                      $$ = 1; }
-  
-  | NAME '.' NAME COMPARISON expr { if ($4 != 4) { yyerror("bad update assignment to %s", $1); YYERROR; }
-                       $$ = 1; }
-    | update_asgn_list COMMA NAME COMPARISON expr { if ($4 != 4) { yyerror("bad update assignment to %s", $3); YYERROR; }
-                             $$ = $1 + 1; }
-    | update_asgn_list COMMA NAME '.' NAME COMPARISON expr { if ($6 != 4) { yyerror("bad update assignment to %s.$s", $3, $5);
-                                 YYERROR; }
-                                  $$ = 1; }
-;
-
+opt_from_caluse:
+  /*EMPTY*/ { $$ = NULL; }
+  | FROM table_references { $$ = $2; };
+    
+set_target:
+     NAME
+     {
+        $$ = ctx.new_name($1);
+        free($1); 
+     }
+     
 stmt: create_database_stmt {  };
 
 create_database_stmt: CREATE DATABASE NAME
@@ -1013,6 +906,20 @@ data_type:
   | FLOAT { $$ = DATA_TYPE_FLOAT; }
 ;
 
+talbe_name:
+  NAME      
+  { 
+    $$ = ctx.new_name($1);
+    free($1); 
+  }
+  
+column_name:
+  NAME      
+  { 
+    $$ = ctx.new_name($1);
+    free($1); 
+  }
+  
 
 
 
@@ -1022,7 +929,8 @@ set_stmt: SET set_list ;
 
 set_list: set_expr | set_list COMMA set_expr ;
 
-set_expr: USERVAR COMPARISON expr { if ($2 != 4) { yyerror("bad set to @%s", $1); YYERROR; }  }
+set_expr: USERVAR COMPARISON expr {
+ if ($2 != 4) { }  }
   | USERVAR ASSIGN expr {  }
 ;
 
@@ -1034,15 +942,5 @@ void parser::Parser::error(const Parser::location_type& l,
         const std::string& m)
 {
   ctx.driver_.error(l, m);
-}
-
-void yyerror(const char* s,...)
-{ 
-  int yylineno;
-  va_list ap;
-  va_start(ap,s);
-  fprintf(stderr,"%d: error: ",yylineno);
-  vfprintf(stderr,s,ap);
-  fprintf(stderr,"\n");
 }
 

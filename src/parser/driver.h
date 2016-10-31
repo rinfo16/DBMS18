@@ -75,6 +75,8 @@ class Driver {
 
   /** Reference to the calculator context filled during parsing of the
    * expressions. */
+
+  std::string input_;
 };
 
 }  // namespace parser
