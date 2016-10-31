@@ -48,7 +48,7 @@ void Driver::error(const class location& l, const std::string& m) {
 }
 
 void Driver::error(const std::string& m) {
-  std::cerr << m << std::endl;
+  std::cerr << "Error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
 }
 
 }  // namespace parser

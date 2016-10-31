@@ -13,7 +13,7 @@
 #include "name.h"
 #include "parser_context.h"
 
-#define yyerror(s) error(yyloc, s)
+#define yyerror(s) (ctx.driver_.error(s))
 #define YYDEBUG 1
 
 
@@ -36,7 +36,8 @@
 %skeleton "lalr1.cc"
 
 /* namespace to enclose parser in */
-%name-prefix="parser"
+%define api.prefix {parser}
+
 
 /* set the parser's class identifier */
 %define "parser_class_name" "Parser"
