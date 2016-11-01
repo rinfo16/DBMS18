@@ -9,8 +9,13 @@
 #include <stdarg.h>
 #include <string.h>
 
+#ifndef unput
 #define unput(c) yyunput( c, yytext_ptr )
+#endif
+
+#ifndef input
 #define input() yyinput()
+#endif
 
 #define yyerror(s) LexerError(s)
 int oldstate;
@@ -218,7 +223,7 @@ FALSE { yylval->intval = 0; return token::BOOL; }
 \"(\\.|[^"\n])*$ { }
 
 
-
+"="  { return token::EQUAL; }
 "&&" { return token::ANDOP; }
 "||" { return token::OR; }
 
@@ -243,7 +248,6 @@ COUNT { int c; // = input(); unput(c);
 
 [A-Za-z][A-Za-z0-9_]* { yylval->strval = strdup(yytext); return token::NAME; }
 
-`[^`/\\.\n]+` { yylval->strval = strdup(yytext+1); yylval->strval[yyleng-2] = 0; return token::NAME; }
 
 `[^`\n]*$ { }
 

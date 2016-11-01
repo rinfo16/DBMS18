@@ -22,7 +22,7 @@
 /*** yacc/bison Declarations ***/
 
 /* Require bison 2.1 or later */
-%require "2.1"
+%require "2.5"
 
 /* add debug output code to generated parser. disable this for release
  * versions. */
@@ -165,6 +165,7 @@
 %token ENCLOSED
 %token END
 %token ENUM
+%token EQUAL
 %token ESCAPED
 %token <subtok> EXISTS
 %token EXIT
@@ -393,31 +394,29 @@ expr: expr '+' expr { yyerror("not implement"); YYERROR; }
   | expr IS BOOL { }
   | expr IS NOT BOOL { }
   | USERVAR ASSIGN expr { }
-  |expr BETWEEN expr AND expr %prec BETWEEN 
-  {
-  }
+  |expr BETWEEN expr AND expr %prec BETWEEN  {}
+  | expr EQUAL expr { 
+      $$ = ctx.new_expression(kEqual, $1, $3); 
+    }
   
   | NAME      
   { 
     $$ = ctx.new_name($1);
-    free($1); 
   }
 
   | NAME '.' NAME 
   {
-    
-    free($1);
-    free($3); 
   }
   
   | USERVAR    
   {
-     
-    free($1); 
   }
 
-  | STRING    { $$ = ctx.new_value($1);free($1); }
-  | INTNUM    { $$ = ctx.new_value($1);free($1); }
+  | STRING    
+  { 
+    $$ = ctx.new_value($1);
+  }
+  | INTNUM    { $$ = ctx.new_value($1);}
   | APPROXNUM  {  }
   | BOOL      {   }
 ;
@@ -436,7 +435,7 @@ expr: expr IN PAREN_LEFT val_list PAREN_RIGHT { }
   | EXISTS PAREN_LEFT select_stmt PAREN_RIGHT { }
 ;
 
-expr: NAME PAREN_LEFT opt_val_list PAREN_RIGHT { free($1); }
+expr: NAME PAREN_LEFT opt_val_list PAREN_RIGHT { }
 ;
 
 expr: FCOUNT PAREN_LEFT '*' PAREN_RIGHT { }
@@ -582,7 +581,6 @@ column_list:
   {
       
      $$ = ctx.new_name($1);
-     free($1); 
   }
   
   | column_list COMMA NAME 
@@ -590,7 +588,6 @@ column_list:
     ASTBase *l = $1;
     l->rappend(ctx.new_name($3));
     
-    free($3);
     $$ = l;
   }
 ;
@@ -654,20 +651,17 @@ table_reference:
 table_factor: NAME opt_as_alias index_hint 
   {
     $$ = ctx.new_table_factor($1, $2, NULL);
-      free($1); free($2); 
   }
 
   | NAME '.' NAME opt_as_alias index_hint 
   { 
     /* TODO DB name ...*/
     $$ = ctx.new_table_factor($3, $4, NULL); 
-    free($3); free($4); 
   }
 
   | table_subquery opt_as NAME 
   { 
     $$ = ctx.new_table_factor(NULL, $3, $1);
-    free($3); 
   }
 
   | PAREN_LEFT table_references PAREN_RIGHT 
@@ -827,15 +821,14 @@ set_target:
      NAME
      {
         $$ = ctx.new_name($1);
-        free($1); 
      }
      
 stmt: create_database_stmt {  };
 
 create_database_stmt: CREATE DATABASE NAME
-      { free($3); }
+      {  }
     | CREATE SCHEMA NAME
-      { free($3); }
+      { }
 ;
 
 
@@ -846,13 +839,11 @@ create_table_stmt:
   CREATE opt_table_scope TABLE NAME  PAREN_LEFT  create_col_list PAREN_RIGHT
   {
     $$ = ctx.new_create_table_stmt($4, $2, $6);
-    free($4);
   }
   
   | CREATE opt_table_scope TABLE NAME opt_column_list AS table_subquery
   {
     $$ = ctx.new_create_table_as_stmt($4, $2, $5, $7);
-    free($4);
   }
 ;
 
@@ -911,14 +902,12 @@ talbe_name:
   NAME      
   { 
     $$ = ctx.new_name($1);
-    free($1); 
   }
   
 column_name:
   NAME      
   { 
     $$ = ctx.new_name($1);
-    free($1); 
   }
   
 
