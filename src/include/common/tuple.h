@@ -5,9 +5,9 @@
 #include <string.h>
 #include <memory.h>
 #include <string>
-#include "common/tuple_desc.h"
 #include "common/define.h"
 #include "common/slot.h"
+#include "row_desc.h"
 
 union ItemValue {
 
@@ -18,16 +18,24 @@ class Tuple {
     return reinterpret_cast<const uint8_t*>(this) + offset;
   }
 
+  uint64_t GetInteger(uint32_t offset) const {
+    return *reinterpret_cast<const uint64_t*>(GetValue(offset));
+  }
+
+  double_t GetDouble(uint32_t offset) const {
+    return *reinterpret_cast<const double_t*>(GetValue(offset));
+  }
+
   void SetValue(uint32_t offset, const void *data, size_t length) {
     memcpy(reinterpret_cast<uint8_t*>(this) + offset, data, length);
   }
 
-  Slot *GetSlot(size_t nth, TupleDesc *desc) {
-    return reinterpret_cast<Slot *>(this) + desc->mapping_[nth];
+  Slot *GetSlot(size_t nth) {
+    return reinterpret_cast<Slot *>(this) + nth;
   }
 
-  const Slot *GetSlot(size_t nth, TupleDesc *desc) const {
-    return reinterpret_cast<const Slot *>(this) + desc->mapping_[nth];
+  const Slot *GetSlot(size_t nth) const {
+    return reinterpret_cast<const Slot *>(this) + nth;
   }
 
 };

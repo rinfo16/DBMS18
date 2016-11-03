@@ -2,13 +2,15 @@
 #define DATA_TYPE_H_
 
 #include <string>
+#include "common/pg_type.h"
 #include "common/define.h"
+
 enum DataType {
   kDTInvalid = 0,
-  kDTInteger,
-  kDTFloat,
-  kDTDate,
-  kDTVarchar,
+  kDTInteger = INT8OID,
+  kDTFloat = FLOAT8OID,
+  kDTDate = DATEOID,
+  kDTVarchar = VARCHAROID
 };
 
 

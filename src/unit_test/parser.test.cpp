@@ -5,9 +5,9 @@
 int main(int argc, char *argv[]) {
 
   const char *sql[] = {
-      "SELECT name,country FROM Websites;",
+      //"SELECT name,country FROM Websites;",
       "SELECT name,country FROM Websites WHERE country='CN';",
-      "SELECT name,country FROM Websites WHERE country='CN' AND alexa > 50;",
+      /*"SELECT name,country FROM Websites WHERE country='CN' AND alexa > 50;",
       "SELECT name,country FROM Websites WHERE country='USA' OR country='CN';",
       "SELECT name,country FROM Websites WHERE alexa > 15 AND (country='CN' OR country='USA');",
       "SELECT name,country FROM Websites ORDER BY alexa;",
@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
       "SELECT Websites.name, access_log.count, access_log.date FROM Websites LEFT JOIN access_log ON Websites.id=access_log.site_id ORDER BY access_log.count DESC;",
       "SELECT Websites.name, access_log.count, access_log.date FROM access_log RIGHT JOIN Websites ON access_log.site_id=Websites.id ORDER BY access_log.count DESC;",
       "CREATE TABLE Person ( PersonID int,LastName varchar(255), FirstName varchar(255), Address varchar(255), City varchar(255));"
+    */
   };
   for (int i = 0; i < sizeof(sql) / sizeof(const char *); i++) {
     std::string sql_str = sql[i];

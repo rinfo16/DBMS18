@@ -109,11 +109,11 @@ int export_to_csv(std::string table, std::string path) {
   }
   Relation *rel = storage::Storage::instance().GetMetaDataManager()
       ->GetRelationByName(table);
-  TupleDesc desc = rel->ToTupleDesc();
+  RowDesc desc = rel->ToTupleDesc();
   storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(
       table);
   iter->SeekToFirst();
-  size_t slot_length = sizeof(Slot) * desc.column_count_;
+  size_t slot_length = sizeof(Slot) * desc.GetColumnCount();
   int i = 0;
   while (iter->GetStatus() == storage::kStatusOK) {
     uint32_t length = 0;
@@ -123,9 +123,9 @@ int export_to_csv(std::string table, std::string path) {
     std::string s((const char*) t + slot_length, length - slot_length);
     std::cout << s << std::endl;
 #endif
-    for (int i = 0; i < desc.column_count_; i++) {
-      Slot *slot = t->GetSlot(i, &desc);
-      switch (desc.GetType(i)) {
+    for (int i = 0; i < desc.GetColumnCount(); i++) {
+      Slot *slot = t->GetSlot(i);
+      switch (desc.GetColumnDesc(i).data_type_) {
         case kDTInteger:
           product.qty = *reinterpret_cast<const int64_t*>(t->GetValue(
               slot->offset_));
