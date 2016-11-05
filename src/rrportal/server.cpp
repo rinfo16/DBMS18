@@ -11,6 +11,7 @@
 #include <list>
 #include <boost/asio.hpp>
 #include <memory>
+#include "storage/storage_service_interface.h"
 #include "session.h"
 
 using boost::asio::ip::tcp;
@@ -61,11 +62,10 @@ int main(int argc, char* argv[]) {
       tcp::endpoint endpoint(tcp::v4(), std::atoi(argv[i]));
       servers.emplace_back(io_service, endpoint);
     }
-
+    storage::StorageServiceInterface::Instance()->Start();
     io_service.run();
   } catch (std::exception& e) {
     std::cerr << "Exception: " << e.what() << "\n";
   }
-
   return 0;
 }

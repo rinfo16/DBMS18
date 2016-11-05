@@ -14,19 +14,16 @@ struct Product {
   Product()
       : name(""),
         qty(0),
-        price(0.0f),
-        date(0) {
+        price(0){
   }
   Product(std::string name_, uint64_t qty_, double_t price_, int64_t date)
       : name(name_),
         qty(qty_),
-        price(price_),
-        date(date) {
+        price(price_){
   }
-  std::string name;
   int64_t qty;
-  double_t price;
-  int64_t date;
+  int64_t price;
+  std::string name;
 };
 
 void gen_random(char *s, const int len);

@@ -43,8 +43,7 @@ int create_csv(int test_rows, std::string path) {
     ssm << "NAME__" << i << "__" << buffer << "__" << i;
     Product product(ssm.str().c_str(), rand() % 20000,
                     (double) rand() / (double) 10000, rand());
-    os << product.name << product.qty << product.price
-       << DateSubsec2SimpleString(product.date) << NEWLINE;
+    os << product.qty << product.price << product.name <<  NEWLINE;
   }
 
   os.flush();
@@ -55,7 +54,7 @@ int create_csv(int test_rows, std::string path) {
 int create_table(std::string table_name) {
   TableSchema sch;
 
-  Column column;
+  ColumnSchema column;
   column.data_type_ = kDTVarchar;
   column.is_null_ = false;
   column.length_ = NAME_LENGTH;
@@ -109,7 +108,7 @@ int export_to_csv(std::string table, std::string path) {
   }
   Relation *rel = storage::Storage::instance().GetMetaDataManager()
       ->GetRelationByName(table);
-  RowDesc desc = rel->ToTupleDesc();
+  RowDesc desc = rel->ToDesc();
   storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(
       table);
   iter->SeekToFirst();
@@ -140,8 +139,6 @@ int export_to_csv(std::string table, std::string path) {
               slot->length_);
           break;
         case kDTDate:
-          product.date = *reinterpret_cast<const int64_t*>(t->GetValue(
-              slot->offset_));
           break;
         default:
           assert(false);
@@ -149,8 +146,7 @@ int export_to_csv(std::string table, std::string path) {
       }
     }
 
-    os2 << product.name << product.qty << product.price
-        << DateSubsec2SimpleString(product.date) << NEWLINE;
+    os2 << product.name << product.qty << product.price << NEWLINE;
 
     if (i % 100000 && i != 0)
       std::cout << "export " << i++ << " rows ..." << std::endl;

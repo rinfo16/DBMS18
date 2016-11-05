@@ -5,7 +5,7 @@
 #include <string>
 #include "common/data_type.h"
 
-struct Column {
+struct ColumnSchema {
   std::string name_;
   DataType data_type_;
   int length_;
@@ -14,7 +14,7 @@ struct Column {
 
 struct TableSchema {
   std::string name_;
-  std::vector<Column> column_list_;
+  std::vector<ColumnSchema> column_list_;
 };
 
 

@@ -1,6 +1,7 @@
 #ifndef __AST_DEF_H__
 #define __AST_DEF_H__
 
+#include "common/data_type.h"
 
 #define	ORD_ASC 1
 #define	ORD_DESC 2
@@ -25,11 +26,48 @@ typedef int join_type_t;
 typedef int table_scope_t;
 typedef int data_type_t;
 
-enum Operator {
+enum OperatorType {
+  kInvalid,
   kAssign,
   kEqual,
+  kLess,
+  kGreater,
   kLessOrEqual,
   kGreaterOrEaual,
 };
+
+enum OrderType {
+  kAsc,
+  kDesc
+};
+
+enum JoinType {
+  kJoinLeft,
+  kJoinRight,
+  kJoinInner,
+  kJoinOuter
+};
+
+enum TreeType {
+  kASTBase,
+  kASTSelectStmt,
+  kASTCreateStmt,
+  kASTCreateAsStmt,
+  kASTUpdateStmt,
+  kASTInsertStmt,
+  kASTCopyStmt,
+  kASTExpression,
+  kASTSelectTarget,
+  kASTJoinClause,
+  kASTOrderClause,
+  kASTReferenceName,
+  kASTTableFactor,
+  kASTColumnReference,
+  kASTColumnDefine,
+  kASTConstValue,
+  kASTTableReference,
+  kASTSubQuery
+};
+
 
 #endif // __AST_DEF_H__

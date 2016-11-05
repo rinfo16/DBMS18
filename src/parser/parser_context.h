@@ -11,7 +11,6 @@
 #include "parser/ast_base.h"
 #include "parser/ast_def.h"
 #include "driver.h"
-#include "select_stmt.h"
 
 using std::vector;
 using std::string;
@@ -21,42 +20,56 @@ using std::string;
  * actions. */
 class ParserContext {
  public:
-  ParserContext() {
+  ParserContext(const std::string &sql)
+      : sql_(sql) {
     root_ = NULL;
   }
 
   ~ParserContext();
 
-  ASTBase *new_create_table_stmt(const char * tbl_name, table_scope_t scope,
-                                 ASTBase * col_def);
+  bool Parse();
 
-  ASTBase *new_create_table_as_stmt(const char * tbl_name, table_scope_t scope,
-                                    ASTBase * col_names, ASTBase *subquery);
+  ASTBase *GetAST();
 
-  ASTBase *new_insert_stmt(const char* tbl_name, ASTBase *col_names,
-                           ASTBase *vals);
+  ASTBase *NewCreateStmt(ASTBase *table_name, ASTBase * column_define_list);
 
-  ASTBase *new_select_stmt(ASTBase* sel_list, ASTBase* tbl_ref_list,
-                           ASTBase* opt_where, ASTBase* opt_group,
-                           ASTBase* opt_have, ASTBase* opt_order);
+  ASTBase *NewCreateAsStmt(ASTBase *table_name, ASTBase * select_stmt);
 
-  ASTBase *new_name(const char* str);
+  ASTBase *NewLoadStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
+                         ASTBase *file_path);
 
-  ASTBase *new_value(const char *str);
+  ASTBase *NewInsertStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
+                         ASTBase *value_list);
 
-  ASTBase *new_orderby(ASTBase *expr, order_t ord);
+  ASTBase *NewSelectStmt(ASTBase* sel_list, ASTBase* tbl_ref_list,
+                         ASTBase* opt_where, ASTBase* opt_group,
+                         ASTBase* opt_have, ASTBase* opt_order);
 
-  ASTBase *new_table_factor(const char* tbl, const char* alias, ASTBase *sub);
+  ASTBase *NewColumnReference(ASTBase* opt_table_name, ASTBase* column_name);
 
-  ASTBase *new_join_table(ASTBase *left, ASTBase *right, ASTBase *cond,
-                          join_type_t type);
+  ASTBase *NewSelectTarget(ASTBase* expr_or_ref, ASTBase* alias_name);
 
-  ASTBase *new_column_def(const char *col_name, data_type_t type);
+  ASTBase *NewOrderClause(ASTBase *expr, OrderType ord);
 
-  ASTBase *new_expression(Operator op, ASTBase *left, ASTBase *right);
+  ASTBase *NewTableReference(ASTBase* table_name, ASTBase* alias);
+
+  ASTBase *NewSubquery(ASTBase* select_stmt, ASTBase* alias);
+
+  ASTBase *NewJoinClause(ASTBase *left, ASTBase *right, ASTBase *cond,
+                         JoinType type);
+
+  ASTBase *NewExpression(OperatorType op, ASTBase *left, ASTBase *right);
 
   ASTBase *NewUpdateStmt(ASTBase *table_name, ASTBase * set_clause_list,
                          ASTBase * opt_from_clause, ASTBase * opt_where);
+
+  ASTBase *NewReferenceName(const char* str);
+
+  ASTBase *NewConstValue(const char *str_val);
+
+  ASTBase *NewConstValue(int64_t int_val);
+
+  ASTBase *NewColumnDefine(ASTBase *column_name, int32_t type_and_length);
 
   /// type of the variable storage
   typedef std::map<std::string, double> variablemap_type;
@@ -69,6 +82,8 @@ class ParserContext {
   std::vector<ASTBase*> ast_node_list_;
 
   parser::Driver driver_;
+
+  std::string sql_;
 };
 
 //#define YYSTYPE (union _YYSTYPE)

@@ -38,6 +38,7 @@ class RowDesc {
   size_t GetColumnCount() const {
     return all_columns_desc_.size();
   }
+
 private:
   std::vector<uint32_t> mapping_;
   uint32_t column_count_;

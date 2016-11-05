@@ -95,6 +95,7 @@ COMMENT { return token::COMMENT; }
 CONDITION { return token::CONDITION; }
 CONSTRAINT { return token::CONSTRAINT; }
 CONTINUE { return token::CONTINUE; }
+COPY { return token::COPY; }
 CREATE { return token::CREATE; }
 CROSS { return token::CROSS; }
 DATABASE { return token::DATABASE; }
@@ -211,8 +212,13 @@ FALSE { yylval->intval = 0; return token::BOOL; }
 '[^'\n]*' { 
       int c = input();
       unput(c);
-      if (c != '\'') 
+      if (c != '\'') {
+        if (strlen(yytext) > 2) {
+          yylval->strval = strdup(yytext + 1);
+          yylval->strval[strlen(yylval->strval)  - 2]  = 0;
+        }
         return token::STRING;
+        }
       else
         yymore();
      }

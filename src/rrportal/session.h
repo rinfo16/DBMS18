@@ -9,6 +9,10 @@
 #include "connection.h"
 #include "common/tuple_row.h"
 #include "common/row_desc.h"
+#include "parser/select_stmt.h"
+#include "parser/create_stmt.h"
+#include "parser/load_stmt.h"
+#include "storage/storage_service_interface.h"
 
 using boost::asio::ip::tcp;
 
@@ -22,16 +26,25 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
 
   void deliver(const MessageBuffer& msg);
 
+  void MainLoop();
+
  private:
   bool ProcessStartupPacket(bool ssl_done);
   bool SendAuthRequest();
   bool SendParameterStatus();
   void SendReadForQuery(char status);
   void SendBackendKeyData();
-  void SendRowDescription(const RowDesc *row_desc);
+  void SendRowDescription(const RowDesc *row_desc, const std::vector<uint32_t> &proj_mapping);
   void SendRowData(const TupleRow *tuple_row, const RowDesc *desc,
                    const std::vector<uint32_t> & proj_mapping);
-  bool ReadCommand();
+  void SendCommandComplete(const std::string & msg);
+  void SendErrorResponse(const std::string & msg);
+
+  bool ProcessCommand();
+  void ProcessSimpleQuery(const std::string & query);
+  void ProcessCreateTable(CreateStmt *create_stmt);
+  void ProcessLoadData(LoadStmt *load_stmt);
+  bool ProcessSelect(SelectStmt *select_stmt);
   bool ReadBody();
 
   void do_read_header();
@@ -41,6 +54,7 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
   void Send(void *data, size_t length);
 
   void BackendMsgBegin(int8_t msg_id);
+  void BackendMsgAppendInt8(int8_t value);
   void BackendMsgAppendInt16(int16_t value);
   void BackendMsgAppendInt32(int32_t value);
   void BackendMsgAppendInt64(int64_t value);
@@ -50,6 +64,7 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
 
   tcp::socket socket_;
   ConnectionManager& manager_;
+  storage::StorageServiceInterface *storage_;
   MessageBuffer read_msg_;
   MessageBuffer write_msg_;
   MessageQueue write_msgs_;

@@ -36,24 +36,26 @@ bool Loader::Load() {
   if (rel == NULL) {
     return false;
   }
-  TupleDesc desc = rel->ToTupleDesc();
+  RowDesc desc = rel->ToDesc();
   batch_ = storage::Storage::instance().NewWriteBatch(rel_name_);
   if (batch_ == NULL) {
     return false;
   }
 
+  int32_t columns = desc.GetColumnCount();
+  //desc.mapping_.resize(attributes_.size(), 0);
   tuple_ = (Tuple*) malloc(config::Setting::instance().page_size_);
 
   int i = 0;
-  uint32_t slot_length = sizeof(Slot) * desc.column_count_;
+  uint32_t slot_length = sizeof(Slot) * desc.GetColumnCount();
   while (is_.read_line()) {
     try {
       uint32_t off = slot_length;
       union DataValue value;
       std::string str;
-      for (int i = 0; i < desc.column_count_; i++) {
-        Slot *slot = tuple_->GetSlot(i, &desc);
-        switch (desc.data_type_[desc.mapping_[i]]) {
+      for (int i = 0; i < desc.GetColumnCount(); i++) {
+        Slot *slot = tuple_->GetSlot(i);
+        switch (desc.GetColumnDesc(i).data_type_) {
           case kDTInteger:
             is_ >> value.integer_;
             slot->offset_ = off;

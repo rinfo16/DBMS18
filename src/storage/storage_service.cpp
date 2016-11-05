@@ -1,8 +1,9 @@
+#include <iostream>
 #include "storage_service.h"
 #include "write_batch.h"
 #include "iterator.h"
 #include "meta_data_manager.h"
-
+#include "storage/loader.h"
 
 namespace storage {
 
@@ -45,18 +46,18 @@ bool StorageService::CreateRelation(const TableSchema & schema) {
     Relation* rel = new Relation();
     rel->SetName(schema.name_);
     rel->SetID(id.pageno_);
-    std::vector<std::pair<Column, int> > columns;
+    std::vector<std::pair<ColumnSchema, int> > columns;
     for (int i = 0; i < schema.column_list_.size(); i++) {
       columns.push_back(std::make_pair(schema.column_list_[i], i));
     }
 
     std::sort(
         columns.begin(), columns.end(),
-        [](const std::pair<Column, int> & x, const std::pair<Column, int> & y)
+        [](const std::pair<ColumnSchema, int> & x, const std::pair<ColumnSchema, int> & y)
         { return x.first.data_type_ < y.first.data_type_;});
 
     for (size_t i = 0; i < columns.size(); i++) {
-      Column & col = columns[i].first;
+      ColumnSchema & col = columns[i].first;
       Attribute attribute;
       attribute.SetName(col.name_);
       attribute.SetID(columns[i].second);
@@ -132,6 +133,30 @@ void StorageService::InitDB() {
 
 void StorageService::FlushAll() {
   buffer_manager_->FlushAll();
+}
+
+
+StorageServiceInterface* StorageServiceInterface::Instance()
+{
+  return & Storage::instance();
+}
+
+int import_from_csv(const std::string table, const std::string path) {
+  storage::Loader *loader = new storage::Loader(path, table);
+  bool ok = loader->Load();
+  if (!ok) {
+    std::cout << "load failed ..." << std::endl;
+    delete loader;
+    return -1;
+  }
+  delete loader;
+  std::cout << "load finish ..." << std::endl;
+  return 0;
+}
+
+bool StorageServiceInterface::Load(const std::string & table_name, const std::string & file_path)
+{
+  return import_from_csv(table_name, file_path) == 0;
 }
 
 }  // namespace storage

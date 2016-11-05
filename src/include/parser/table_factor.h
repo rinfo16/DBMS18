@@ -5,19 +5,14 @@
 
 #include "parser/ast_base.h"
 
-using std::string;
-
 class TableFactor : public ASTBase {
+  friend ParserContext;
  public:
-  TableFactor()
-      : sub_query_(NULL) {
+  TableFactor(TreeType type)
+      : ASTBase(type) {
   }
 
-  string table_name_;
-  string alias_name_;
-  ASTBase *sub_query_;
-
-  TRACE_FUNC_DECLARE;
+  virtual ptree ToPropertyTree() const { return ptree(); }
 };
 
 #endif // __TABLE_FACTOR_H__

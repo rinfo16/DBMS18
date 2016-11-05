@@ -3,11 +3,12 @@
 #include <iostream>
 #include <thread>
 #include <boost/asio.hpp>
-#include "common/message.hpp"
+
+#include "../include/common/message.h"
 
 using boost::asio::ip::tcp;
 
-typedef std::deque<Message> MessageQueue;
+typedef std::deque<MessageBuffer> MessageQueue;
 
 class Client {
  public:
@@ -18,7 +19,7 @@ class Client {
     do_connect(endpoint_iterator);
   }
 
-  void write(const Message& msg) {
+  void write(const MessageBuffer& msg) {
     io_service_.post([this, msg]()
     {
       bool write_in_progress = !write_msgs_.empty();
@@ -49,7 +50,7 @@ class Client {
 
   void do_read_header() {
     boost::asio::async_read(
-        socket_, boost::asio::buffer(read_msg_.data(), Message::header_length),
+        socket_, boost::asio::buffer(read_msg_.Data(), MessageBuffer::header_length),
         [this](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec && read_msg_.decode_header())
@@ -65,12 +66,12 @@ class Client {
 
   void do_read_body() {
     boost::asio::async_read(
-        socket_, boost::asio::buffer(read_msg_.body(), read_msg_.body_length()),
+        socket_, boost::asio::buffer(read_msg_.Data(), read_msg_.GetSize()),
         [this](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec)
           {
-            std::cout.write(read_msg_.body(), read_msg_.body_length());
+            std::cout.write(read_msg_.Data(), read_msg_.GetSize());
             std::cout << "\n";
             do_read_header();
           }
@@ -84,8 +85,8 @@ class Client {
   void do_write() {
     boost::asio::async_write(
         socket_,
-        boost::asio::buffer(write_msgs_.front().data(),
-                            write_msgs_.front().length()),
+        boost::asio::buffer(write_msgs_.front().Data(),
+                            write_msgs_.front().GetSize()),
         [this](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec)
@@ -106,7 +107,7 @@ class Client {
  private:
   boost::asio::io_service& io_service_;
   tcp::socket socket_;
-  Message read_msg_;
+  MessageBuffer read_msg_;
   MessageQueue write_msgs_;
 };
 
@@ -125,12 +126,10 @@ int main(int argc, char* argv[]) {
 
     std::thread t([&io_service]() {io_service.run();});
 
-    char line[Message::max_body_length + 1];
-    while (std::cin.getline(line, Message::max_body_length + 1)) {
-      Message msg;
-      msg.body_length(std::strlen(line));
-      std::memcpy(msg.body(), line, msg.body_length());
-      msg.encode_header();
+    char line[MessageBuffer::buffer_length + 1];
+    while (std::cin.getline(line, MessageBuffer::buffer_length + 1)) {
+      MessageBuffer msg;
+      // TODO ..
       c.write(msg);
     }
 

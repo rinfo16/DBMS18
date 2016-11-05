@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include <vector>
 #include "parser/ast_base.h"
-#include "select_stmt.h"
-#include "name.h"
 #include "parser_context.h"
 
 #define yyerror(s) (ctx.driver_.error(s))
@@ -62,7 +60,7 @@
  /*** BEGIN PARSER - Change the parser grammar's tokens below ***/
 %union 
 {
-  int intval;
+  int64_t intval;
   double floatval;
   char *strval;
   int subtok;
@@ -74,7 +72,7 @@
 /* names and literal values */
 %token <strval> NAME
 %token <strval> STRING
-%token <strval> INTNUM
+%token <intval> INTNUM
 %token <intval> BOOL
 %token <floatval> APPROXNUM
 
@@ -130,6 +128,7 @@
 %token CONSTRAINT
 %token CONTINUE
 %token CONVERT
+%token COPY
 %token CREATE
 %token CROSS
 %token CURRENT_DATE
@@ -324,23 +323,25 @@
 %token FDATE_SUB
 %token FCOUNT
 
-%type <strval> opt_as_alias
 %type <intval> select_opts
 %type <intval> val_list opt_val_list case_list
-%type <intval> opt_asc_desc opt_table_scope
+%type <intval> opt_asc_desc
 %type <intval> opt_inner_cross opt_outer
 %type <intval> left_or_right opt_left_or_right_outer 
 %type <intval> index_list opt_for_join
 %type <intval> column_atts data_type 
 
-%type <astbase_ptr> talbe_name column_name
-%type <astbase_ptr> select_stmt opt_where opt_groupby opt_having opt_orderby groupby_list 
-%type <astbase_ptr>  select_expr select_expr_list 
-%type <astbase_ptr> table_factor join_table table_reference table_references expr
-%type <astbase_ptr> opt_join_condition join_condition opt_with_rollup
+%type <astbase_ptr> table_name column_name opt_as_alias alias_name
+%type <astbase_ptr> select_stmt opt_where opt_groupby opt_having opt_orderby 
+%type <astbase_ptr> groupby_list orderby_list
+%type <astbase_ptr> select_expr select_expr_list 
+%type <astbase_ptr> table_factor join_table table_reference table_references 
+%type <astbase_ptr> expr
+%type <astbase_ptr> opt_join_condition join_condition
 %type <astbase_ptr> stmt stmt_list create_table_stmt create_col_list table_subquery create_definition opt_column_list
 %type <astbase_ptr> insert_stmt ctext_row ctext_expr_list ctext_expr column_list
 %type <astbase_ptr> update_stmt set_clause_list set_clause set_target opt_from_caluse
+%type <astbase_ptr> load_stmt opt_column_name_list column_name_list file_path
 %{
 
 #include "parser_context.h"
@@ -396,16 +397,17 @@ expr: expr '+' expr { yyerror("not implement"); YYERROR; }
   | USERVAR ASSIGN expr { }
   |expr BETWEEN expr AND expr %prec BETWEEN  {}
   | expr EQUAL expr { 
-      $$ = ctx.new_expression(kEqual, $1, $3); 
+      $$ = ctx.NewExpression(kEqual, $1, $3); 
     }
   
-  | NAME      
+  | column_name      
   { 
-    $$ = ctx.new_name($1);
+    $$ = ctx.NewColumnReference(NULL, $1);
   }
 
-  | NAME '.' NAME 
+  | table_name '.' column_name 
   {
+    $$ = ctx.NewColumnReference($1, $3);
   }
   
   | USERVAR    
@@ -414,9 +416,9 @@ expr: expr '+' expr { yyerror("not implement"); YYERROR; }
 
   | STRING    
   { 
-    $$ = ctx.new_value($1);
+    $$ = ctx.NewConstValue($1);
   }
-  | INTNUM    { $$ = ctx.new_value($1);}
+  | INTNUM    { $$ = ctx.NewConstValue($1);}
   | APPROXNUM  {  }
   | BOOL      {   }
 ;
@@ -511,7 +513,7 @@ select_stmt:
   | SELECT select_opts select_expr_list FROM table_references 
     opt_where opt_groupby opt_having opt_orderby opt_limit
   { 
-    $$ = ctx.new_select_stmt($3, $5, $6, $7, $8, $9);
+    $$ = ctx.NewSelectStmt($3, $5, $6, $7, $8, $9);
   }
 ;
 
@@ -525,33 +527,39 @@ opt_where:
 opt_groupby:
   /* nil */ { $$ = NULL; }
 
-  | GROUP BY groupby_list opt_with_rollup 
+  | GROUP BY groupby_list 
   { $$ = $3; }
 ;
 
-groupby_list: 
-  expr opt_asc_desc 
+groupby_list:
+  expr 
   {
-    $$ = ctx.new_orderby($1, $2); 
+    $$ = $1; 
   }
   
-  | groupby_list COMMA expr opt_asc_desc 
+  | groupby_list COMMA expr 
   { 
-    ASTBase *ptr = ctx.new_orderby($3, $4);
-    $1->rappend(ptr);
+    $$ = $1;
+    $$->RAppend($3);
+  }
+  
+orderby_list: 
+  expr opt_asc_desc 
+  {
+    $$ = ctx.NewOrderClause($1, (OrderType)$2); 
+  }
+  
+  | orderby_list COMMA expr opt_asc_desc 
+  { 
+    ASTBase *ptr = ctx.NewOrderClause($3, (OrderType)$4);
+    $1->RAppend(ptr);
     $$ = $1;
   }
 ;
 
 opt_asc_desc: 
-  /* nil */ { $$ = ORD_ASC; }
-  | ASC { $$ = ORD_ASC; }
-  | DESC { $$ = ORD_DESC; }
-;
-
-opt_with_rollup:
-  /* nil */ { $$ = NULL; }
-  | WITH ROLLUP { $$ = NULL; }
+  /* nil */ { $$ = kAsc; }
+  | ASC { $$ = kAsc; }
 ;
 
 opt_having: 
@@ -566,7 +574,7 @@ opt_orderby:
   /* nil */
   { $$ = NULL; }
 
-  | ORDER BY groupby_list
+  | ORDER BY orderby_list
   { $$ = $3; }
 ;
 
@@ -580,13 +588,13 @@ column_list:
   NAME 
   {
       
-     $$ = ctx.new_name($1);
+     $$ = ctx.NewReferenceName($1);
   }
   
   | column_list COMMA NAME 
   {
     ASTBase *l = $1;
-    l->rappend(ctx.new_name($3));
+    l->RAppend(ctx.NewReferenceName($3));
     
     $$ = l;
   }
@@ -612,7 +620,7 @@ select_expr_list:
   | select_expr_list COMMA select_expr 
   { 
      
-    $1->rappend($3); $$ = $1; 
+    $1->RAppend($3); $$ = $1; 
   }
   
   | '*' {  $$ = NULL; }
@@ -621,14 +629,9 @@ select_expr_list:
 select_expr:
   expr opt_as_alias 
   { 
-    $$ = $1;
+    $$ = ctx.NewSelectTarget($1, $2);
   };
 
-opt_as_alias: 
-  AS NAME { $$ = $2; }
-  | NAME { $$ = $1; }
-  | /* nil */ { $$ = NULL; }
-;
 
 table_references: table_reference 
   { 
@@ -638,7 +641,7 @@ table_references: table_reference
   | table_references COMMA table_reference 
   { 
     ASTBase *l = $1;
-    l->rappend($3);
+    l->RAppend($3);
     $$ = l; 
   }
 ;
@@ -648,57 +651,41 @@ table_reference:
   | join_table { $$ = $1; }
 ;
 
-table_factor: NAME opt_as_alias index_hint 
+table_factor: table_name opt_as_alias index_hint 
   {
-    $$ = ctx.new_table_factor($1, $2, NULL);
+    $$ = ctx.NewTableReference($1, $2);
   }
 
-  | NAME '.' NAME opt_as_alias index_hint 
+  | table_subquery opt_as alias_name 
   { 
-    /* TODO DB name ...*/
-    $$ = ctx.new_table_factor($3, $4, NULL); 
-  }
-
-  | table_subquery opt_as NAME 
-  { 
-    $$ = ctx.new_table_factor(NULL, $3, $1);
+    $$ = ctx.NewSubquery($1, $3);
   }
 
   | PAREN_LEFT table_references PAREN_RIGHT 
   { 
-    $$ = ctx.new_table_factor(NULL, NULL, $2);
+    $$ = $2;
   }
 ;
 
-opt_as: AS
-    | /* nil */
+opt_as: AS     
+    | /* nil */ 
 ;
 
 join_table: 
   table_reference opt_inner_cross JOIN table_factor opt_join_condition 
   {
-    $$ = ctx.new_join_table($1, $4, $5, $2); 
-  }
-
-  | table_reference STRAIGHT_JOIN table_factor 
-  { 
-    $$ = ctx.new_join_table($1, $3, NULL, JOIN_STRAIGHT);
-  }
-
-  | table_reference STRAIGHT_JOIN table_factor ON expr 
-  { 
-    $$ = ctx.new_join_table($1, $3, $5, JOIN_STRAIGHT); 
+    $$ = ctx.NewJoinClause($1, $4, $5, (JoinType)$2); 
   }
   
   | table_reference left_or_right opt_outer JOIN table_factor join_condition
   {
-    $$ = ctx.new_join_table($1, $5, $6, $2); 
+    $$ = ctx.NewJoinClause($1, $5, $6, (JoinType)$2); 
   }
 
   
   | table_reference NATURAL opt_left_or_right_outer JOIN table_factor 
   {
-    $$ = ctx.new_join_table($1, $5, NULL, $3); 
+    $$ = ctx.NewJoinClause($1, $5, NULL, (JoinType)$3); 
   }
 
 ;
@@ -765,9 +752,9 @@ stmt:
 ;
 
 insert_stmt:
-  INSERT INTO NAME opt_column_list VALUES ctext_row
+  INSERT INTO table_name opt_column_list VALUES ctext_row
   {
-      $$ = ctx.new_insert_stmt($3,$4,$6);
+      $$ = ctx.NewInsertStmt($3,$4,$6);
   }
 ;
 
@@ -777,16 +764,16 @@ ctext_row:
 
 ctext_expr_list:
   ctext_expr { $$ = $1; }
-  | ctext_expr_list COMMA ctext_expr { $1->rappend($3); $$ = $1; }
+  | ctext_expr_list COMMA ctext_expr { $1->RAppend($3); $$ = $1; }
 ;
 
 ctext_expr: 
-  STRING { $$ = ctx.new_value($1); };
+  STRING { $$ = ctx.NewConstValue($1); };
 
 set_clause_list:
   set_clause_list COMMA set_clause
   {
-    $1->rappend($3);
+    $1->RAppend($3);
     $$ = $1;
   }
 ;
@@ -798,7 +785,7 @@ set_clause:
     { 
       
     }
-    $$ = ctx.new_expression(kAssign, $1, $3);
+    $$ = ctx.NewExpression(kAssign, $1, $3);
   }
 ;
 
@@ -807,7 +794,7 @@ stmt:
   update_stmt { $$ = $1; };
 
 update_stmt:
-  UPDATE talbe_name SET set_clause_list opt_from_caluse opt_where
+  UPDATE table_name SET set_clause_list opt_from_caluse opt_where
   {
       $$ = ctx.NewUpdateStmt($2, $4, $5, $6); 
   }
@@ -820,7 +807,7 @@ opt_from_caluse:
 set_target:
      NAME
      {
-        $$ = ctx.new_name($1);
+        $$ = ctx.NewReferenceName($1);
      }
      
 stmt: create_database_stmt {  };
@@ -832,24 +819,19 @@ create_database_stmt: CREATE DATABASE NAME
 ;
 
 
-stmt: create_table_stmt { }
+stmt: create_table_stmt { $$ = $1; }
   ;
 
 create_table_stmt: 
-  CREATE opt_table_scope TABLE NAME  PAREN_LEFT  create_col_list PAREN_RIGHT
+  CREATE TABLE table_name  PAREN_LEFT  create_col_list PAREN_RIGHT
   {
-    $$ = ctx.new_create_table_stmt($4, $2, $6);
+    $$ = ctx.NewCreateStmt($3, $5);
   }
   
-  | CREATE opt_table_scope TABLE NAME opt_column_list AS table_subquery
+  | CREATE TABLE table_name AS table_subquery
   {
-    $$ = ctx.new_create_table_as_stmt($4, $2, $5, $7);
+    $$ = ctx.NewCreateAsStmt($3, $5);
   }
-;
-
-opt_table_scope: 
-  /* nil */ { $$ = 0; }
-  | TEMPORARY { $$ = TABLE_SCOPE_TMP; }
 ;
 
 opt_column_list:
@@ -860,20 +842,13 @@ opt_column_list:
 
 create_col_list:
     create_definition { $$ = $1; }
-    | create_col_list COMMA create_definition { $$ = $1; $1->rappend($3); }
+    | create_col_list COMMA create_definition { $$ = $1; $1->RAppend($3); }
 ;
 
-create_definition: /* not support */
-  PRIMARY KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-  | KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-  | INDEX PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-  | FULLTEXT INDEX PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-  | FULLTEXT KEY PAREN_LEFT column_list PAREN_RIGHT { $$ = NULL; }
-;
 
 create_definition:
-  NAME data_type column_atts
-  { $$ = ctx.new_column_def($1, $2); }
+  column_name data_type column_atts
+  { $$ = ctx.NewColumnDefine($1, $2); }
 ;
 
 column_atts:
@@ -894,23 +869,34 @@ column_atts:
 
 
 data_type:
-  INTEGER { $$ = DATA_TYPE_INTEGER; }
-  | FLOAT { $$ = DATA_TYPE_FLOAT; }
+  INTEGER { $$ = MAKE_INT32(8, kDTInteger); }
+  | FLOAT { $$ = MAKE_INT32(8, kDTFloat); }
+  | VARCHAR PAREN_LEFT INTNUM PAREN_RIGHT { $$ = MAKE_INT32($3, kDTVarchar); }
 ;
 
-talbe_name:
+table_name:
   NAME      
   { 
-    $$ = ctx.new_name($1);
+    $$ = ctx.NewReferenceName($1);
   }
   
 column_name:
   NAME      
   { 
-    $$ = ctx.new_name($1);
+    $$ = ctx.NewReferenceName($1);
+  }
+
+alias_name:
+  NAME      
+  { 
+    $$ = ctx.NewReferenceName($1);
   }
   
-
+opt_as_alias: 
+  AS alias_name { $$ = $2; }
+  | alias_name { $$ = $1; }
+  | /* nil */ { $$ = NULL; }
+;
 
 
 stmt: set_stmt {  };
@@ -922,6 +908,37 @@ set_list: set_expr | set_list COMMA set_expr ;
 set_expr: USERVAR COMPARISON expr {
  if ($2 != 4) { }  }
   | USERVAR ASSIGN expr {  }
+;
+
+stmt: load_stmt { $$ = $1; };
+
+load_stmt:
+COPY table_name opt_column_name_list FROM file_path
+ { $$ = ctx.NewLoadStmt($2, $3, $5); };
+
+
+file_path:
+  STRING {
+    $$ = ctx.NewConstValue($1);
+  };
+
+ opt_column_name_list:
+  /* nil */ { $$ = NULL; }
+  | PAREN_LEFT column_name_list PAREN_RIGHT 
+  { $$ = $2; };
+
+
+column_name_list:
+  column_name 
+  {   
+     $$ = $1;
+  }
+  
+  | column_name_list COMMA column_name 
+  {
+    $1->RAppend($3);  
+    $$ = $1;
+  }
 ;
 
  /*** END PARSER - Change the parser grammar rules above ***/

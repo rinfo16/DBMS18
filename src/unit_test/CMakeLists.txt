@@ -20,7 +20,7 @@ add_executable (file file.test.cpp)
 target_link_libraries (file common storage gtest)
 
 add_executable (storage_service.test storage_service.test.cpp)
-target_link_libraries (storage_service.test storage common gtest)
+target_link_libraries (storage_service.test storage common gtest boost_date_time)
 
 add_executable (relation relation.test.cpp)
 target_link_libraries (relation storage common gtest)

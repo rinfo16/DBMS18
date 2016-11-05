@@ -21,6 +21,9 @@ class StorageServiceInterface : public boost::noncopyable {
   virtual WriteBatchInterface * NewWriteBatch(const std::string & rel_name) = 0;
   virtual void DeleteIOObject(IOObjectInterface* io_object) = 0;
   virtual MetaDataManagerInterface *GetMetaDataManager() = 0;
+
+  static StorageServiceInterface* Instance();
+  static bool Load(const std::string & table_name, const std::string & file_path);
 };
 
 }

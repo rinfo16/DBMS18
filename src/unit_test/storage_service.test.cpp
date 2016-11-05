@@ -9,7 +9,7 @@ void test1() {
   TableSchema sch2;
   TableSchema sch3;
 
-  Column column;
+  ColumnSchema column;
   column.data_type_ = kDTVarchar;
   column.is_null_ = false;
   column.length_ = 32;

@@ -81,6 +81,14 @@ class Relation {
     return last_data_pageid_;
   }
 
+  int32_t GetAttributeIndex(const std::string & attribute_name) const {
+    for (int i = 0; i < attributes_.size(); i++) {
+      if (attributes_[i].GetName() == attribute_name) {
+        return i;
+      }
+    }
+    return -1;
+  }
   boost::property_tree::ptree ToPropertyTree() {
     boost::property_tree::ptree relation;
     boost::property_tree::ptree attributes;
@@ -151,7 +159,7 @@ class Relation {
     InitByPropertyTree(relation_tree);
   }
 
-  RowDesc ToTupleDesc() const {
+  RowDesc ToDesc() const {
     RowDesc desc;
     uint32_t off = 0;
     bool variable = false;
