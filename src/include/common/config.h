@@ -14,8 +14,10 @@ struct SettingParam {
     data_directory_ = DATA_DIRECTORY;
     max_page_number_per_file_ = MAX_PAGE_NUMBER_PER_FILE;
     extent_number_per_file_ = MAX_EXTENT_COUNT;
+    port_ = DEFAULT_PORT;
   }
 
+  uint32_t port_;
   uint32_t page_size_;
   uint32_t page_number_per_extent_;
   uint32_t buffer_pool_size_;

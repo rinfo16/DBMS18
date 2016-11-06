@@ -15,9 +15,22 @@ typedef std::deque<MessageBuffer> MessageQueue;
 
 class Connection {
  public:
+  Connection()
+      : stop_(false) {
+  }
   virtual ~Connection() {
   }
+
+  bool IsStop() {
+    return stop_;
+  }
+  virtual void Stop() {
+    stop_ = true;
+  }
+
   virtual void deliver(const MessageBuffer& msg) = 0;
+ private:
+  bool stop_;
 };
 
 typedef std::shared_ptr<Connection> ConnectionPtr;
@@ -45,6 +58,12 @@ class ConnectionManager {
       participant->deliver(msg);
   }
 
+  void Stop() {
+    for (auto iter = participants_.begin(); iter != participants_.end(); iter++) {
+      (*iter)->Stop();
+    }
+    std::cout << "connection manager stop." << std::endl;
+  }
  private:
   std::set<ConnectionPtr> participants_;
   enum {

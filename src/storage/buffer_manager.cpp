@@ -32,6 +32,7 @@ bool BufferManager::Start() {
     free_buffer_index_.push_back(i);
   }
   lru_list_ = new utils::List<PageFrame>();
+  std::cout << "buffer manager start." << std::endl;
   return true;
 }
 
@@ -53,6 +54,8 @@ void BufferManager::Stop() {
   stack_q_.clear();
   delete lru_list_;
   lru_list_ = NULL;
+
+  std::cout << "buffer manager stop." <<std::endl;
 }
 
 Page* BufferManager::FixPage(PageID id, ReadWriteMode mode,

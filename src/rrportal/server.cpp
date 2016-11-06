@@ -1,71 +1,61 @@
-// Modified from boost asio example
-// http://www.boost.org/doc/libs/1_62_0/doc/html/boost_asio/
-//
-// Copyright (c) 2003-2016 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-
 #include <iostream>
-#include <list>
-#include <boost/asio.hpp>
-#include <memory>
-#include "storage/storage_service_interface.h"
+#include "common/config.h"
+#include "server.h"
 #include "session.h"
+#include "storage/storage_service_interface.h"
 
-using boost::asio::ip::tcp;
-
+bool extern g_quit;
 //----------------------------------------------------------------------
 
-typedef std::deque<MessageBuffer> MessageQueue;
+Server::Server(uint16_t port)
+    : port_(port),
+      endpoint_(tcp::v4(), port),
+      acceptor_(io_service_, endpoint_),
+      socket_(io_service_),
+      thread_(NULL) {
+}
 
-class Server {
- public:
-  Server(boost::asio::io_service& io_service, const tcp::endpoint& endpoint)
-      : acceptor_(io_service, endpoint),
-        socket_(io_service) {
-    do_accept();
-  }
+Server::~Server() {
+  delete thread_;
+}
 
- private:
-  void do_accept() {
-    acceptor_.async_accept(socket_, [this](boost::system::error_code ec)
-    {
-      if (!ec)
+void Server::DoAccept() {
+  acceptor_.async_accept(
+      socket_,
+      [this](boost::system::error_code ec)
       {
-        std::make_shared<Session>(std::move(socket_), connection_manager_)->start();
-      }
+        if (!ec)
+        {
+          std::make_shared<Session>(std::move(socket_), connection_manager_)->start();
+        }
 
-      do_accept();
-    });
+        DoAccept();
+      });
+  if (g_quit) {
+    Stop();
   }
+}
 
-  tcp::acceptor acceptor_;
-  tcp::socket socket_;
-  ConnectionManager connection_manager_;
-};
-
-//----------------------------------------------------------------------
-
-int main(int argc, char* argv[]) {
-  try {
-    if (argc < 2) {
-      std::cerr << "Usage: chat_server <port> [<port> ...]\n";
-      return 1;
-    }
-
-    boost::asio::io_service io_service;
-
-    std::list<Server> servers;
-    for (int i = 1; i < argc; ++i) {
-      tcp::endpoint endpoint(tcp::v4(), std::atoi(argv[i]));
-      servers.emplace_back(io_service, endpoint);
-    }
-    storage::StorageServiceInterface::Instance()->Start();
-    io_service.run();
-  } catch (std::exception& e) {
-    std::cerr << "Exception: " << e.what() << "\n";
+bool Server::Start() {
+  thread_ = new std::thread(&Server::Run, this);
+  bool ok = storage::StorageServiceInterface::Instance()->Start();
+  if (!ok) {
+    return false;
   }
-  return 0;
+  std::cout << "storage initialize ok." << std::endl;
+  DoAccept();
+  std::cout << "server listen on port [" << port_ << "]." << std::endl;
+  std::cout << "begin accept connection ..." << std::endl;
+  return ok;
+}
+
+void Server::Stop() {
+  connection_manager_.Stop();
+  storage::StorageServiceInterface::Instance()->Stop();
+  io_service_.stop();
+  thread_->join();
+}
+
+void Server::Run() {
+  io_service_.run();
 }

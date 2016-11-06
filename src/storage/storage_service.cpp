@@ -29,7 +29,7 @@ bool StorageService::Start() {
   if (!meta_data_manager_->Start()) {
     return false;
   }
-  return meta_data_manager_->Start();
+  return true;
 }
 
 void StorageService::Stop() {
@@ -37,6 +37,7 @@ void StorageService::Stop() {
   // Since it call buffer manager to flush its data
   meta_data_manager_->Stop();
   buffer_manager_->Stop();
+  std::cout << "storage service stop." << std::endl;
 }
 
 bool StorageService::CreateRelation(const TableSchema & schema) {

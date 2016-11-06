@@ -15,6 +15,7 @@
 #define SEGMENT_DESCRIPT_FILE_NO  0
 #define DATA_FILE_NO              1
 #define FILE_HEADER_PAGE_NO       0
+#define DEFAULT_PORT 8432
 
 #define STR_NAME                  "NAME"
 #define STR_ID                    "ID"

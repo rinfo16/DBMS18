@@ -98,6 +98,7 @@ bool MetaDataManager::Start() {
     buffer_manager_->UnfixPage(segment_desc_page);
   }
   buffer_manager_->UnfixPage(seg_file_hdr_page);
+  std::cout << "meta data manager start." << std::endl;
   return true;
 }
 
@@ -122,6 +123,7 @@ void MetaDataManager::Stop() {
   all_relations_.clear();
   id_rel_map_.clear();
   name_rel_map_.clear();
+  std::cout << "meta data manager stop." << std::endl;
 }
 
 }  // namespace storage

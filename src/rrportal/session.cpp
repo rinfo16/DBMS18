@@ -18,28 +18,57 @@ Session::Session(tcp::socket socket, ConnectionManager& manager_)
     : socket_(std::move(socket)),
       manager_(manager_),
       storage_(NULL),
-      proto_version_(0) {
+      proto_version_(0),
+      thread_(NULL) {
+}
+
+Session::~Session() {
+  std::cout << "delete thread" << std::endl;
+  delete thread_;
 }
 
 void Session::start() {
-  do {
-    storage_ = storage::StorageServiceInterface::Instance();
-    manager_.join(shared_from_this());
-    if (!ProcessStartupPacket(false)) {
-      break;
-    }
-    if (!SendParameterStatus()) {
-      break;
-    }
-    SendBackendKeyData();
-    SendReadForQuery(READY_FOR_QUERY_IDLE);
-    MainLoop();
-  } while (0);
+  manager_.join(shared_from_this());
+  std::cout << "create new thread" << std::endl;
+  thread_ = new std::thread(&Session::Thread, this);
+}
+
+void Session::Stop() {
+  std::cout << "stop the session." << std::endl;
+  Connection::Stop();
+  thread_->join();
   manager_.leave(shared_from_this());
+  std::cout << "session stop." << std::endl;
+}
+
+void Session::Thread() {
+  do {
+    try {
+      storage_ = storage::StorageServiceInterface::Instance();
+      if (!ProcessStartupPacket(false)) {
+        break;
+      }
+      if (!SendParameterStatus()) {
+        break;
+      }
+      SendBackendKeyData();
+      SendReadForQuery(READY_FOR_QUERY_IDLE);
+
+      MainLoop();
+    } catch (const std::runtime_error &ex) {
+      std::cerr << ex.what() << '\n';
+    }
+  } while (0);
+
+  if (!IsStop()) {
+    // close actively
+    manager_.leave(shared_from_this());
+    std::cout << "session end." << std::endl;
+  }
 }
 
 void Session::MainLoop() {
-  while (true) {
+  while (!IsStop()) {
     ProcessCommand();
   }
 }
@@ -313,10 +342,10 @@ void Session::ProcessSimpleQuery(const std::string & query) {
     CreateStmt *create_stmt = dynamic_cast<CreateStmt *>(parse_tree);
     ProcessCreateTable(create_stmt);
   } else if (parse_tree->ASTType() == kASTCopyStmt) {
-    LoadStmt *load_stmt =dynamic_cast<LoadStmt *>(parse_tree);
+    LoadStmt *load_stmt = dynamic_cast<LoadStmt *>(parse_tree);
     ProcessLoadData(load_stmt);
   } else if (parse_tree->ASTType() == kASTSelectStmt) {
-    SelectStmt *select_stmt =dynamic_cast<SelectStmt *>(parse_tree);
+    SelectStmt *select_stmt = dynamic_cast<SelectStmt *>(parse_tree);
     ProcessSelect(select_stmt);
   }
   parser::ParserServiceInterface::Instance()->DestroySQLParser(sql_parser);
@@ -359,11 +388,11 @@ void Session::ProcessLoadData(LoadStmt *load_stmt) {
 }
 
 bool Session::ProcessSelect(SelectStmt *select_stmt) {
-  // TODO .. semantic check
-  // TODO .. reduce sql
-  // TODO .. optimize path
-  // TODO .. CBO
-  // TODO .. move the follow code to realizer or executor buidler ...
+// TODO .. semantic check
+// TODO .. reduce sql
+// TODO .. optimize path
+// TODO .. CBO
+// TODO .. move the follow code to realizer or executor buidler ...
   bool ret = false;
   storage::IteratorInterface *iter = NULL;
   std::string table_name;
@@ -387,11 +416,11 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
 
   std::vector<uint32_t> projection_mapping;
   auto select_list = select_stmt->SelectList();
-  projection_mapping.resize(select_list.size());
   for (size_t i = 0; i < select_list.size(); i++) {
     const ExpressionBase *expr = select_list[i]->SelectExpression();
     if (expr->ASTType() == kASTColumnReference) {
-      const ColumnReference *column_reference = dynamic_cast<const ColumnReference*>(expr);
+      const ColumnReference *column_reference =
+          dynamic_cast<const ColumnReference*>(expr);
       int32_t index = relation->GetAttributeIndex(
           column_reference->ColumnName());
       if (index < 0)
@@ -405,37 +434,42 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
     return false;
   }
   RowDesc desc = relation->ToDesc();
-  std:: cout << "build execution tree" << std::endl;
-  // begin build execution tree ...
+  std::cout << "build execution tree" << std::endl;
+// begin build execution tree ...
 
   TupleRow *row = NULL;
   SendRowDescription(&desc, projection_mapping);
   executor::ExecInterface *exec = new executor::SeqScan(iter, 0);
 
-
-  std:: cout << "execute the plan" << std::endl;
-  // execute the plan
+  std::stringstream ssm;
+  int rows = 0;
+  std::cout << "execute the plan" << std::endl;
+// execute the plan
   if (!exec->Prepare()) {
     goto RET;
   }
   if (!exec->Open()) {
     goto RET;
   }
+
   row = new TupleRow(1);
   while (true) {
     bool ok = exec->GetNext(row);
     if (!ok)
       break;
+    rows++;
     SendRowData(row, &desc, projection_mapping);
     free(row->GetTuple(0));
   }
   exec->Close();
+  ssm << "SELECT " << rows << " rows." << std::endl;
+  SendCommandComplete(ssm.str());
   ret = true;
 
-RET:
-  delete row;
+  RET: delete row;
   delete exec;
   storage_->DeleteIOObject(iter);
+  return ret;
 }
 
 bool Session::ReadBody() {
@@ -557,11 +591,9 @@ void Session::SendRowDescription(const RowDesc *row_desc,
     BackendMsgAppendInt16((int16_t) col_desc.data_type_size_);
 
     // The type modifier. The meaning of the modifier is type-specific.
-    BackendMsgAppendInt32(0);
+    BackendMsgAppendInt32(-1);
 
     int16_t format_code = 0;
-    if (col_desc.data_type_ != kDTVarchar)
-      format_code = 1;
     //The format code being used for the field. Currently will be zero (text) or one (binary).
     BackendMsgAppendInt16(format_code);
   }
@@ -572,28 +604,43 @@ void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *desc,
                           const std::vector<uint32_t> & proj_mapping) {
   BackendMsgBegin(DATA_ROW);
   uint16_t number = (uint16_t) proj_mapping.size();
+
+// The number of column values that follow (possibly zero).
+  BackendMsgAppendInt16(number);
   for (uint16_t i = 0; i < number; i++) {
     const ColumnDesc & col_desc = desc->GetColumnDesc(proj_mapping[i]);
     uint32_t nth_tuple = col_desc.item_slot_.nth_tuple_;
     uint32_t nth_item = col_desc.item_slot_.nth_item_;
+
     const Tuple *tuple = tuple_row->GetTuple(nth_tuple);
     const Slot * slot = tuple->GetSlot(nth_item);
+    // The length of the column value, in bytes (this count does not include
+    // itself). Can be zero. As a special case, -1 indicates a NULL column
+    // value. No value bytes follow in the NULL case
+
+    uint16_t off = slot->offset_;
+    uint16_t len = slot->length_;
+    std::string value;
     switch (col_desc.data_type_) {
       case kDTInteger:
-      case kDTDate:
-        BackendMsgAppendInt64(tuple->GetInteger(slot->offset_));
+      case kDTDate: {
+        std::stringstream ssm;
+        int64_t i = tuple->GetInteger(off);
+        ssm << i;
+        value = ssm.str();
+      }
         break;
       case kDTFloat:
         break;
       case kDTVarchar:
-        BackendMsgAppendString(
-            std::string((const char*) tuple->GetValue(slot->offset_),
-                        slot->length_));
+        value = std::string((const char*) tuple->GetValue(off), len);
         break;
       default:
         break;
     }
-    BackendMsgAppend(tuple->GetValue(slot->offset_), slot->length_);
+    int32_t length = value.size();
+    BackendMsgAppendInt32(length + 1);
+    BackendMsgAppendString(value);
   }
   BackendMsgEnd(DATA_ROW);
 }
@@ -612,7 +659,7 @@ void Session::SendErrorResponse(const std::string & msg) {
 }
 
 void Session::BackendMsgBegin(int8_t msg_id) {
-  // 1 byte message id,  4 byte message body
+// 1 byte message id,  4 byte message body
   write_msg_.SetSize(0);
   write_msg_.Append(&msg_id, 1);
   write_msg_.SetSize(1 + 4);
@@ -646,7 +693,7 @@ void Session::BackendMsgAppend(const void *value, size_t length) {
 }
 
 void Session::BackendMsgEnd(int8_t msg_id) {
-  // minus the first byte of the message
+// minus the first byte of the message
   uint32_t length = write_msg_.GetSize() - 1;
   length = htonl(length);
   memcpy(write_msg_.Data() + 1, &length, sizeof(length));

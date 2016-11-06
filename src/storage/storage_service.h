@@ -15,7 +15,7 @@ class StorageService : public StorageServiceInterface {
   StorageService();
   virtual ~StorageService();
   virtual bool Start();
-  void Stop();
+  virtual void Stop();
   virtual bool CreateRelation(const TableSchema & schema);
   virtual bool DropRelation(const std::string & rel_name);
   virtual IteratorInterface * NewIterator(const std::string & rel_name);

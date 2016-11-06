@@ -1,4 +1,9 @@
 #include "space_manager.h"
+#include <memory.h>
+#include <string.h>
+#include <iostream>
+#include <sstream>
+#include <fstream>
 #include "common/define.h"
 #include "common/config.h"
 #include "common/bitmap.h"
@@ -7,10 +12,6 @@
 #include "page_operation.h"
 #include "buffer_manager.h"
 #include "space_manager.h"
-#include <memory.h>
-#include <string.h>
-#include <sstream>
-#include <fstream>
 
 namespace storage {
 
@@ -27,8 +28,14 @@ SpaceManager::~SpaceManager() {
 }
 
 bool SpaceManager::InitDB() {
-  if (!Exists())
-    return CreateFile(SEGMENT_DESCRIPT_FILE_NO);
+  if (!Exists()) {
+    bool ok = CreateFile(SEGMENT_DESCRIPT_FILE_NO);
+    if (!ok) {
+      return false;
+    }
+    std::cout << "initialize database file in [" << data_directory_ << "]" << std::endl;
+  }
+  std::cout << "space manager start." << std::endl;
   return true;
 }
 
@@ -128,7 +135,8 @@ bool SpaceManager::CreateSegment(PageID *segment_header_page) {
   seg_header_pageid.fileno_ = seg_file_header_pageid.fileno_;
   PageCreateStruct create_struct;
   create_struct.page_type_ = kPageSegmentHeader;
-  Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, kWrite, &create_struct);
+  Page *seg_hdr_page = buffer_manager_->FixPage(seg_header_pageid, kWrite,
+                                                &create_struct);
   if (seg_hdr_page) {
     SegmentHeader *segment_header = ToSegmentHeader(seg_hdr_page);
     segment_header->extent_count_ = 0;
@@ -174,7 +182,7 @@ bool SpaceManager::AllocateExtentInSegment(Page* segment_header_page,
 
     fileno_t file_no = segment_file_header->fileno_[i];
     if (AllocateExtentInFile(segment_header_page, file_no,
-                              &new_externt_header_pageid)) {
+                             &new_externt_header_pageid)) {
       ret = true;
       break;
     }
@@ -225,7 +233,8 @@ bool SpaceManager::AllocateExtentInFile(Page *segment_page,
 
   PageCreateStruct create_struct;
   create_struct.page_type_ = kPageExtentHeader;
-  Page *page = buffer_manager_->FixPage(extent_header_pageid, kWrite, &create_struct);
+  Page *page = buffer_manager_->FixPage(extent_header_pageid, kWrite,
+                                        &create_struct);
   if (page == NULL) {
     assert(false);
     buffer_manager_->UnfixPage(page);
@@ -264,8 +273,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
     return false;
   }
 
-  Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid
-                                  );
+  Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid);
   if (segment_header_page == NULL) {
     return false;
   }
@@ -280,8 +288,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
     extent_header_pageid = segment_header->first_extent_header_page_id_;
 
   while (!extent_header_pageid.Invalid()) {
-    Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid
-                                                        );
+    Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid);
     if (extent_header_page == NULL) {
       buffer_manager_->UnfixPage(segment_header_page);
       return false;
@@ -298,8 +305,7 @@ bool SpaceManager::WriteTuple(PageID segment_header_pageid, void *tuple,
   if (!ok) {
     PageID extent_header_pageid;
     if (AllocateExtentInSegment(segment_header_page, &extent_header_pageid)) {
-      Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid
-                                                          );
+      Page *extent_header_page = buffer_manager_->FixPage(extent_header_pageid);
       if (extent_header_page != NULL) {
         if (WriteTupleToExtent(segment_header_page, extent_header_page, tuple,
                                length)) {
@@ -322,8 +328,9 @@ bool SpaceManager::WriteTupleToExtent(Page* segment_header_page,
   for (i = 0; i < extent_header->page_count_ - 1; i++) {
     // WHY (page count - 1) ?, the 1st page is extent header page,
     // only the following can be used to write data
-    if (extent_header->used_[i] + length + sizeof(TupleHeader)<=
-    page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE - sizeof(DataHeader)) {
+    if (extent_header->used_[i] + length + sizeof(TupleHeader)
+        <= page_size_ - PAGE_HEADER_SIZE - PAGE_TAILER_SIZE
+            - sizeof(DataHeader)) {
       if (WriteTupleToPage(segment_header_page, extent_header_page, i, tuple,
                            length)) {
         ok = true;
@@ -362,15 +369,13 @@ bool SpaceManager::WriteTupleToPage(Page *segment_header_page,
     }
     PageGetFrame(segment_header_page)->SetDirty(true);
     PageGetFrame(data_page)->SetDirty(true);
-  }
-  else{
+  } else {
     data_page = buffer_manager_->FixPage(data_pageid);
   }
 
   DataHeader *hdr = ToDataHeader(data_page);
   assert(
-      hdr->free_end_ - hdr->free_begin_
-      + extent_header->used_[off] + sizeof(DataHeader) + PAGE_HEADER_SIZE + PAGE_TAILER_SIZE == page_size_);
+      hdr->free_end_ - hdr->free_begin_ + extent_header->used_[off] + sizeof(DataHeader) + PAGE_HEADER_SIZE + PAGE_TAILER_SIZE == page_size_);
   if (PutTuple(data_page, tuple, length)) {
     ok = true;
     extent_header->used_[off] += length + sizeof(TupleHeader);
