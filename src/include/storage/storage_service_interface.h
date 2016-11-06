@@ -15,6 +15,7 @@ class StorageServiceInterface : public boost::noncopyable {
  public:
   virtual ~StorageServiceInterface(){};
   virtual bool Start() = 0;
+  virtual void Stop() = 0;
   virtual bool CreateRelation(const TableSchema & schema) = 0;
   virtual bool DropRelation(const std::string & rel_name) = 0;
   virtual IteratorInterface * NewIterator(const std::string & rel_name) = 0;

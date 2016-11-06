@@ -37,13 +37,13 @@ void Server::DoAccept() {
 }
 
 bool Server::Start() {
-  thread_ = new std::thread(&Server::Run, this);
   bool ok = storage::StorageServiceInterface::Instance()->Start();
   if (!ok) {
     return false;
   }
   std::cout << "storage initialize ok." << std::endl;
   DoAccept();
+  thread_ = new std::thread(&Server::Run, this);
   std::cout << "server listen on port [" << port_ << "]." << std::endl;
   std::cout << "begin accept connection ..." << std::endl;
   return ok;
