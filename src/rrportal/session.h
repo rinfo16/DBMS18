@@ -57,7 +57,6 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
   void BackendMsgAppendInt8(int8_t value);
   void BackendMsgAppendInt16(int16_t value);
   void BackendMsgAppendInt32(int32_t value);
-  void BackendMsgAppendInt64(int64_t value);
   void BackendMsgAppendString(const std::string & value);
   void BackendMsgAppend(const void *value, size_t length);
   void BackendMsgEnd(int8_t msg_id);

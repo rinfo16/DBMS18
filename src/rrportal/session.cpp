@@ -679,11 +679,6 @@ void Session::BackendMsgAppendInt32(int32_t value) {
   write_msg_.Append(&value, sizeof(value));
 }
 
-void Session::BackendMsgAppendInt64(int64_t value) {
-  value = htonll(value);
-  write_msg_.Append(&value, sizeof(value));
-}
-
 void Session::BackendMsgAppendString(const std::string & value) {
   write_msg_.Append(value.c_str(), value.size() + 1);
 }
