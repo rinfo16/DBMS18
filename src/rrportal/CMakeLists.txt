@@ -6,6 +6,7 @@ target_link_libraries (
   storage
   executor
   common
+  pthread
   boost_system
   boost_program_options
   boost_date_time
