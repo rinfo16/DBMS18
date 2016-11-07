@@ -18,7 +18,7 @@
 
 #ifndef __FLEX_LEXER_H
 #define yyFlexLexer SQLFlexLexer
-#include "FlexLexer.h"
+#include <FlexLexer.h> // search from the system path
 #undef yyFlexLexer
 #endif
 
