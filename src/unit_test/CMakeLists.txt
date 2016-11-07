@@ -35,7 +35,7 @@ add_executable (cmd.test cmd.test.cpp storage.test.cpp)
 target_link_libraries (cmd.test storage common boost_program_options boost_date_time boost_log)
 
 add_executable (parser.test parser.test.cpp)
-target_link_libraries (parser.test parser common boost_log)
+target_link_libraries (parser.test parser common pthread boost_log)
 
 if (ENABLE_CODE_COVERAGE)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
