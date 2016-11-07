@@ -7,13 +7,13 @@
 - [ ] Commont Utils/ADTs
 
 ##### __RRPortal__  
-- [ ] Start Up Initial
-- [ ] Session Manager
-- [ ] C&S Protocol
+- [x] Start Up Initial
+- [x] Session Manager
+- [x] C&S Protocol
 
 ##### __Parser__  
-- [ ] Lex && Yacc
-- [ ] AST
+- [x] Lex && Yacc
+- [x] AST
 
 
 ##### __Realizer__  
@@ -23,7 +23,7 @@
 
 
 ##### __Executor__  
-- [ ] Scan
+- [x] Scan
 - [ ] Sort
 - [ ] Aggregate
 - [ ] Merge
@@ -34,7 +34,7 @@
 ##### __Storage__  
 - [x] Space Manager
 - [x] Buffer Manager
-- [x] Meta Data Manager 50% done
+- [x] Meta Data Manager
 - [ ] Lock Manager
 - [ ] Index Access
     - [ ] B+ Tree
