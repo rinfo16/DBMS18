@@ -32,7 +32,7 @@ add_executable (loader.test loader.test.cpp storage.test.cpp)
 target_link_libraries (loader.test storage common pthread boost_program_options boost_date_time boost_log)
 
 add_executable (cmd.test cmd.test.cpp storage.test.cpp)
-target_link_libraries (cmd.test storage common boost_program_options boost_date_time boost_log)
+target_link_libraries (cmd.test storage common pthread boost_program_options boost_date_time boost_log)
 
 add_executable (parser.test parser.test.cpp)
 target_link_libraries (parser.test parser common pthread boost_log)
