@@ -11,7 +11,7 @@ using namespace boost::program_options;
 bool g_quit = false;
 
 void SigHandler(int signum) {
-  std::cout << "receive signal " << signum << std::endl;
+  BOOST_LOG_TRIVIAL(info) << "receive signal [" << signum << "].";
   if (signum == SIGINT) {
     g_quit = true;
   } else if (signum == SIGQUIT) {
@@ -22,7 +22,7 @@ void SigHandler(int signum) {
 void RegisterSignal() {
   signal(SIGINT, SigHandler);
   signal(SIGQUIT, SigHandler);
-  std::cout << "register signal[SIGINT SIGQUIT] handler." << std::endl;
+  BOOST_LOG_TRIVIAL(info)<< "register signal [SIGINT SIGQUIT] handler.";
 }
 
 //----------------------------------------------------------------------
@@ -54,14 +54,14 @@ int main(int argc, char* argv[]) {
       config::Setting::instance().port_ = vm["port"].as<uint32_t>();
     }
 
-    std::cout << "nutshell startup ........." << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "nutshell startup .........";
     RegisterSignal();
     Server server(config::Setting::instance().port_);
     server.Start();
     while (true) {
       if (g_quit) {
         server.Stop();
-        std::cout << "nutshell stop ........." << std::endl;
+        BOOST_LOG_TRIVIAL(info) << "nutshell stop .........";
         break;
       }
       std::this_thread::sleep_for (std::chrono::seconds(1));

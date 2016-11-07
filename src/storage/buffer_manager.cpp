@@ -1,7 +1,6 @@
 #include "buffer_manager.h"
 #include <memory.h>
 #include <sstream>
-#include <iostream>
 #include <algorithm>
 #include "common/config.h"
 #include "page_operation.h"
@@ -32,7 +31,7 @@ bool BufferManager::Start() {
     free_buffer_index_.push_back(i);
   }
   lru_list_ = new utils::List<PageFrame>();
-  std::cout << "buffer manager start." << std::endl;
+  BOOST_LOG_TRIVIAL(info)<< "buffer manager start.";
   return true;
 }
 
@@ -55,7 +54,7 @@ void BufferManager::Stop() {
   delete lru_list_;
   lru_list_ = NULL;
 
-  std::cout << "buffer manager stop." <<std::endl;
+  BOOST_LOG_TRIVIAL(info) << "buffer manager stop.";
 }
 
 Page* BufferManager::FixPage(PageID id, ReadWriteMode mode,

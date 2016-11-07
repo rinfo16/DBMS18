@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include <map>
 #include "connection.h"
 #include "session.h"
@@ -19,26 +18,29 @@ Session::Session(tcp::socket socket, ConnectionManager& manager_)
       manager_(manager_),
       storage_(NULL),
       proto_version_(0),
-      thread_(NULL) {
+      thread_(NULL),
+      state_(kStateOK) {
 }
 
 Session::~Session() {
-  std::cout << "delete thread" << std::endl;
+  BOOST_LOG_TRIVIAL(debug) << "delete thread";
+  // before go here, the thread is joinable
+  thread_->detach();
   delete thread_;
 }
 
 void Session::start() {
   manager_.join(shared_from_this());
-  std::cout << "create new thread" << std::endl;
+  BOOST_LOG_TRIVIAL(debug) << "create new thread";
   thread_ = new std::thread(&Session::Thread, this);
 }
 
 void Session::Stop() {
-  std::cout << "stop the session." << std::endl;
+  BOOST_LOG_TRIVIAL(debug) << "stop the session.";
   Connection::Stop();
   thread_->join();
   manager_.leave(shared_from_this());
-  std::cout << "session stop." << std::endl;
+  BOOST_LOG_TRIVIAL(debug) << "session stop.";
 }
 
 void Session::Thread() {
@@ -56,14 +58,14 @@ void Session::Thread() {
 
       MainLoop();
     } catch (const std::runtime_error &ex) {
-      std::cerr << ex.what() << '\n';
+      BOOST_LOG_TRIVIAL(error) << ex.what() << '\n';
     }
   } while (0);
 
-  if (!IsStop()) {
-    // close actively
+  if (IsStop() && state_ == kStateFrontendTerminate) {
+    BOOST_LOG_TRIVIAL(info) << "session end.";
+    // frontend close the connection
     manager_.leave(shared_from_this());
-    std::cout << "session end." << std::endl;
   }
 }
 
@@ -278,16 +280,19 @@ bool Session::ProcessCommand() {
       }
       std::string query(read_msg_.Data(), read_msg_.GetSize());
       ProcessSimpleQuery(query);
-    }
       break;
+    }
 
     case 'F': /* fastpath function call */
       if (PG_PROTOCOL_MAJOR(proto_version_) < 3) {
       }
       break;
 
-    case 'X': /* terminate */
+    case 'X': /* terminate */{
+      state_ = kStateFrontendTerminate;
+      Connection::Stop();
       break;
+    }
 
     case 'B': /* bind */
     case 'C': /* close */
@@ -331,7 +336,7 @@ bool Session::ProcessCommand() {
 }
 
 void Session::ProcessSimpleQuery(const std::string & query) {
-  std::cout << query << std::endl;
+  BOOST_LOG_TRIVIAL(debug)<< query;
   parser::SQLParserInterface *sql_parser =
       parser::ParserServiceInterface::Instance()->CreateSQLParser(query);
   ASTBase *parse_tree = sql_parser->Parse();
@@ -412,8 +417,6 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
   if (relation == NULL) {
     return false;
   }
-  std::cout << "table oid" << relation->GetID() << std::endl;
-
   std::vector<uint32_t> projection_mapping;
   auto select_list = select_stmt->SelectList();
   for (size_t i = 0; i < select_list.size(); i++) {
@@ -434,7 +437,7 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
     return false;
   }
   RowDesc desc = relation->ToDesc();
-  std::cout << "build execution tree" << std::endl;
+  BOOST_LOG_TRIVIAL(debug)<< "build execution tree";
 // begin build execution tree ...
 
   TupleRow *row = NULL;
@@ -443,7 +446,7 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
 
   std::stringstream ssm;
   int rows = 0;
-  std::cout << "execute the plan" << std::endl;
+  BOOST_LOG_TRIVIAL(debug) << "execute the plan";
 // execute the plan
   if (!exec->Prepare()) {
     goto RET;

@@ -1,4 +1,4 @@
-#include <iostream>
+#include "common/define.h"
 #include "common/config.h"
 #include "server.h"
 #include "session.h"
@@ -41,11 +41,11 @@ bool Server::Start() {
   if (!ok) {
     return false;
   }
-  std::cout << "storage initialize ok." << std::endl;
+  BOOST_LOG_TRIVIAL(info) << "storage initialize.";
   DoAccept();
   thread_ = new std::thread(&Server::Run, this);
-  std::cout << "server listen on port [" << port_ << "]." << std::endl;
-  std::cout << "begin accept connection ..." << std::endl;
+  BOOST_LOG_TRIVIAL(info) << "server listen on port [" << port_ << "].";
+  BOOST_LOG_TRIVIAL(info) << "begin accept connection ...";
   return ok;
 }
 

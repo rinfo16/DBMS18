@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include "common/boost_log.h"
 
 #define PAGE_SIZE                 8192
 #define PAGE_NUMBER_PER_EXTENT    320

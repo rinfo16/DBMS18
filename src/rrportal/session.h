@@ -10,6 +10,7 @@
 #include "common/row_desc.h"
 #include "common/tuple_row.h"
 #include "common/row_desc.h"
+#include "common/state.h"
 #include "parser/select_stmt.h"
 #include "parser/create_stmt.h"
 #include "parser/load_stmt.h"
@@ -73,6 +74,7 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
   std::vector<std::pair<std::string, std::string> > guc_options_;
   ProtocolVersion proto_version_;
   std::thread *thread_;
+  State state_;
 };
 
 //----------------------------------------------------------------------

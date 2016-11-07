@@ -1,5 +1,4 @@
 #include "storage/loader.h"
-#include <iostream>
 #include "common/minicsv.h"
 #include "common/config.h"
 #include "common/datetime.h"
@@ -96,15 +95,15 @@ bool Loader::Load() {
       batch_->Put(&t);
 #if OUTPUT
       std::string tuple_string((const char*)t.Data() + slot_length, t.Size() - slot_length);
-      std::cout << tuple_string << std::endl;
+      BOOST_LOG_TRIVIAL(debug) << tuple_string;
 #endif
       if (i != 0 && i % 10000 == 0) {
-        std::cout << "write " << i << " rows ..." << std::endl;
+        BOOST_LOG_TRIVIAL(debug) << "write " << i << " rows ...";
       }
 
       i++;
     } catch (std::runtime_error& e) {
-      std::cerr << e.what() << std::endl;
+      BOOST_LOG_TRIVIAL(error) << e.what();
       return false;
     }
   }

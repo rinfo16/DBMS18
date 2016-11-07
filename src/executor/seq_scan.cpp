@@ -1,6 +1,6 @@
 #include "executor/seq_scan.h"
 #include "storage/storage_service_interface.h"
-#include <iostream>
+
 namespace executor {
 
 SeqScan::SeqScan(storage::IteratorInterface *iterator, int n)
@@ -27,7 +27,6 @@ bool SeqScan::GetNext(TupleRow *row) {
   bool ok = iterator_->Get(&tw);
   if (ok) {
     rows_++;
-    std::cout << rows_ << std::endl;
     row->SetTuple(tuple_index_, (Tuple*) tw.Data());
     iterator_->Next();
   }

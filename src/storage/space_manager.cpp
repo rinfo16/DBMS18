@@ -1,7 +1,6 @@
 #include "space_manager.h"
 #include <memory.h>
 #include <string.h>
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include "common/define.h"
@@ -33,9 +32,9 @@ bool SpaceManager::InitDB() {
     if (!ok) {
       return false;
     }
-    std::cout << "initialize database file in [" << data_directory_ << "]" << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "initialize database file in [" << data_directory_ << "]";
   }
-  std::cout << "space manager start." << std::endl;
+  BOOST_LOG_TRIVIAL(info) << "space manager start.";
   return true;
 }
 

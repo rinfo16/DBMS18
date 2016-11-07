@@ -1,4 +1,3 @@
-#include <iostream>
 #include "storage_service.h"
 #include "write_batch.h"
 #include "iterator.h"
@@ -37,7 +36,7 @@ void StorageService::Stop() {
   // Since it call buffer manager to flush its data
   meta_data_manager_->Stop();
   buffer_manager_->Stop();
-  std::cout << "storage service stop." << std::endl;
+  BOOST_LOG_TRIVIAL(info) << "storage service stop.";
 }
 
 bool StorageService::CreateRelation(const TableSchema & schema) {
@@ -146,12 +145,12 @@ int import_from_csv(const std::string table, const std::string path) {
   storage::Loader *loader = new storage::Loader(path, table);
   bool ok = loader->Load();
   if (!ok) {
-    std::cout << "load failed ..." << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "load failed ...";
     delete loader;
     return -1;
   }
   delete loader;
-  std::cout << "load finish ..." << std::endl;
+  BOOST_LOG_TRIVIAL(info) << "load finish ...";
   return 0;
 }
 

@@ -10,4 +10,5 @@ target_link_libraries (
   boost_system
   boost_program_options
   boost_date_time
+  boost_log
 )

@@ -2,7 +2,6 @@
 #define __AST_BASE_H__
 
 #include <vector>
-#include <iostream>
 #include <cstddef>
 #include <sstream>
 #include <boost/property_tree/ptree.hpp>

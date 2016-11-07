@@ -1,11 +1,12 @@
+#include "file.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
-#include <iostream>
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "file.h"
 #include <stdio.h>
+#include "common/define.h"
 
 namespace storage {
 
@@ -22,8 +23,7 @@ bool File::Create() {
 
   fd_ = ::creat(path_.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (fd_ < 0) {
-    perror("open");
-    std::cerr << "file [" << path_ << "] open failed." << std::endl;
+    BOOST_LOG_TRIVIAL(fatal) << "file [" << path_ << "] open failed," << strerror(errno) << ".";
     return false;
   }
   Close();
@@ -33,8 +33,7 @@ bool File::Create() {
 bool File::Open() {
   fd_ = ::open(path_.c_str(), O_RDWR);
   if (fd_ < 0) {
-    perror("open");
-    std::cerr << "file [" << path_ << "] open failed." << std::endl;
+    BOOST_LOG_TRIVIAL(fatal) << "file [" << path_ << "] open failed, " << strerror(errno) << ".";
     return false;
   }
   return true;
@@ -43,39 +42,32 @@ bool File::Open() {
 bool File::Read(size_t offset, void *buff, int length) {
   int ret = ::lseek(fd_, offset, SEEK_SET);
   if (ret < 0) {
-    perror("lseek");
-    std::cerr << "file [" << path_ << "] seek offset [" << offset << "] failed."
-              << std::endl;
+    BOOST_LOG_TRIVIAL(fatal) << "file [" << path_ << "] seek offset [" << offset << "] failed, " << strerror(errno) << ".";
     return false;
   }
 
   // TODO .. readn
   ret = ::read(fd_, buff, length);
   if (ret < 0) {
-    perror("read");
-    std::cerr << "file [" << path_ << "] read offset [" << offset << "] failed."
-              << std::endl;
+    BOOST_LOG_TRIVIAL(fatal) << "file [" << path_ << "] read offset [" << offset << "] failed, " << strerror(errno) << ".";;
     return false;
   }
   return true;
 }
 
 bool File::Write(size_t offset, const void *buff, int length) {
-  //printf("write to file [%s], fd [%d], offset [%ld]\n", path_.c_str(), fd_, offset);
+
   int ret = ::lseek(fd_, offset, SEEK_SET);
   if (ret < 0) {
-    perror("lseek");
-    std::cerr << "file [" << path_ << "] seek offset [" << offset << "] failed."
-              << std::endl;
+    BOOST_LOG_TRIVIAL(fatal) << "file [" << path_ << "] seek offset [" << offset << "] failed, " << strerror(errno) << ".";;
     return false;
   }
 
   // TODO , writen ...
   ret = ::write(fd_, buff, length);
   if (ret < 0) {
-    perror("read");
-    std::cerr << "file [" << path_ << "] write offset [" << offset
-              << "] failed." << std::endl;
+    BOOST_LOG_TRIVIAL(fatal) << "file [" << path_ << "] write offset [" << offset
+              << "] failed, " << strerror(errno) << ".";
     return false;
   }
   fsync(fd_);

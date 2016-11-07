@@ -62,7 +62,7 @@ class ConnectionManager {
     for (auto iter = participants_.begin(); iter != participants_.end(); iter++) {
       (*iter)->Stop();
     }
-    std::cout << "connection manager stop." << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "connection manager stop.";
   }
  private:
   std::set<ConnectionPtr> participants_;

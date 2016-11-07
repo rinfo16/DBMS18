@@ -1,11 +1,10 @@
 // $Id$
 /** \file driver.cc Implementation of the parser::Driver class. */
 
+#include "driver.h"
 #include <fstream>
 #include <sstream>
-
-#include "driver.h"
-
+#include "common/define.h"
 #include "parser_context.h"
 #include "scanner.h"
 
@@ -44,11 +43,11 @@ bool Driver::parse_string(ParserContext & ctx, const std::string &input,
 }
 
 void Driver::error(const class location& l, const std::string& m) {
-  std::cerr << l << " error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
+  BOOST_LOG_TRIVIAL(warning) << l << " error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
 }
 
 void Driver::error(const std::string& m) {
-  std::cerr << "Error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
+  BOOST_LOG_TRIVIAL(warning) << "Error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
 }
 
 }  // namespace parser
