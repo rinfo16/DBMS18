@@ -28,7 +28,7 @@ target_link_libraries (relation storage common gtest)
 add_executable (csv.test csv.test.cpp)
 target_link_libraries (csv.test common)
 
-add_executable (loader.test loader.test.cpp storage.test.cpp)
+add_executable (loader.test loader.test.cpp storage.test.cpp pthread)
 target_link_libraries (loader.test storage common boost_program_options boost_date_time boost_log)
 
 add_executable (cmd.test cmd.test.cpp storage.test.cpp)
