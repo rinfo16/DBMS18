@@ -1,7 +1,7 @@
 支持的语句:
-> CREATE TABLE table_name ( column_define_list );
-> SELECT column_name_list FROM table_name;
-> LOAD table_name ( column_name_list) FROM ‘csv_file_path’;
+> CREATE TABLE table_name ( column_define_list );  
+> SELECT column_name_list FROM table_name;  
+> LOAD table_name ( column_name_list) FROM ‘csv_file_path’;  
 
 支持的数据类型：
 > INTEGER, VARCHAR，FLOAT
