@@ -9,7 +9,7 @@
 ##### __RRPortal__  
 - [x] Start Up Initial
 - [x] Session Manager
-- [x] C&S Protocol
+- [x] C&S Protocol support postgreSQL protocal
 
 ##### __Parser__  
 - [x] Lex && Yacc
@@ -19,17 +19,25 @@
 ##### __Realizer__  
 - [ ] Semantic Check
 - [ ] Optimizer RBO/CBO
-- [ ] Build Execute Tree
+- [ ] Build Execution Tree
 
 
 ##### __Executor__  
 - [x] Scan
+- [ ] Porject
+- [ ] Nest Loop Join
+- [ ] Hash Join
+- [ ] Merge Join
 - [ ] Sort
-- [ ] Aggregate
-- [ ] Merge
 - [ ] Hash
+- [ ] Aggregate
 - [ ] Join
-
+- [ ] Union
+- [ ] Union All
+- [ ] Intersect
+- [ ] Except
+- [ ] Sub Query 
+- [ ] Expression Calculate
 
 ##### __Storage__  
 - [x] Space Manager
