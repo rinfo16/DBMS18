@@ -57,23 +57,12 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
-#ifdef HAVE_STRINGS_H
 #include <strings.h>
-#endif
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <sys/types.h>
-
 #include <errno.h>
-#if defined(WIN32) || defined(__CYGWIN__)
 #include <fcntl.h>				/* ensure O_BINARY is available */
-#endif
 
-#if defined(WIN32) || defined(__CYGWIN__)
-/* We have to redefine some system functions after they are included above. */
-#include "pg_config_os.h"
-#endif
 
 /*
  * Force disable inlining if PG_FORCE_DISABLE_INLINE is defined. This is used
