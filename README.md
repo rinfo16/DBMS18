@@ -10,7 +10,7 @@
 ##### __RRPortal__  
 - [x] Start Up Initial
 - [x] Session Manager
-- [x] C&S Protocol, support PostgreSQL protocal
+- [x] C&S Protocol, support PostgreSQL protocol
 
 ##### __Parser__  
 - [x] Lex && Yacc
