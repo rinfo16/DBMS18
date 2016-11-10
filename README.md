@@ -5,11 +5,12 @@
 ### __Roadmap__
 ##### __Common__  
 - [ ] Commont Utils/ADTs
+- [ ] Memory Manager
 
 ##### __RRPortal__  
 - [x] Start Up Initial
 - [x] Session Manager
-- [x] C&S Protocol support postgreSQL protocal
+- [x] C&S Protocol, support PostgreSQL protocal
 
 ##### __Parser__  
 - [x] Lex && Yacc
@@ -31,7 +32,6 @@
 - [ ] Sort
 - [ ] Hash
 - [ ] Aggregate
-- [ ] Join
 - [ ] Union
 - [ ] Union All
 - [ ] Intersect
