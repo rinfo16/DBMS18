@@ -56,8 +56,5 @@
 - [ ] UI
 - [ ] Tools
 
-### __编码风格__
 
-
-参考[Google Style Guide](http://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/)
  
