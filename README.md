@@ -4,7 +4,7 @@
 
 ### __Roadmap__
 ##### __Common__  
-- [ ] Commont Utils/ADTs
+- [ ] Common Utils/ADTs
 - [ ] Memory Manager
 
 ##### __RRPortal__  
