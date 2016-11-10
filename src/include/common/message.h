@@ -4,7 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "common/pgcomm.h"
+
+#include "postgres/pgcomm.h"
 
 #define PARAMETER_STATUS 'S'
 #define READ_FOR_QUERY 'Z'

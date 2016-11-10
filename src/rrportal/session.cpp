@@ -31,12 +31,12 @@ Session::~Session() {
 
 void Session::start() {
   manager_.join(shared_from_this());
-  BOOST_LOG_TRIVIAL(debug) << "create new thread";
+  BOOST_LOG_TRIVIAL(debug)<< "create new thread";
   thread_ = new std::thread(&Session::Thread, this);
 }
 
 void Session::Stop() {
-  BOOST_LOG_TRIVIAL(debug) << "stop the session.";
+  BOOST_LOG_TRIVIAL(debug)<< "stop the session.";
   Connection::Stop();
   thread_->join();
   manager_.leave(shared_from_this());
@@ -58,9 +58,9 @@ void Session::Thread() {
 
       MainLoop();
     } catch (const std::runtime_error &ex) {
-      BOOST_LOG_TRIVIAL(error) << ex.what() << '\n';
+      BOOST_LOG_TRIVIAL(error)<< ex.what() << '\n';
     }
-  } while (0);
+  }while (0);
 
   if (IsStop() && state_ == kStateFrontendTerminate) {
     BOOST_LOG_TRIVIAL(info) << "session end.";
@@ -338,7 +338,7 @@ bool Session::ProcessCommand() {
 void Session::ProcessSimpleQuery(const std::string & query) {
   BOOST_LOG_TRIVIAL(debug)<< query;
   parser::SQLParserInterface *sql_parser =
-      parser::ParserServiceInterface::Instance()->CreateSQLParser(query);
+  parser::ParserServiceInterface::Instance()->CreateSQLParser(query);
   ASTBase *parse_tree = sql_parser->Parse();
   if (parse_tree == NULL) {
     return;
@@ -446,7 +446,7 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
 
   std::stringstream ssm;
   int rows = 0;
-  BOOST_LOG_TRIVIAL(debug) << "execute the plan";
+  BOOST_LOG_TRIVIAL(debug)<< "execute the plan";
 // execute the plan
   if (!exec->Prepare()) {
     goto RET;

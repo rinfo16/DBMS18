@@ -2,7 +2,8 @@
 #define DATA_TYPE_H_
 
 #include <string>
-#include "common/pg_type.h"
+
+#include "postgres/pg_type.h"
 #include "common/define.h"
 
 enum DataType {
