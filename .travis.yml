@@ -36,4 +36,4 @@ matrix:
             - g++-5
       env: COMPILER=g++-5
 script:
-- ./script/build.sh -debug && cd ./build && make -j10
+- ./script/build.sh -debug && cd ./build && make

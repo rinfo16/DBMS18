@@ -3,7 +3,7 @@
 
 #include "common/define.h"
 #include "storage/iterator_interface.h"
-#include <boost/core/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 #include "storage/write_batch_interface.h"
 #include "storage/meta_data_manager.h"
 #include "common/table_schema.h"
