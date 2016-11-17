@@ -3,8 +3,18 @@ compiler:
 - gcc
 os:
 - linux
-before_install:
-- sudo apt-get update -qq
-- sudo apt-get install -qq cmake flex bison libboost-all-dev
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - boost-latest
+    packages:
+    - gcc
+    - g++
+    - flex
+    - bison
+    - libboost1.55-all-dev
+    - cmake
+
 script:
-- ./script/build.sh -debug && cd ./build && make -j10 && cd -
+- ./script/build.sh -debug && cd ./build && make -j10
