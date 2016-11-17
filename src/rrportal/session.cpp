@@ -3,12 +3,9 @@
 #include "connection.h"
 #include "session.h"
 #include "assert.h"
-#include "parser/parser_service_interface.h"
+#include "realizer/query_realizer.h"
+#include "rrportal/row_output.h"
 #include "storage/storage_service_interface.h"
-#include "executor/seq_scan.h"
-#include "parser/table_reference.h"
-#include "parser/column_reference.h"
-#include "parser/create_stmt.h"
 
 //----------------------------------------------------------------------
 using boost::asio::buffer;
@@ -335,143 +332,39 @@ bool Session::ProcessCommand() {
   return true;
 }
 
-void Session::ProcessSimpleQuery(const std::string & query) {
-  BOOST_LOG_TRIVIAL(debug)<< query;
-  parser::SQLParserInterface *sql_parser =
-  parser::ParserServiceInterface::Instance()->CreateSQLParser(query);
-  ASTBase *parse_tree = sql_parser->Parse();
-  if (parse_tree == NULL) {
-    return;
+void Session::ProcessSimpleQuery(const std::string & sql) {
+  BOOST_LOG_TRIVIAL(debug)<< sql;
+
+  rrportal::RowOutput out(this);
+  realizer::QueryRealizerInterface *rlz;
+
+  rlz = realizer::NewRealizer(&out, sql);
+  State state = rlz->Parse();
+  if (state != kStateOK)
+  {
+	  SendErrorResponse(rlz->Message());
   }
-  if (parse_tree->ASTType() == kASTCreateStmt) {
-    CreateStmt *create_stmt = dynamic_cast<CreateStmt *>(parse_tree);
-    ProcessCreateTable(create_stmt);
-  } else if (parse_tree->ASTType() == kASTCopyStmt) {
-    LoadStmt *load_stmt = dynamic_cast<LoadStmt *>(parse_tree);
-    ProcessLoadData(load_stmt);
-  } else if (parse_tree->ASTType() == kASTSelectStmt) {
-    SelectStmt *select_stmt = dynamic_cast<SelectStmt *>(parse_tree);
-    ProcessSelect(select_stmt);
+  state = rlz->Optimize();
+  if (state != kStateOK)
+  {
+	  SendErrorResponse(rlz->Message());
   }
-  parser::ParserServiceInterface::Instance()->DestroySQLParser(sql_parser);
+
+  state = rlz->Build();
+  if (state != kStateOK)
+  {
+	  SendErrorResponse(rlz->Message());
+  }
+
+  state = rlz->Execute();
+  if (state != kStateOK)
+  {
+	  SendErrorResponse(rlz->Message());
+  }
+  SendCommandComplete(rlz->Message());
+
+  realizer::DeleteRealizer(rlz);
   SendReadForQuery(READY_FOR_QUERY_IDLE);
-}
-
-void Session::ProcessCreateTable(CreateStmt *create_stmt) {
-  TableSchema schema;
-  schema.name_ = create_stmt->TableName();
-  const std::vector<ColumnDefine*> &def_list = create_stmt->ColumnDefineList();
-  for (int i = 0; i < def_list.size(); i++) {
-    ColumnDefine *column_define = def_list[i];
-    ColumnSchema column_schema;
-    column_schema.name_ = column_define->ColumnName();
-    column_schema.data_type_ = column_define->ColumnType();
-    column_schema.length_ = column_define->DataLength();
-    column_schema.is_null_ = false;
-    schema.column_list_.push_back(column_schema);
-  }
-  bool ok = storage_->CreateRelation(schema);
-  if (ok) {
-    SendCommandComplete("table " + schema.name_ + " created.");
-  } else {
-    SendErrorResponse("table " + schema.name_ + " create failed.");
-  }
-}
-
-void Session::ProcessLoadData(LoadStmt *load_stmt) {
-  const std::string & table_name = load_stmt->TableName();
-  const std::string & file_path = load_stmt->FilePath();
-  bool ok = storage_->Load(table_name, file_path);
-  std::string msg;
-  if (ok) {
-    msg = "copy " + table_name + " from '" + file_path + "' success.";
-    SendCommandComplete(msg);
-  } else {
-    msg = "copy " + table_name + " from '" + file_path + "' failed.";
-    SendErrorResponse(msg);
-  }
-}
-
-bool Session::ProcessSelect(SelectStmt *select_stmt) {
-// TODO .. semantic check
-// TODO .. reduce sql
-// TODO .. optimize path
-// TODO .. CBO
-// TODO .. move the follow code to realizer or executor buidler ...
-  bool ret = false;
-  storage::IteratorInterface *iter = NULL;
-  std::string table_name;
-  auto table_factor_list = select_stmt->TableReference();
-  const TableFactor * table_factor = table_factor_list[0];
-  if (table_factor->ASTType() == kASTTableReference) {
-    const TableReference *table_reference =
-        dynamic_cast<const TableReference*>(table_factor);
-    table_name = table_reference->TableName();
-  } else {
-    // NOT SUPPORT TODO
-    assert(false);
-  }
-
-  Relation *relation = storage_->GetMetaDataManager()->GetRelationByName(
-      table_name);
-  if (relation == NULL) {
-    return false;
-  }
-  std::vector<uint32_t> projection_mapping;
-  auto select_list = select_stmt->SelectList();
-  for (size_t i = 0; i < select_list.size(); i++) {
-    const ExpressionBase *expr = select_list[i]->SelectExpression();
-    if (expr->ASTType() == kASTColumnReference) {
-      const ColumnReference *column_reference =
-          dynamic_cast<const ColumnReference*>(expr);
-      int32_t index = relation->GetAttributeIndex(
-          column_reference->ColumnName());
-      if (index < 0)
-        return false;
-      projection_mapping.push_back(index);
-    }
-  }
-
-  iter = storage_->NewIterator(table_name);
-  if (iter == NULL) {
-    return false;
-  }
-  RowDesc desc = relation->ToDesc();
-  BOOST_LOG_TRIVIAL(debug)<< "build execution tree";
-// begin build execution tree ...
-
-  TupleRow *row = NULL;
-  SendRowDescription(&desc, projection_mapping);
-  executor::ExecInterface *exec = new executor::SeqScan(iter, 0);
-
-  std::stringstream ssm;
-  int rows = 0;
-  BOOST_LOG_TRIVIAL(debug)<< "execute the plan";
-// execute the plan
-  if (!exec->Prepare()) {
-    goto RET;
-  }
-  if (!exec->Open()) {
-    goto RET;
-  }
-
-  row = new TupleRow(1);
-  while (true) {
-    bool ok = exec->GetNext(row);
-    if (!ok)
-      break;
-    rows++;
-    SendRowData(row, &desc, projection_mapping);
-  }
-  exec->Close();
-  ssm << "SELECT " << rows << " rows." << std::endl;
-  SendCommandComplete(ssm.str());
-  ret = true;
-
-  RET: delete row;
-  delete exec;
-  storage_->DeleteIOObject(iter);
-  return ret;
 }
 
 bool Session::ReadBody() {
@@ -574,13 +467,13 @@ void Session::SendBackendKeyData() {
   Send(write_msg_.Data(), write_msg_.GetSize());
 }
 
-void Session::SendRowDescription(const RowDesc *row_desc,
-                                 const std::vector<uint32_t> & proj_mapping) {
+void Session::SendRowDescription(const RowDesc *row_desc
+                              ) {
   BackendMsgBegin(ROW_DESCRIPTION);
-  int16_t columns_count = (int16_t) proj_mapping.size();
+  int16_t columns_count = row_desc->GetColumnCount();
   BackendMsgAppendInt16(columns_count);
   for (int16_t i = 0; i < columns_count; i++) {
-    const ColumnDesc & col_desc = row_desc->GetColumnDesc(proj_mapping[i]);
+    const ColumnDesc & col_desc = row_desc->GetColumnDesc(i);
     // The field name
     BackendMsgAppendString(col_desc.column_name_);
     // The object ID of the table
@@ -602,15 +495,14 @@ void Session::SendRowDescription(const RowDesc *row_desc,
   BackendMsgEnd(ROW_DESCRIPTION);
 }
 
-void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *desc,
-                          const std::vector<uint32_t> & proj_mapping) {
+void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *row_desc) {
   BackendMsgBegin(DATA_ROW);
-  uint16_t number = (uint16_t) proj_mapping.size();
+  uint16_t number = (uint16_t)row_desc->GetColumnCount();
 
 // The number of column values that follow (possibly zero).
   BackendMsgAppendInt16(number);
   for (uint16_t i = 0; i < number; i++) {
-    const ColumnDesc & col_desc = desc->GetColumnDesc(proj_mapping[i]);
+    const ColumnDesc & col_desc = row_desc->GetColumnDesc(i);
     uint32_t nth_tuple = col_desc.item_slot_.nth_tuple_;
     uint32_t nth_item = col_desc.item_slot_.nth_item_;
 

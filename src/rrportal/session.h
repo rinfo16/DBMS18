@@ -6,14 +6,10 @@
 #include <string>
 #include <thread>
 #include "connection.h"
+#include "common/state.h"
 #include "common/message.h"
 #include "common/row_desc.h"
 #include "common/tuple_row.h"
-#include "common/row_desc.h"
-#include "common/state.h"
-#include "parser/select_stmt.h"
-#include "parser/create_stmt.h"
-#include "parser/load_stmt.h"
 #include "storage/storage_service_interface.h"
 
 using boost::asio::ip::tcp;
@@ -31,23 +27,20 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
 
   void MainLoop();
 
+  void SendRowDescription(const RowDesc *row_desc);
+  void SendRowData(const TupleRow *tuple_row, const RowDesc *row_desc);
  private:
-  bool ProcessStartupPacket(bool ssl_done);bool SendAuthRequest();bool SendParameterStatus();
+  bool ProcessStartupPacket(bool ssl_done);
+  bool SendAuthRequest();
+  bool SendParameterStatus();
   void SendReadForQuery(char status);
   void SendBackendKeyData();
-  void SendRowDescription(const RowDesc *row_desc,
-                          const std::vector<uint32_t> &proj_mapping);
-  void SendRowData(const TupleRow *tuple_row, const RowDesc *desc,
-                   const std::vector<uint32_t> & proj_mapping);
   void SendCommandComplete(const std::string & msg);
   void SendErrorResponse(const std::string & msg);
 
   bool ProcessCommand();
   void ProcessSimpleQuery(const std::string & query);
-  void ProcessCreateTable(CreateStmt *create_stmt);
-  void ProcessLoadData(LoadStmt *load_stmt);bool ProcessSelect(
-      SelectStmt *select_stmt);bool ReadBody();
-
+  bool ReadBody();
   void do_read_header();
   void do_read_body();
   void do_write();
