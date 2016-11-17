@@ -1,9 +1,9 @@
-language: cpp
-os: linux
+- language: cpp
 sudo: false
 matrix:
   include:
-    - compiler: gcc
+      os: linux
+      compiler: g++
       addons:
         apt:
           sources:
