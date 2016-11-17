@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
-project (Nutshell)
+cmake_minimum_required(VERSION 2.7)
+project (nutshell)
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE DEBUG)
