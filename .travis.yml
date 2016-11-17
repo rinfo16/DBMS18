@@ -20,6 +20,8 @@ matrix:
             - bison
             - libboost1.55-all-dev
             - cmake
-      env: COMPILER=g++-5
+env:   
+  global:
+    - COMPILER=g++-5
 script:
 - ./script/build.sh -debug && cd ./build && make
