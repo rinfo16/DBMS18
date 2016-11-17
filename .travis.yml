@@ -1,4 +1,6 @@
-language: cpp
+language: generic
+script:
+  - ./script/build.sh -debug && cd ./build && make
 sudo: false
 matrix:
   include:
@@ -18,6 +20,4 @@ matrix:
             - cmake
       env:   
         global:
-          - COMPILER=g++-5
-script:
-  - ./script/build.sh -debug && cd ./build && make
+          - COMPILER_NAME=gcc CXX=g++-5 CC=gcc-5
