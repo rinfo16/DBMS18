@@ -5,10 +5,14 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE DEBUG)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set (CMAKE_CXX_STANDARD 11
-    CACHE STRING "build use C++11 standard."
-    FORCE)
-    
+if (CMAKE_VERSION VERSION_LESS "3.1")
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set (CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}")
+  endif ()
+else ()
+    set (CMAKE_CXX_STANDARD 11)
+endif ()
+
 message(STATUS "Build type is ${CMAKE_BUILD_TYPE}")
 
 set(ENABLE_CODE_COVERAGE false)
