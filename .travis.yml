@@ -1,0 +1,10 @@
+language: cpp
+compiler:
+- gcc
+os:
+- linux
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -qq cmake flex bison libboost-all-dev
+script:
+- ./script/build.sh -debug && cd ./build && make -j10 && cd -
