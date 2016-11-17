@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/rinfo16/nutshell.svg?branch=master)](https://travis-ci.org/rinfo16/nutshell)
+
 # __nutshell__
 
 一个数据库POC
