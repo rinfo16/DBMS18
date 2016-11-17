@@ -2,7 +2,7 @@
 #define SRC_INCLUDE_STORAGE_META_DATA_MANAGER_INTERFACE_H_
 
 #include <string>
-#include <boost/noncopyable.hpp>
+#include <boost/utility.hpp>
 #include "common/relation.h"
 
 namespace storage {

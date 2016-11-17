@@ -1,9 +1,9 @@
 #ifndef STORAGE_SERVICE_INTERFACE_H_
 #define STORAGE_SERVICE_INTERFACE_H_
 
-#include "common/define.h"
 #include "storage/iterator_interface.h"
-#include <boost/noncopyable.hpp>
+#include <boost/utility.hpp>
+#include "common/define.h"
 #include "storage/write_batch_interface.h"
 #include "storage/meta_data_manager.h"
 #include "common/table_schema.h"
