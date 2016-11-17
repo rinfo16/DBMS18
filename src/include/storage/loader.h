@@ -4,6 +4,7 @@
 #include "storage/write_batch_interface.h"
 #include "common/minicsv.h"
 #include "common/tuple.h"
+
 namespace storage {
 
 class Loader {
