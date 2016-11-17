@@ -3,7 +3,6 @@ compiler: gcc
 os:
 - linux
 sudo: false
-dist: trusty
 matrix:
   include:
     - compiler: gcc
@@ -19,5 +18,7 @@ matrix:
             - bison
             - libboost1.55-all-dev
             - cmake
+install:
+ - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
 script:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi ./script/build.sh -debug && cd ./build && make
+ -  ./script/build.sh -debug && cd ./build && make
