@@ -10,12 +10,11 @@ Loader::Loader(const std::string & path, const std::string & rel_name)
     : batch_(NULL),
       csv_(path),
       rel_name_(rel_name),
-      is_(path.c_str()),
-      tuple_(NULL) {
+      is_(path.c_str()) {
+  tuple_ = memory::CreateTuple(config::Setting::instance().page_size_);
 }
 
 Loader::~Loader() {
-  free(tuple_);
   storage::Storage::instance().DeleteIOObject(batch_);
 }
 
@@ -43,7 +42,6 @@ bool Loader::Load() {
 
   int32_t columns = desc.GetColumnCount();
   //desc.mapping_.resize(attributes_.size(), 0);
-  tuple_ = (Tuple*) malloc(config::Setting::instance().page_size_);
 
   int i = 0;
   uint32_t slot_length = sizeof(Slot) * desc.GetColumnCount();
@@ -91,7 +89,7 @@ bool Loader::Load() {
         }
       }
       assert(off > 0);
-      TupleWarpper t(tuple_, off);
+      TupleWarpper t(tuple_->Data(), off);
       batch_->Put(&t);
 #if OUTPUT
       std::string tuple_string((const char*)t.Data() + slot_length, t.Size() - slot_length);

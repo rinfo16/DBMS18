@@ -117,7 +117,7 @@ int export_to_csv(std::string table, std::string path) {
   while (iter->GetStatus() == storage::kStatusOK) {
     uint32_t length = 0;
     Product product;
-    Tuple *t = (Tuple*) iter->Get(&length);
+    RawTuple *t = (RawTuple*) iter->Get(&length);
 #if OUTPUT
     std::string s((const char*) t + slot_length, length - slot_length);
     std::cout << s << std::endl;

@@ -23,14 +23,17 @@ bool SeqScan::Open() {
 }
 
 bool SeqScan::GetNext(TupleRow *row) {
-  TupleWarpper tw;
-  bool ok = iterator_->Get(&tw);
-  if (ok) {
+
+  uint32_t length = 0;
+  const void *p = iterator_->Get(&length);
+  if (p) {
     rows_++;
-    row->SetTuple(tuple_index_, (Tuple*) tw.Data());
+    Tuple tuple = memory::CreateTuple(length);
+    memcpy(tuple->Data(), p, length);
+    row->SetTuple(tuple_index_, tuple);
     iterator_->Next();
   }
-  return ok;
+  return p != NULL;
 }
 
 void SeqScan::Close() {

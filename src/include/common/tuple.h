@@ -8,14 +8,16 @@
 #include "common/define.h"
 #include "common/slot.h"
 #include "row_desc.h"
+#include <boost/shared_ptr.hpp>
 
 union ItemValue {
 
 };
-class Tuple {
+
+class RawTuple {
  public:
-  const void *GetValue(uint32_t offset) const{
-    return reinterpret_cast<const uint8_t*>(this) + offset;
+  const char *GetValue(uint32_t offset) const {
+    return reinterpret_cast<const char*>(this) + offset;
   }
 
   uint64_t GetInteger(uint32_t offset) const {
@@ -38,7 +40,17 @@ class Tuple {
     return reinterpret_cast<const Slot *>(this) + nth;
   }
 
+  char *Data() {
+    return reinterpret_cast<char *>(this);
+  }
 };
+
+
+typedef boost::shared_ptr<RawTuple> Tuple;
+
+namespace memory {
+  Tuple CreateTuple(size_t n);
+}
 
 class TupleWarpper {
  public:

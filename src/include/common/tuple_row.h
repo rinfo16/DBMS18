@@ -7,24 +7,24 @@
 class TupleRow {
  public:
   TupleRow() {
-    tuples_ = new Tuple*[1];
+    tuples_.resize(1);
     size_ = 1;
   }
 
   TupleRow(uint32_t n) {
-    tuples_ = new Tuple*[n];
+    tuples_.resize(n);
     size_ = n;
   }
 
-  void SetTuple(uint32_t n, Tuple *t) {
+  void SetTuple(uint32_t n, Tuple t) {
     tuples_[n] = t;
   }
 
-  Tuple *GetTuple(uint32_t n) {
+  Tuple GetTuple(uint32_t n) {
     return tuples_[n];
   }
 
-  const Tuple *GetTuple(uint32_t n) const {
+  const Tuple GetTuple(uint32_t n) const {
     return tuples_[n];
   }
 
@@ -33,7 +33,7 @@ class TupleRow {
   }
 
  private:
-  Tuple **tuples_;
+  std::vector<Tuple> tuples_;
   uint32_t size_;
 };
 

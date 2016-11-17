@@ -462,7 +462,6 @@ bool Session::ProcessSelect(SelectStmt *select_stmt) {
       break;
     rows++;
     SendRowData(row, &desc, projection_mapping);
-    free(row->GetTuple(0));
   }
   exec->Close();
   ssm << "SELECT " << rows << " rows." << std::endl;
@@ -615,7 +614,7 @@ void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *desc,
     uint32_t nth_tuple = col_desc.item_slot_.nth_tuple_;
     uint32_t nth_item = col_desc.item_slot_.nth_item_;
 
-    const Tuple *tuple = tuple_row->GetTuple(nth_tuple);
+    const Tuple tuple = tuple_row->GetTuple(nth_tuple);
     const Slot * slot = tuple->GetSlot(nth_item);
     // The length of the column value, in bytes (this count does not include
     // itself). Can be zero. As a special case, -1 indicates a NULL column
