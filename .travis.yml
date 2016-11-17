@@ -5,25 +5,23 @@ os:
 - linux
 sudo: required
 dist: trusty
-matrix:
-  include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - boost-latest
-          packages:
-            - gcc-5
-            - g++-5
-            - flex
-            - bison
-            - libboost1.55-all-dev
-            - cmake
-      env:   
-        global:
-          - COMPILER=g++-5
-  exclude:
-    - g++-4.8
+env:   
+  global:
+    - COMPILER=g++-5
+  matrix:
+    include:
+      - compiler: gcc
+        addons:
+          apt:
+            sources:
+              - ubuntu-toolchain-r-test
+              - boost-latest
+            packages:
+              - gcc-5
+              - g++-5
+              - flex
+              - bison
+              - libboost1.55-all-dev
+              - cmake
 script:
 - ./script/build.sh -debug && cd ./build && make
