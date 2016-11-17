@@ -17,7 +17,7 @@ class Loader {
   mini::csv::ifstream is_;
   std::string rel_name_;
   std::string csv_;
-  Tuple *tuple_;
+  Tuple tuple_;
 };
 
 }  // namespace storage
