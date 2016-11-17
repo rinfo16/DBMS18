@@ -34,7 +34,7 @@
 %skeleton "lalr1.cc"
 
 /* namespace to enclose parser in */
-%define api.prefix {parser}
+%name-prefix="parser"
 
 
 /* set the parser's class identifier */
