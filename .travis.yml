@@ -1,9 +1,8 @@
 language: cpp
-compiler:
-- gcc
+compiler: gcc
 os:
 - linux
-sudo: required
+sudo: false
 dist: trusty
 matrix:
   include:
@@ -20,8 +19,5 @@ matrix:
             - bison
             - libboost1.55-all-dev
             - cmake
-      env:   
-        global:
-          - COMPILER=g++-5
 script:
-- ./script/build.sh -debug && cd ./build && make
+- if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi ./script/build.sh -debug && cd ./build && make
