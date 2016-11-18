@@ -1,9 +1,9 @@
 <img src="doc/owl.jpg" height=160></img>
-[![Build Status](https://travis-ci.org/rinfo16/nutshell.svg?branch=master)](https://travis-ci.org/rinfo16/nutshell)
+[![Build Status](https://travis-ci.org/rinfo16/owl.svg?branch=master)](https://travis-ci.org/rinfo16/owl)
 
 # Welcome to Owl
 
-一个数据库POC
+A database POC
  
 ### __Roadmap__
 ##### __Common__  
