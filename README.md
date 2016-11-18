@@ -60,15 +60,15 @@ A database POC
 - [ ] Tools
 
 ### Start Up  
-#### support SQL: 
+#### Support SQL: 
 > CREATE TABLE table_name ( column_define_list );  
 > SELECT column_name_list FROM table_name;  
 > LOAD table_name ( column_name_list) FROM ‘csv_file_path’;  
 
-#### support data type: 
+#### Support data type: 
 > INTEGER, VARCHAR，FLOAT
 
-#### example:
+#### Example:
 Backend start 
 > nutshell --port=8432
 
