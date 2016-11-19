@@ -6,7 +6,7 @@
 #include "parser/ast_base.h"
 
 using std::string;
-
+namespace ast {
 class ReferenceName : public ASTBase {
  public:
   ReferenceName(const string & name)
@@ -20,5 +20,5 @@ class ReferenceName : public ASTBase {
  private:
   string str_val_;
 };
-
+}
 #endif //__NAME_H__

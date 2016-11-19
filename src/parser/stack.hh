@@ -31,18 +31,18 @@
 // version 2.2 of Bison.
 
 /**
- ** \file /Users/guohua/Workspace/Nutshell/src/parser/stack.hh
+ ** \file /Users/guohua/Workspace/owl/src/parser/stack.hh
  ** Define the parser::stack class.
  */
 
-#ifndef YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_STACK_HH_INCLUDED
-# define YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_STACK_HH_INCLUDED
+#ifndef YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_STACK_HH_INCLUDED
+# define YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_STACK_HH_INCLUDED
 
 # include <vector>
 
 
 namespace parser {
-#line 46 "/Users/guohua/Workspace/Nutshell/src/parser/stack.hh" // stack.hh:151
+#line 46 "/Users/guohua/Workspace/owl/src/parser/stack.hh" // stack.hh:151
   template <class T, class S = std::vector<T> >
   class stack
   {
@@ -152,6 +152,6 @@ namespace parser {
 
 
 } // parser
-#line 156 "/Users/guohua/Workspace/Nutshell/src/parser/stack.hh" // stack.hh:151
+#line 156 "/Users/guohua/Workspace/owl/src/parser/stack.hh" // stack.hh:151
 
-#endif // !YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_STACK_HH_INCLUDED
+#endif // !YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_STACK_HH_INCLUDED

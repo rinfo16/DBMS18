@@ -8,6 +8,7 @@ class BooleanExprInterface : public DatumInterface {
 public:
   virtual ~BooleanExprInterface() {};
   virtual bool GetValue(TupleRow *row) = 0;
+  virtual bool GetValue(TupleRow *row1, TupleRow *row2) = 0;
 };
 
 #endif // BOOLEAN_EXPR_INTERFACE_H__

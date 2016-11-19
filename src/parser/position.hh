@@ -31,12 +31,12 @@
 // version 2.2 of Bison.
 
 /**
- ** \file /Users/guohua/Workspace/Nutshell/src/parser/position.hh
+ ** \file /Users/guohua/Workspace/owl/src/parser/position.hh
  ** Define the parser::position class.
  */
 
-#ifndef YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_POSITION_HH_INCLUDED
-# define YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_POSITION_HH_INCLUDED
+#ifndef YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_POSITION_HH_INCLUDED
+# define YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_POSITION_HH_INCLUDED
 
 # include <algorithm> // std::max
 # include <iostream>
@@ -52,7 +52,7 @@
 
 
 namespace parser {
-#line 56 "/Users/guohua/Workspace/Nutshell/src/parser/position.hh" // location.cc:337
+#line 56 "/Users/guohua/Workspace/owl/src/parser/position.hh" // location.cc:337
   /// Abstract a position.
   class position
   {
@@ -176,5 +176,5 @@ namespace parser {
 
 
 } // parser
-#line 180 "/Users/guohua/Workspace/Nutshell/src/parser/position.hh" // location.cc:337
-#endif // !YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_POSITION_HH_INCLUDED
+#line 180 "/Users/guohua/Workspace/owl/src/parser/position.hh" // location.cc:337
+#endif // !YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_POSITION_HH_INCLUDED

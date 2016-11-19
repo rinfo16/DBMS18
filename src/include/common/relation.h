@@ -50,6 +50,8 @@ class Relation {
 
   void AddAttribute(const Attribute & attribute) {
     attributes_.push_back(attribute);
+    attributes_.back().SetRelationName(name_);
+    attributes_.back().SetRelationID(id_);
   }
 
   void SetFirstExtentPageID(PageID pageid) {

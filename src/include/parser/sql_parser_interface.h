@@ -6,7 +6,7 @@
 namespace parser {
 class SQLParserInterface {
  public:
-  virtual ASTBase* Parse() = 0;
+  virtual ast::ASTBase* Parse() = 0;
   virtual ~SQLParserInterface(){}
 };
 }

@@ -1,5 +1,5 @@
 #include "parser/expression.h"
-
+namespace ast {
 ptree Expression::ToPropertyTree() const {
   ptree expr;
   std::string op;
@@ -33,4 +33,5 @@ ptree Expression::ToPropertyTree() const {
     expr.put_child(STR_RIGHT, right_->ToPropertyTree());
   }
   return expr;
+}
 }

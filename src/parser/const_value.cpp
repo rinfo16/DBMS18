@@ -1,5 +1,5 @@
 #include "parser/const_value.h"
-
+namespace ast {
 ptree ConstValue::ToPropertyTree() const {
   ptree value;
   if (!str_val_.empty())
@@ -7,4 +7,5 @@ ptree ConstValue::ToPropertyTree() const {
   else
     value.put(STR_CONST_VALUE, int_val_);
   return value;
+}
 }

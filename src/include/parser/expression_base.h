@@ -2,7 +2,7 @@
 #define EXPRESSION_BASE_H__
 
 #include "parser/ast_base.h"
-
+namespace ast {
 class ExpressionBase : public ASTBase {
 public:
   ExpressionBase(TreeType type): ASTBase(type) {}
@@ -10,5 +10,5 @@ public:
 private:
   ExpressionBase();
 };
-
+}
 #endif //EXPRESSION_BASE_H__

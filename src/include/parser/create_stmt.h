@@ -10,7 +10,7 @@
 #include "reference_name.h"
 
 using std::string;
-
+namespace ast {
 class ColumnDefine : public ASTBase {
  public:
   ColumnDefine(const std::string & column_name, DataType column_type, int32_t data_length)
@@ -63,5 +63,5 @@ class CreateStmt : public ASTBase {
   string table_name_;
   std::vector<ColumnDefine*> column_define_list_;
 };
-
+}
 #endif // __CREATE_TABLE_STMT_H__

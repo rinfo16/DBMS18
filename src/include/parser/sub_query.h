@@ -2,7 +2,7 @@
 #define SUB_QUERY_H__
 
 #include "parser/table_factor.h"
-
+namespace ast {
 class SelectStmt;
 
 class SubQuery : public TableFactor {
@@ -35,5 +35,5 @@ class SubQuery : public TableFactor {
   SelectStmt *select_stmt_;
   std::string alias_name_;
 };
-
+}
 #endif // SUB_QUERY_H__

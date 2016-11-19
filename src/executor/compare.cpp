@@ -7,7 +7,7 @@ left_(left),
 right_(right) {
 }
 
-bool StringCompare::GetValue(TupleRow *row) {
+bool StringCompare::GetValue(TupleRow *row) const{
   char *str;
   uint32_t len;
   str = (char*)left_->GetValue(row, &len);
@@ -43,7 +43,7 @@ IntegerCompare::IntegerCompare(OperatorType op, ValueExprInterface *left,
       right_(right) {
 }
 
-bool IntegerCompare::GetValue(TupleRow *row) {
+bool IntegerCompare::GetValue(TupleRow *row) const {
   uint32_t len;
   int64_t int_left = *(uint64_t*)left_->GetValue(row, &len);
   int64_t int_right = *(uint64_t*)right_->GetValue(row, &len);
@@ -76,7 +76,7 @@ FloatCompare::FloatCompare(OperatorType op, ValueExprInterface *left,
       right_(right) {
 }
 
-bool FloatCompare::GetValue(TupleRow *row) {
+bool FloatCompare::GetValue(TupleRow *row) const {
   uint32_t len;
   double_t float_left = *(double*)left_->GetValue(row, &len);
   double_t float_right = *(double*)right_->GetValue(row, &len);

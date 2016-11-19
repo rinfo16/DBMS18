@@ -1,5 +1,5 @@
 #include "parser/create_stmt.h"
-
+namespace ast {
 ptree ColumnDefine::ToPropertyTree() const {
   ptree colunn_define;
   colunn_define.put(STR_COLUMN_NAME, column_name_);
@@ -22,4 +22,5 @@ ptree CreateStmt::ToPropertyTree() const {
   create.put_child(STR_COLUMN_DEFINE_LIST, column_name_list);
 
   return create;
+}
 }

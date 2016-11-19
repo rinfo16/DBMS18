@@ -6,7 +6,7 @@ slot_index_(slot_index)
 {
 }
 
-const char *SlotReference::GetValue(TupleRow *row, uint32_t *length) {
+const char *SlotReference::GetValue(TupleRow *row, uint32_t *length) const {
   Tuple tuple = row->GetTuple(tuple_index_);
   const Slot *slot = tuple->GetSlot(slot_index_);
   *length = (uint32_t)slot->offset_;

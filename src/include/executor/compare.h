@@ -9,7 +9,7 @@ class StringCompare : public BooleanExprInterface {
  public:
   StringCompare(OperatorType op, ValueExprInterface *left,
                 ValueExprInterface *right);
-  virtual bool GetValue(TupleRow *row);
+  virtual bool GetValue(TupleRow *row) const;
  private:
   OperatorType op_;
   ValueExprInterface *left_;
@@ -20,7 +20,7 @@ class IntegerCompare : public BooleanExprInterface {
  public:
   IntegerCompare(OperatorType op, ValueExprInterface *left,
                  ValueExprInterface *right);
-  virtual bool GetValue(TupleRow *row);
+  virtual bool GetValue(TupleRow *row) const;
  private:
   OperatorType op_;
   ValueExprInterface *left_;
@@ -31,7 +31,7 @@ class FloatCompare : public BooleanExprInterface {
  public:
   FloatCompare(OperatorType op, ValueExprInterface *left,
                ValueExprInterface *right);
-  virtual bool GetValue(TupleRow *row);
+  virtual bool GetValue(TupleRow *row) const;
  private:
   OperatorType op_;
   ValueExprInterface *left_;

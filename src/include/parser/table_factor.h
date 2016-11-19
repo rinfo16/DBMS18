@@ -4,7 +4,7 @@
 #include <string>
 
 #include "parser/ast_base.h"
-
+namespace ast {
 class TableFactor : public ASTBase {
   friend ParserContext;
  public:
@@ -14,5 +14,5 @@ class TableFactor : public ASTBase {
 
   virtual ptree ToPropertyTree() const { return ptree(); }
 };
-
+}
 #endif // __TABLE_FACTOR_H__

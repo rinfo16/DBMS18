@@ -5,6 +5,7 @@
 #include <string>
 #include "parser/ast_base.h"
 #include "parser/const_value.h"
+namespace ast {
 class InsertStmt : public ASTBase {
   friend ParserContext;
  public:
@@ -38,5 +39,5 @@ class InsertStmt : public ASTBase {
   std::vector<std::string> opt_column_names_;
   std::vector<ConstValue*> insert_values_;
 };
-
+}
 #endif //__INSERT_STMT_H__

@@ -9,6 +9,7 @@
 #include "ast_def.h"
 class ParserContext;
 using boost::property_tree::ptree;
+namespace ast {
 class ASTBase {
   friend ParserContext;
  public:
@@ -71,5 +72,6 @@ class ASTBase {
   ASTBase *next_;
   TreeType tree_type_;
 };
+}
 
 #endif

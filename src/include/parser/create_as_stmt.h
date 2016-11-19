@@ -5,7 +5,7 @@
 #include <vector>
 #include "parser/ast_base.h"
 #include "parser/select_stmt.h"
-
+namespace ast {
 class CreateAsStmt : public ASTBase {
   friend ParserContext;
  public:
@@ -35,5 +35,5 @@ class CreateAsStmt : public ASTBase {
   std::vector<std::string> opt_column_name_list_;
   SelectStmt * sub_select_;
 };
-
+}
 #endif // CREATE_AS_STMT_H__

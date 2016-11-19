@@ -12,6 +12,7 @@
 using std::vector;
 using std::string;
 
+namespace ast {
 
 class SelectTarget : public ASTBase {
  public:
@@ -82,16 +83,32 @@ class SelectStmt : public ASTBase {
     return select_list_;
   }
 
+  std::vector<TableFactor*> & TableReference() {
+    return table_reference_;
+  }
+
   const std::vector<TableFactor*> & TableReference() const {
     return table_reference_;
+  }
+
+  std::vector<ExpressionBase*> & OptWhere() {
+    return opt_where_;
   }
 
   const std::vector<ExpressionBase*> & OptWhere() const {
     return opt_where_;
   }
 
+  std::vector<ExpressionBase*> & OptGroupBy() {
+    return opt_group_;
+  }
+
   const std::vector<ExpressionBase*> & OptGroupBy() const {
     return opt_group_;
+  }
+
+  std::vector<OrderClause *> OptOrderBy() {
+    return opt_order_;
   }
 
   const std::vector<OrderClause *> OptOrderBy() const {
@@ -106,5 +123,5 @@ class SelectStmt : public ASTBase {
   std::vector<ExpressionBase*> opt_group_;
   std::vector<OrderClause*> opt_order_;
 };
-
+}
 #endif // __SELECT_STMT_H__

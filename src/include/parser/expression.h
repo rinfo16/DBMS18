@@ -5,6 +5,7 @@
 #include "parser/ast_base.h"
 #include "parser/expression_base.h"
 
+namespace ast {
 class Expression : public ExpressionBase {
  public:
   Expression(ExpressionBase *left, ExpressionBase*right, OperatorType op)
@@ -37,5 +38,5 @@ class Expression : public ExpressionBase {
   ExpressionBase *left_;
   ExpressionBase *right_;
 };
-
+}
 #endif // EXPRESSION_H__

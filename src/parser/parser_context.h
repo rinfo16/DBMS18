@@ -14,6 +14,7 @@
 
 using std::vector;
 using std::string;
+using ast::ASTBase;
 
 /** Parser context used to save the parsed SQL. This context is
  * passed along to the parser::Driver class and fill during parsing via bison

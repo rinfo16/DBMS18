@@ -6,7 +6,7 @@
 #include "parser/ast_base.h"
 #include "parser/expression.h"
 #include "parser/table_factor.h"
-
+namespace ast {
 class UpdateStmt : public ASTBase {
   friend ParserContext;
  public:
@@ -42,5 +42,5 @@ class UpdateStmt : public ASTBase {
   std::vector<TableFactor *> opt_from_clause_;
   std::vector<ExpressionBase *> opt_where_;
 };
-
+}
 #endif // UPDATE_STMT_H__

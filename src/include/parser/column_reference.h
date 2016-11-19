@@ -2,7 +2,7 @@
 #define COLUMN_REFERENCE_H__
 
 #include "parser/expression_base.h"
-
+namespace ast {
 class ColumnReference : public ExpressionBase {
  public:
   ColumnReference(const std::string & column_name)
@@ -47,5 +47,5 @@ class ColumnReference : public ExpressionBase {
   std::string column_name_;
   std::string alias_name_;
 };
-
+}
 #endif // COLUMN_REFERENCE_H__

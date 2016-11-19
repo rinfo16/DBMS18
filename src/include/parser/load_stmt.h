@@ -3,7 +3,7 @@
 #include "parser/ast_base.h"
 #include <string>
 #include <vector>
-
+namespace ast {
 class LoadStmt : public ASTBase {
   friend ParserContext;
  public:
@@ -24,5 +24,5 @@ class LoadStmt : public ASTBase {
   std::string file_path_;
   std::vector<std::string> opt_column_name_list_;
 };
-
+}
 #endif // LOAD_STMT_H__

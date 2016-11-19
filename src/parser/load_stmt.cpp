@@ -1,5 +1,5 @@
 #include "parser/load_stmt.h"
-
+namespace ast {
 ptree LoadStmt::ToPropertyTree() const {
   ptree load_stmt;
   if (!table_name_.empty()) {
@@ -20,4 +20,5 @@ ptree LoadStmt::ToPropertyTree() const {
     load_stmt.put(STR_FILE_PATH, file_path_);
   }
   return load_stmt;
+}
 }

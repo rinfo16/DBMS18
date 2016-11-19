@@ -35,11 +35,11 @@ int main(int argc, char *argv[]) {
     std::cout << sql << std::endl;
     std::cout << "SQL:[" <<  sql << "]" << std::endl;
     parser::SQLParserInterface *parser = parser::ParserServiceInterface::Instance()->CreateSQLParser(sql);
-    ASTBase *ast = parser->Parse();
-    if (ast) {
+    ast::ASTBase *tree = parser->Parse();
+    if (tree) {
       std::cout << "parse TREE : " << std::endl;
       std::cout << "---------------------------------------------" << std::endl;
-      std::cout << ast->ToJSON() << std::endl;
+      std::cout << tree->ToJSON() << std::endl;
       std::cout << "---------------------------------------------" << std::endl;
     }
   }

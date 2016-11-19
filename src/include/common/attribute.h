@@ -15,7 +15,8 @@ class Attribute {
         max_length_(0),
         data_type_(kDTInvalid),
         is_null_(false),
-        is_variable_(false) {
+        is_variable_(false),
+        attribute_index_(0){
   }
 
   ~Attribute() {
@@ -33,6 +34,14 @@ class Attribute {
   }
   attributeid_t GetID() const {
     return id_;
+  }
+
+  void SetRelationName(const std::string & relation_name) {
+    relation_name_ = relation_name;
+  }
+
+  const std::string & GetRelationName() const{
+    return relation_name_;
   }
 
   void SetRelationID(relationid_t id) {
@@ -70,6 +79,15 @@ class Attribute {
     return is_variable_;
   }
 
+
+  // position in relation attribute list
+  void SetAttributeIndex(uint32_t i) {
+    attribute_index_ = i;
+  }
+  // position in relation attribute list
+  uint32_t GetAttributeIndex() const {
+    return attribute_index_;
+  }
   boost::property_tree::ptree ToPropertyTree() const {
     boost::property_tree::ptree attribute;
 
@@ -96,6 +114,8 @@ class Attribute {
 
  private:
   std::string name_;
+  std::string relation_name_;
+  uint32_t attribute_index_;
   attributeid_t id_;
   relationid_t relation_id_;
   uint32_t max_length_;

@@ -31,18 +31,18 @@
 // version 2.2 of Bison.
 
 /**
- ** \file /Users/guohua/Workspace/Nutshell/src/parser/location.hh
+ ** \file /Users/guohua/Workspace/owl/src/parser/location.hh
  ** Define the parser::location class.
  */
 
-#ifndef YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_LOCATION_HH_INCLUDED
-# define YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_LOCATION_HH_INCLUDED
+#ifndef YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_LOCATION_HH_INCLUDED
+# define YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_LOCATION_HH_INCLUDED
 
 # include "position.hh"
 
 
 namespace parser {
-#line 46 "/Users/guohua/Workspace/Nutshell/src/parser/location.hh" // location.cc:337
+#line 46 "/Users/guohua/Workspace/owl/src/parser/location.hh" // location.cc:337
   /// Abstract a location.
   class location
   {
@@ -188,5 +188,5 @@ namespace parser {
 
 
 } // parser
-#line 192 "/Users/guohua/Workspace/Nutshell/src/parser/location.hh" // location.cc:337
-#endif // !YY_PARSER_USERS_GUOHUA_WORKSPACE_NUTSHELL_SRC_PARSER_LOCATION_HH_INCLUDED
+#line 192 "/Users/guohua/Workspace/owl/src/parser/location.hh" // location.cc:337
+#endif // !YY_PARSER_USERS_GUOHUA_WORKSPACE_OWL_SRC_PARSER_LOCATION_HH_INCLUDED

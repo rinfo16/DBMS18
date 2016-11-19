@@ -5,7 +5,7 @@
 #include "parser/table_factor.h"
 #include "parser/expression_base.h"
 
-
+namespace ast {
 class JoinClause : public TableFactor {
   friend ParserContext;
  public:
@@ -40,4 +40,5 @@ class JoinClause : public TableFactor {
   TableFactor *right_table_;
   ExpressionBase *join_predicate_;
 };
+}
 #endif // __JOIN_TABLE_H__

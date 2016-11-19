@@ -15,6 +15,7 @@
 #include "parser/column_reference.h"
 #include "parser/load_stmt.h"
 
+using namespace ast;
 ParserContext::~ParserContext() {
   size_t size = ast_node_list_.size();
   for (size_t i = 0; i < size; i++) {

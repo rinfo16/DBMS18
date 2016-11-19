@@ -8,7 +8,7 @@
 class SlotReference : public ValueExprInterface {
  public:
   SlotReference(uint32_t tuple_index, uint32_t slot_index);
-  virtual const char *GetValue(TupleRow *row, uint32_t *length);
+  virtual const char *GetValue(TupleRow *row, uint32_t *length) const;
  private:
   uint32_t tuple_index_;
   uint32_t slot_index_;

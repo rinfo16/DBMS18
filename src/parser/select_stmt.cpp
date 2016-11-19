@@ -1,7 +1,7 @@
 #include "parser/select_stmt.h"
 #include <sstream>
 using std::stringstream;
-
+namespace ast {
 ptree SelectTarget::ToPropertyTree() const {
   ptree select_target;
   if (expression_) {
@@ -85,4 +85,5 @@ ptree SelectStmt::ToPropertyTree() const {
     select_stmt.put_child(STR_ORDER_BY_LIST, orderby_list);
   }
   return select_stmt;
+}
 }

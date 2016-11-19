@@ -2,7 +2,7 @@
 #define TABLE_REFERENCE_H__
 
 #include "parser/table_factor.h"
-
+namespace ast {
 class TableReference : public TableFactor {
  public:
   TableReference(const std::string & table_name)
@@ -23,5 +23,5 @@ class TableReference : public TableFactor {
   std::string table_name_;
   std::string alias_name_;
 };
-
+}
 #endif // TABLE_REFERENCE_H__

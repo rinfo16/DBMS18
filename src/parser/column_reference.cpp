@@ -1,5 +1,5 @@
 #include "parser/column_reference.h"
-
+namespace ast {
 ptree ColumnReference::ToPropertyTree() const {
   ptree column_reference;
   if (!table_name_.empty()) {
@@ -12,4 +12,5 @@ ptree ColumnReference::ToPropertyTree() const {
     column_reference.put(STR_ALIAS_NAME, alias_name_);
   }
   return column_reference;
+}
 }

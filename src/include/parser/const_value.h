@@ -4,7 +4,7 @@
 #include <string>
 #include "parser/ast_base.h"
 #include "parser/expression_base.h"
-
+namespace ast {
 class ConstValue : public ExpressionBase {
  public:
   ConstValue(const std::string & str_val)
@@ -28,5 +28,5 @@ class ConstValue : public ExpressionBase {
   std::string str_val_;
   int64_t int_val_;
 };
-
+}
 #endif // VALUE_H__
