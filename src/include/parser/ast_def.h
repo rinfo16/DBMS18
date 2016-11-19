@@ -56,7 +56,7 @@ enum TreeType {
   kASTUpdateStmt,
   kASTInsertStmt,
   kASTCopyStmt,
-  kASTExpression,
+  kASTOperation,
   kASTSelectTarget,
   kASTJoinClause,
   kASTOrderClause,

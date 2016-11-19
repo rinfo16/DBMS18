@@ -3,7 +3,7 @@
 
 #include "executor/value_expr_interface.h"
 #include <string>
-
+namespace executor {
 class VarcharConstValue : public ValueExprInterface {
 public:
   VarcharConstValue(const std::string & value) : value_(value){
@@ -32,5 +32,5 @@ class FloatConstValue : public ValueExprInterface {
  private:
   double_t value_;
 };
-
+}
 #endif // CONST_VALUE_H__

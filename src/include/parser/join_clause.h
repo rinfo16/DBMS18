@@ -18,15 +18,15 @@ class JoinClause : public TableFactor {
         join_type_(type) {
   }
 
-  TableFactor *LeftTable() {
+  const TableFactor *LeftTable() const {
     return left_table_;
   }
 
-  TableFactor *RihtTable() {
+  const TableFactor *RightTable() const {
     return right_table_;
   }
 
-  ExpressionBase *JoinPredicate() {
+  const ExpressionBase *JoinPredicate() const {
     return join_predicate_;
   }
   JoinType Type() const {

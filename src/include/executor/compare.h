@@ -4,7 +4,7 @@
 #include "parser/ast_def.h"
 #include "executor/value_expr_interface.h"
 #include "executor/boolean_expr_interface.h"
-
+namespace executor {
 class StringCompare : public BooleanExprInterface {
  public:
   StringCompare(OperatorType op, ValueExprInterface *left,
@@ -37,5 +37,5 @@ class FloatCompare : public BooleanExprInterface {
   ValueExprInterface *left_;
   ValueExprInterface *right_;
 };
-
+}
 #endif // OPERATION_H__

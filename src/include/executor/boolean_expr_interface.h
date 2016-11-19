@@ -3,6 +3,7 @@
 
 #include "common/tuple_row.h"
 #include "executor/datum_interface.h"
+namespace executor {
 
 class BooleanExprInterface : public DatumInterface {
 public:
@@ -10,5 +11,5 @@ public:
   virtual bool GetValue(TupleRow *row) = 0;
   virtual bool GetValue(TupleRow *row1, TupleRow *row2) = 0;
 };
-
+}
 #endif // BOOLEAN_EXPR_INTERFACE_H__

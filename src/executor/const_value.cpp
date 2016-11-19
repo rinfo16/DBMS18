@@ -1,5 +1,5 @@
 #include "executor/const_value.h"
-
+namespace executor {
 const char *VarcharConstValue::GetValue(TupleRow *row, uint32_t *length) const {
   *length = value_.size();
   return value_.c_str();
@@ -14,4 +14,4 @@ const char *FloatConstValue::GetValue(TupleRow *row, uint32_t *length) const {
   *length = sizeof(value_);
   return (char*) &value_;
 }
-
+}

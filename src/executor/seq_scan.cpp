@@ -13,16 +13,16 @@ SeqScan::~SeqScan() {
 
 }
 
-bool SeqScan::Prepare() {
-  return true;
+State SeqScan::Prepare() {
+  return kStateOK;
 }
 
-bool SeqScan::Open() {
+State SeqScan::Open() {
   iterator_->SeekToFirst();
-  return true;
+  return kStateOK;
 }
 
-bool SeqScan::GetNext(TupleRow *row) {
+State SeqScan::GetNext(TupleRow *row) {
 
   uint32_t length = 0;
   const void *p = iterator_->Get(&length);
@@ -32,8 +32,12 @@ bool SeqScan::GetNext(TupleRow *row) {
     memcpy(tuple->Data(), p, length);
     row->SetTuple(tuple_index_, tuple);
     iterator_->Next();
+    return kStateOK;
   }
-  return p != NULL;
+  else
+  {
+    return kStateEOF;
+  }
 }
 
 void SeqScan::Close() {

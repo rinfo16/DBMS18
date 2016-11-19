@@ -2,7 +2,10 @@
 #include "parser/table_reference.h"
 #include "parser/column_reference.h"
 #include "parser/create_stmt.h"
+#include "parser/join_clause.h"
 #include "executor/seq_scan.h"
+#include "executor/nested_loop_join.h"
+
 namespace realizer {
 
 QueryRealizer::QueryRealizer(RowOutputInterface *output,
@@ -34,60 +37,172 @@ State QueryRealizer::Parse() {
 
 State QueryRealizer::Check() {
   // TODO .. semantic check
+  State state;
   if (parse_tree_->ASTType() == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
-    return CheckSelect(select_stmt);
+    state = CheckFrom(select_stmt);
+    state = CheckWhere(select_stmt);
+    state = CheckGroupBy(select_stmt);
+    state = CheckSelect(select_stmt);
+    state = CheckOrderBy(select_stmt);
   }
   return kStateOK;
 }
 
-State QueryRealizer::CheckSelect(ast::SelectStmt *select_stmt) {
-  auto select_target = select_stmt->SelectList();
-  for (auto i = 0; i < select_target.size(); i++) {
-    ast::SelectTarget *t = select_target[i];
-    auto select_expr = t->SelectExpression();
-    if (select_expr->ASTType() == kASTColumnReference) {
-      const ast::ColumnReference *ref =
-          static_cast<const ast::ColumnReference*>(select_expr);
-      Relation *rel = NULL;
-      Attribute attr;
-      if (ref->TableName().empty()) {
-        auto iter = table2relation_.find(ref->TableName());
-        if (iter == table2relation_.end()) {
-          return kStateTableNotFind;
-        }
-        rel = iter->second;
-        int32_t i = rel->GetAttributeIndex(ref->ColumnName());
-        if (i < 0) {
-          return kStateAttributeNotFound;
-        }
-      } else {
-        std::vector<Attribute> attr_vec;
-        for (auto iter = table2relation_.begin(); iter != table2relation_.end();
-            ++iter) {
-          Relation *rel = iter->second;
-          int32_t i = rel->GetAttributeIndex(ref->ColumnName());
-          if (i >= 0) {  // OK, we find the right attribute
-            attr_vec.push_back(rel->GetAttribute(i));
-          }
-          if (attr_vec.size() > 1) {
-            return kStateNameAmbiguous;
-          } else if (attr_vec.empty()) {
-            return kStateAttributeNotFound;
-          }
-          assert(attr_vec.size() == 1);
-        }
-      }
+State QueryRealizer::CheckFrom(const ast::SelectStmt *select_stmt) {
+  auto table_factor_list = select_stmt->TableReference();
+  for (int i = 0; i < table_factor_list.size(); i++) {
+    State state = CheckTableFactor(table_factor_list[i]);
+    if (state != kStateOK)
+      return state;
+  }
+  return kStateOK;
+}
 
-      if (t->AliasName().empty()) {
-        t->SetAliasName(ref->ColumnName());
+State QueryRealizer::CheckTableFactor(const ast::TableFactor *table_factor) {
+
+  if (table_factor->ASTType() == kASTTableReference) {
+    const ast::TableReference *table_reference =
+        dynamic_cast<const ast::TableReference*>(table_factor);
+    Relation *relation = storage_->GetMetaDataManager()->GetRelationByName(
+        table_reference->TableName());
+    if (relation == NULL) {
+      return kStateTableNotFind;
+    }
+    std::string table_name;
+    if (!table_reference->AliasName().empty()) {
+      table_name = table_reference->AliasName();
+    } else {
+      table_name = table_reference->TableName();
+    }
+    name2tuple_index_.insert(
+        std::make_pair(table_name, name2tuple_index_.size()));
+    name2relation_.insert(std::make_pair(table_name, relation));
+  } else if (table_factor->ASTType() == kASTJoinClause) {
+    const ast::JoinClause *join_clause =
+        dynamic_cast<const ast::JoinClause*>(table_factor);
+    State state = CheckTableFactor(join_clause->LeftTable());
+    if (state != kStateOK)
+      return state;
+
+    state = CheckTableFactor(join_clause->RightTable());
+    if (state != kStateOK)
+      return state;
+  }
+  return kStateOK;
+}
+
+State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
+                                         ClauseType type) {
+  if (expr_base->ASTType() == kASTColumnReference) {
+    const ast::ColumnReference *ref =
+        static_cast<const ast::ColumnReference*>(expr_base);
+    Relation *rel = NULL;
+    int32_t slot_index = 0;
+    ColumnRefName name;
+    std::string column_name = ref->ColumnName();
+    if (!ref->TableName().empty()) {
+      auto iter = name2relation_.find(ref->TableName());
+      if (iter == name2relation_.end()) {
+        return kStateTableNotFind;
+      }
+      rel = iter->second;
+      name.first = iter->first;
+      slot_index = rel->GetAttributeIndex(ref->ColumnName());
+      if (slot_index < 0) {
+        return kStateAttributeNotFound;
       }
     } else {
-      //TODO
+      std::vector<uint32_t> attr_vec;
+      for (auto iter = name2relation_.begin(); iter != name2relation_.end();
+          ++iter) {
+        Relation *rel = iter->second;
+        int32_t i = rel->GetAttributeIndex(ref->ColumnName());
+        if (i >= 0) {  // OK, we find the right attribute
+          attr_vec.push_back(i);
+          name.first = iter->first;
+        }
+      }
+      if (attr_vec.size() > 1) {
+        return kStateNameAmbiguous;
+      } else if (attr_vec.empty()) {
+        return kStateAttributeNotFound;
+      }
+      assert(attr_vec.size() == 1);
+      slot_index = attr_vec[0];
     }
+    assert(name2tuple_index_.find(name.first) != name2tuple_index_.end());
+    executor::SlotReference slot_ref(name2tuple_index_[name.first], slot_index);
+    if (ref->AliasName().empty()) {
+      name.second = ref->AliasName();
+    } else {
+      name.second = ref->ColumnName();
+    }
+    name2slot_.insert(std::make_pair(name, slot_ref));
+    if (type == kSelect) {
+      select_ref_.push_back(ref);
+    } else if (type == kGroupBy) {
+      opt_group_by_ref_.push_back(ref);
+    } else if (type == kOrderBy) {
+      opt_order_by_ref_.push_back(ref);
+    } else {
+      assert(false);
+    }
+  } else if (kASTOperation) {
+    //TODO
+    assert(type == kJoinOn || type == kWhere);
+    const ast::Operation *operation =
+        static_cast<const ast::Operation*>(expr_base);
+
+    // check the left operate number
+    State state = CheckExpressionBase(operation->Left(), type);
+    if (state != kStateOK)
+      return state;
+
+    // check the right operate number
+    state = CheckExpressionBase(operation->Right(), type);
+    if (state != kStateOK)
+      return state;
+
+    if (type == kWhere) {
+      opt_where_.push_back(operation);
+    }
+  } else {  // const value expression
+  }
+}
+
+State QueryRealizer::CheckWhere(const ast::SelectStmt *select_stmt) {
+  auto opt_where = select_stmt->OptWhere();
+  for (size_t i = 0; i < opt_where.size(); i++) {
+    CheckExpressionBase(opt_where[i], kWhere);
+  }
+}
+
+State QueryRealizer::CheckGroupBy(const ast::SelectStmt *select_stmt) {
+  auto opt_group_by = select_stmt->OptGroupBy();
+  for (size_t i = 0; i < opt_group_by.size(); i++) {
+    CheckExpressionBase(opt_group_by[i], kGroupBy);
+  }
+}
+
+State QueryRealizer::CheckSelect(const ast::SelectStmt *select_stmt) {
+  auto select_target = select_stmt->SelectList();
+  for (auto i = 0; i < select_target.size(); i++) {
+    const ast::SelectTarget *t = select_target[i];
+    const ast::ExpressionBase *select_expr = t->SelectExpression();
+    CheckExpressionBase(select_expr, kSelect);
   }
   return kStateOK;
 }
+
+State QueryRealizer::CheckOrderBy(const ast::SelectStmt *select_stmt) {
+  auto opt_order_by = select_stmt->OptOrderBy();
+  for (size_t i = 0; i < opt_order_by.size(); i++) {
+    opt_order_by_is_desc_.push_back(opt_order_by[i]->IsDesc());
+    CheckExpressionBase(opt_order_by[i]->OrderByExpression(), kOrderBy);
+  }
+}
+
 State QueryRealizer::Optimize() {
   // TODO .. reduce sql
   // TODO .. optimize path
@@ -190,8 +305,73 @@ bool QueryRealizer::BuildJoin(
   return true;
 }
 
-bool QueryRealizer::BuildJoin(ast::TableFactor *table_factor) {
-  return true;
+executor::ExecInterface* QueryRealizer::BuildJoin(
+    const ast::TableFactor *table_factor) {
+  if (table_factor->ASTType() == kASTTableReference) {
+    // table reference, build a table scan executor
+    const ast::TableReference *table_reference =
+        dynamic_cast<const ast::TableReference*>(table_factor);
+    return BuildTableScan(table_reference);
+  } else if (table_factor->ASTType() == kASTJoinClause) {
+    // this is a join clause, SQL 92 syntax
+    const ast::JoinClause *join_clause =
+        dynamic_cast<const ast::JoinClause*>(table_factor);
+
+    // build the left join executor
+    executor::ExecInterface* left_exec = BuildJoin(join_clause->LeftTable());
+
+    // build the right join executor
+    executor::ExecInterface* right_exec = BuildJoin(join_clause->RightTable());
+
+    // build join predicate
+    if (join_clause->JoinPredicate()->ASTType() != kASTOperation) {
+      // join predicate must be an operation expression
+      assert(false);
+      return NULL;
+    }
+    const ast::Operation *operation =
+        static_cast<const ast::Operation*>(join_clause->JoinPredicate());
+    executor::BooleanExprInterface *boolean_expr = BuildBooleanExpression(
+        operation);
+    executor::ExecInterface* join_exec = new executor::NestedLoopJoin(
+        left_exec, right_exec, boolean_expr);
+    all_exec_obj_.push_back(join_exec);
+    return join_exec;
+  }
+  assert(false);
+  return NULL;
+}
+
+executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
+    const ast::Operation *operation) {
+
+}
+executor::ExecInterface* QueryRealizer::BuildTableScan(
+    const ast::TableReference *table_reference) {
+  std::string table_name = table_reference->TableName();
+  storage::IteratorInterface *iter = storage_->NewIterator(table_name);
+  assert(iter);
+  if (iter == NULL) {
+    return NULL;
+  }
+  all_iter_.push_back(iter);
+
+  if (!table_reference->AliasName().empty()) {
+    table_name = table_reference->AliasName();
+  }
+
+  Relation *relation = NULL;
+  auto i = name2relation_.find(table_name);
+  assert(i != name2relation_.end());
+  if (i == name2relation_.end()) {
+    return NULL;
+  }
+
+  relation = i->second;
+  int32_t tuple_index = all_tuple_desc_.size();
+  all_tuple_desc_.push_back(relation->ToDesc());
+  executor::ExecInterface *exec = new executor::SeqScan(iter, tuple_index);
+  all_exec_obj_.push_back(exec);
 }
 
 bool QueryRealizer::ExecLoad(ast::LoadStmt *load_stmt) {

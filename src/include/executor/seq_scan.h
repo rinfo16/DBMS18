@@ -8,9 +8,9 @@ class SeqScan : public ExecInterface {
   ~SeqScan();
   // TODO .. filter
   // SeqScan(storage::Iterator *iterator, int n, Filter *filter);
-  virtual bool Prepare();
-  virtual bool Open();
-  virtual bool GetNext(TupleRow *row);
+  virtual State Prepare();
+  virtual State Open();
+  virtual State GetNext(TupleRow *row);
   virtual void Close();
  private:
   SeqScan();

@@ -1,5 +1,5 @@
 #include "executor/compare.h"
-
+namespace executor {
 StringCompare::StringCompare(OperatorType op, ValueExprInterface *left,
     ValueExprInterface *right)
 : op_(op),
@@ -100,4 +100,5 @@ bool FloatCompare::GetValue(TupleRow *row) const {
       break;
   }
   return false;
+}
 }

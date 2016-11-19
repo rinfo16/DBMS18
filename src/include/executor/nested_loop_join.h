@@ -3,8 +3,7 @@
 
 #include "executor/exec_interface.h"
 #include "executor/boolean_expr_interface.h"
-#include "executor/value_expr_interface.h"
-#include "executor/sort.h"
+#include "common/tuple_row.h"
 
 namespace executor {
 
@@ -13,9 +12,9 @@ class NestedLoopJoin : public ExecInterface {
   NestedLoopJoin(ExecInterface *left, ExecInterface *right,
                  const BooleanExprInterface *join_predicate);
   virtual ~NestedLoopJoin();
-  virtual bool Prepare();
-  virtual bool Open();
-  virtual bool GetNext(TupleRow *row);
+  virtual State Prepare();
+  virtual State Open();
+  virtual State GetNext(TupleRow *row);
   virtual void Close();
 };
 

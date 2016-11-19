@@ -6,13 +6,13 @@
 #include "parser/expression_base.h"
 
 namespace ast {
-class Expression : public ExpressionBase {
+class Operation : public ExpressionBase {
  public:
-  Expression(ExpressionBase *left, ExpressionBase*right, OperatorType op)
+  Operation(ExpressionBase *left, ExpressionBase*right, OperatorType op)
       : left_(left),
         right_(right),
         operator_(op),
-        ExpressionBase(kASTExpression) {
+        ExpressionBase(kASTOperation) {
   }
 
   OperatorType ExprOperator() const {
@@ -33,7 +33,7 @@ class Expression : public ExpressionBase {
 
   virtual ptree ToPropertyTree() const;
  private:
-  Expression();
+  Operation();
   OperatorType operator_;
   ExpressionBase *left_;
   ExpressionBase *right_;

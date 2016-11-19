@@ -12,9 +12,9 @@ class MergeJoin : public ExecInterface {
   MergeJoin(Sort *left, Sort *right,
                  const BooleanExprInterface *join_predicate);
   virtual ~MergeJoin();
-  virtual bool Prepare();
-  virtual bool Open();
-  virtual bool GetNext(TupleRow *row);
+  virtual State Prepare();
+  virtual State Open();
+  virtual State GetNext(TupleRow *row);
   virtual void Close();
 };
 

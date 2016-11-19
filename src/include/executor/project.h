@@ -13,9 +13,9 @@ class Project : public ExecInterface {
   Project(ExecInterface *left,
           const std::vector<ValueExprInterface*> & project_attr);
   virtual ~Project();
-  virtual bool Prepare();
-  virtual bool Open();
-  virtual bool GetNext(TupleRow *row);
+  virtual State Prepare();
+  virtual State Open();
+  virtual State GetNext(TupleRow *row);
   virtual void Close();
 };
 

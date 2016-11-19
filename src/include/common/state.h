@@ -3,6 +3,7 @@
 
 enum State {
   kStateOK,
+  kStateEOF,
   kStateParseError,
   kStateBuildError,
   kStateExecError,

@@ -1,6 +1,6 @@
-#include "parser/expression.h"
+#include "parser/operation.h"
 namespace ast {
-ptree Expression::ToPropertyTree() const {
+ptree Operation::ToPropertyTree() const {
   ptree expr;
   std::string op;
   switch (operator_) {

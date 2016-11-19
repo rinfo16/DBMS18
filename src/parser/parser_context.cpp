@@ -1,10 +1,11 @@
 #include <boost/algorithm/string.hpp>
 #include "parser_context.h"
+
+#include "parser/operation.h"
 #include "parser/const_value.h"
 #include "parser/join_clause.h"
 #include "parser/reference_name.h"
 #include "parser/table_reference.h"
-#include "parser/expression.h"
 #include "parser/create_stmt.h"
 #include "parser/update_stmt.h"
 #include "parser/insert_stmt.h"
@@ -263,7 +264,7 @@ ASTBase *ParserContext::NewColumnDefine(ASTBase *column_name,
 
 ASTBase *ParserContext::NewExpression(OperatorType op, ASTBase *left,
                                       ASTBase *right) {
-  Expression *expression = new Expression(dynamic_cast<ExpressionBase*>(left),
+  Operation *expression = new Operation(dynamic_cast<ExpressionBase*>(left),
                                           dynamic_cast<ExpressionBase*>(right),
                                           op);
   ast_node_list_.push_back(expression);
@@ -281,7 +282,7 @@ ASTBase *ParserContext::NewUpdateStmt(ASTBase *table_name,
   ASTBase * ast = set_clause_list;
   ast = opt_where;
   while (ast) {
-    Expression *expr = dynamic_cast<Expression*>(ast);
+    Operation *expr = dynamic_cast<Operation*>(ast);
     update_stmt->set_clause_list_.push_back(expr);
     ast->Next();
   }

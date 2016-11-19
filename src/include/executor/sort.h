@@ -13,9 +13,9 @@ class Sort : public ExecInterface {
   // to compare two TupleRow
   Sort(const BooleanExprInterface *tuple_compare);
   virtual ~Sort();
-  virtual bool Prepare();
-  virtual bool Open();
-  virtual bool GetNext(TupleRow *row);
+  virtual State Prepare();
+  virtual State Open();
+  virtual State GetNext(TupleRow *row);
   virtual void Close();
 };
 

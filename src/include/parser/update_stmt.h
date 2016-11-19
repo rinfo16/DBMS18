@@ -3,8 +3,9 @@
 
 #include <string>
 #include <vector>
+
+#include "operation.h"
 #include "parser/ast_base.h"
-#include "parser/expression.h"
 #include "parser/table_factor.h"
 namespace ast {
 class UpdateStmt : public ASTBase {
@@ -17,7 +18,7 @@ class UpdateStmt : public ASTBase {
     return table_name_;
   }
 
-  std::vector<Expression *> & SetClauseList() {
+  std::vector<Operation *> & SetClauseList() {
     return set_clause_list_;
   }
   std::vector<TableFactor *> &OptFromClause() {
@@ -26,7 +27,7 @@ class UpdateStmt : public ASTBase {
   std::vector<ExpressionBase *> & OptWhere() {
     return opt_where_;
   }
-  const std::vector<Expression *> & SetClauseList() const {
+  const std::vector<Operation *> & SetClauseList() const {
     return set_clause_list_;
   }
   const std::vector<TableFactor *> &OptFromClause() const {
@@ -38,7 +39,7 @@ class UpdateStmt : public ASTBase {
   virtual ptree ToPropertyTree() const;
  private:
   std::string table_name_;
-  std::vector<Expression *> set_clause_list_;
+  std::vector<Operation *> set_clause_list_;
   std::vector<TableFactor *> opt_from_clause_;
   std::vector<ExpressionBase *> opt_where_;
 };
