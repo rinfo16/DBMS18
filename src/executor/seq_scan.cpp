@@ -6,7 +6,7 @@ namespace executor {
 SeqScan::SeqScan(storage::IteratorInterface *iterator, int n)
     : iterator_(iterator),
       tuple_index_(n),
-      rows_(0){
+      rows_(0) {
 }
 
 SeqScan::~SeqScan() {
@@ -33,9 +33,7 @@ State SeqScan::GetNext(TupleRow *row) {
     row->SetTuple(tuple_index_, tuple);
     iterator_->Next();
     return kStateOK;
-  }
-  else
-  {
+  } else {
     return kStateEOF;
   }
 }
