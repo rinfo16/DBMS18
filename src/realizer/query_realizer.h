@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include "common/row_desc.h"
 #include "parser/operation.h"
 #include "parser/select_stmt.h"
 #include "parser/create_stmt.h"
@@ -42,10 +43,13 @@ namespace realizer {
     };
 
     bool BuildSelect(ast::SelectStmt *select_stmt);
-    bool BuildJoin(const std::vector<ast::TableFactor *> table_factor_list);
+    executor::ExecInterface* BuildJoin(const std::vector<ast::TableFactor *> table_factor_list);
     executor::ExecInterface* BuildJoin(const ast::TableFactor *table_factor);
     executor::ExecInterface* BuildTableScan(const ast::TableReference *table_reference);
-    executor::BooleanExprInterface *BuildBooleanExpression(const ast::Operation *operation);
+    executor::BooleanExprInterface *BuildBooleanExpression(const ast::ExpressionBase *operation);
+    executor::ValueExprInterface *BuildValueExpression(const ast::ExpressionBase *expr_base);
+
+
     bool ExecCreate(ast::CreateStmt *create_stmt);
     bool ExecLoad(ast::LoadStmt *load_stmt);
     bool ExecSelect();
@@ -83,6 +87,7 @@ namespace realizer {
     std::vector<const ast::Operation*> opt_where_;
 
     std::vector<RowDesc> all_tuple_desc_;
+    boost::ptr_vector<executor::DatumInterface> all_datum_items_;
   };
 
 }  // end namespace realizer

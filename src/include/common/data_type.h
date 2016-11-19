@@ -11,7 +11,8 @@ enum DataType {
   kDTInteger = INT8OID,
   kDTFloat = FLOAT8OID,
   kDTDate = DATEOID,
-  kDTVarchar = VARCHAROID
+  kDTVarchar = VARCHAROID,
+  kDTBoolean
 };
 
 

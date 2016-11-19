@@ -16,7 +16,7 @@ private:
 
 class IntegerConstValue : public ValueExprInterface {
  public:
-  IntegerConstValue(double_t & value) : value_(value){
+  IntegerConstValue(int64_t value) : value_(value){
   }
   virtual const char *GetValue(TupleRow *row, uint32_t *length) const;
  private:

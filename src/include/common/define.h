@@ -59,6 +59,10 @@
 #define STR_ORDER_BY_LIST "ORDER_BY_LIST"
 
 
+#define LOW_INT16(l)              ((int16_t)((int32_t)(l) & 0xffff))
+#define HIGH_INT16(l)             ((int16_t)((int32_t)(l) >> 16))
+#define MAKE_INT32(high16, low16) ((int32_t) high16 << 16 | (int32_t) low16)
+
 typedef uint32_t fileno_t;
 typedef uint32_t segmentno_t;
 typedef uint32_t extentno_t;
@@ -69,9 +73,73 @@ typedef uint32_t attributeid_t;
 typedef double double_t;
 
 
-#define LOW_INT16(l)              ((int16_t)((int32_t)(l) & 0xffff))
-#define HIGH_INT16(l)             ((int16_t)((int32_t)(l) >> 16))
-#define MAKE_INT32(high16, low16) ((int32_t) high16 << 16 | (int32_t) low16)
+typedef int order_t;
+typedef int join_type_t;
+typedef int table_scope_t;
+typedef int data_type_t;
+
+enum OperatorType {
+  kInvalid,
+  kAssign,
+
+  kBooleanBegin,
+
+  kCompareBegin,
+  kEqual,
+  kLess,
+  kGreater,
+  kLessOrEqual,
+  kGreaterOrEaual,
+  kCompareEnd,
+
+  kLogicBegin,
+  kAnd,
+  kOr,
+  kXOr,
+  kLogicEnd,
+
+  kBooleanEnd,
+
+  kArithmeticBegin,
+  kArithmeticEnd,
+};
+
+enum OrderType {
+  kAsc,
+  kDesc
+};
+
+enum JoinType {
+  kJoinLeft,
+  kJoinRight,
+  kJoinInner,
+  kJoinOuter
+};
+
+enum TreeType {
+  kASTBase,
+  kASTSelectStmt,
+  kASTCreateStmt,
+  kASTCreateAsStmt,
+  kASTUpdateStmt,
+  kASTInsertStmt,
+  kASTCopyStmt,
+  kASTOperation,
+  kASTSelectTarget,
+  kASTJoinClause,
+  kASTOrderClause,
+  kASTReferenceName,
+  kASTTableFactor,
+  kASTColumnReference,
+  kASTColumnDefine,
+  kASTConstValue,
+  kASTTableReference,
+  kASTSubQuery
+};
 
 
+bool IsArithmeticOperator(OperatorType);
+bool IsBooleanOperator(OperatorType);
+bool IsCompareOperator(OperatorType);
+bool IsLogicOperator(OperatorType);
 #endif // DEFINE_H_

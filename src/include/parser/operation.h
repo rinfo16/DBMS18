@@ -15,7 +15,7 @@ class Operation : public ExpressionBase {
         ExpressionBase(kASTOperation) {
   }
 
-  OperatorType ExprOperator() const {
+  OperatorType Operator() const {
     return operator_;
   }
   ExpressionBase *Left() {

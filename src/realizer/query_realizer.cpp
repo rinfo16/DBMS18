@@ -5,6 +5,9 @@
 #include "parser/join_clause.h"
 #include "executor/seq_scan.h"
 #include "executor/nested_loop_join.h"
+#include "executor/slot_reference.h"
+#include "executor/compare.h"
+#include "executor/const_value.h"
 
 namespace realizer {
 
@@ -297,12 +300,13 @@ bool QueryRealizer::BuildSelect(ast::SelectStmt *select_stmt) {
   return true;
 }
 
-bool QueryRealizer::BuildJoin(
+executor::ExecInterface* QueryRealizer::BuildJoin(
     const std::vector<ast::TableFactor *> table_factor_list) {
   for (auto i = 0; i < table_factor_list.size(); i++) {
-
+    BuildJoin(table_factor_list[i]);
   }
-  return true;
+  // TODO ..
+  return NULL;
 }
 
 executor::ExecInterface* QueryRealizer::BuildJoin(
@@ -343,9 +347,95 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
 }
 
 executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
-    const ast::Operation *operation) {
+    const ast::ExpressionBase *expression_base) {
+  executor::BooleanExprInterface *ret = NULL;
+  if (expression_base->ASTType() != kASTOperation) {
+    assert(false);
+    return NULL;
+  }
+  const ast::Operation *operation =
+      static_cast<const ast::Operation *>(expression_base);
+  if (IsCompareOperator(operation->Operator())) {
+    executor::ValueExprInterface *left = BuildValueExpression(
+        operation->Left());
+    executor::ValueExprInterface *right = BuildValueExpression(
+        operation->Right());
+    if (left->GetDataType() == right->GetDataType()) {
+      DataType data_type = left->GetDataType();
+      if (data_type == kDTInteger) {
+        ret = new executor::IntegerCompare(operation->Operator(),left, right);
+        all_datum_items_.push_back(ret);
+      } else if (data_type == kDTFloat) {
+        ret = new executor::IntegerCompare(operation->Operator(),left, right);
+        all_datum_items_.push_back(ret);
+      } else if (data_type == kDTVarchar) {
+        ret = new executor::IntegerCompare(operation->Operator(),left, right);
+        all_datum_items_.push_back(ret);
+      }
+    } else {
+      // TODO  type cast ...
+    }
+    // TODO and/or/xor support...
+  } else if (IsCompareOperator(operation->Operator())) {
 
+  }
+  const ast::ExpressionBase *left = operation->Left();
+  if (left->ASTType() == kASTColumnReference) {
+    //static_cast<const ast::ColumnReference*>(left);
+  } else if (left->ASTType() == kASTConstValue) {
+
+  } else if (left->ASTType() == kASTOperation) {
+
+  }
+  const ast::ExpressionBase *right = operation->Right();
+  if (right->ASTType() == kASTColumnReference) {
+
+  }
 }
+
+executor::ValueExprInterface *QueryRealizer::BuildValueExpression(
+    const ast::ExpressionBase *expr_base) {
+  executor::ValueExprInterface *ret = NULL;
+  if (expr_base->ASTType() == kASTColumnReference) {
+    const ast::ColumnReference* col_ref =
+        static_cast<const ast::ColumnReference*>(expr_base);
+    ColumnRefName name;
+    name.first = col_ref->TableName();
+    name.second = col_ref->AliasName();
+    auto iter = name2slot_.find(name);
+    if (iter == name2slot_.end()) {
+      assert(false);
+      return NULL;
+    }
+    ret = new executor::SlotReference(iter->second);
+    // TODO set data_type
+    all_datum_items_.push_back(ret);
+  } else if (expr_base->ASTType() == kASTConstValue) {
+    const ast::ConstValue* const_value =
+        static_cast<const ast::ConstValue*>(expr_base);
+    DataType data_type = const_value->GetDataType();
+    if (data_type == kDTInteger) {
+      ret = new executor::IntegerConstValue(const_value->GetIntegerValue());
+      ret->SetDataType(kDTInteger);
+      all_datum_items_.push_back(ret);
+    } else if (data_type == kDTVarchar) {
+      ret = new executor::VarcharConstValue(const_value->GetStringValue());
+      ret->SetDataType(kDTVarchar);
+      all_datum_items_.push_back(ret);
+    }
+  } else if (expr_base->ASTType() == kASTOperation) {
+    const ast::Operation *operation =
+        static_cast<const ast::Operation*>(expr_base);
+    executor::ValueExprInterface *left = BuildValueExpression(
+        operation->Left());
+    executor::ValueExprInterface *right = BuildValueExpression(
+        operation->Right());
+    // TODO build arithmetic expression
+    // ...
+  }
+  return ret;
+}
+
 executor::ExecInterface* QueryRealizer::BuildTableScan(
     const ast::TableReference *table_reference) {
   std::string table_name = table_reference->TableName();
