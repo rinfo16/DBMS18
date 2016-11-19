@@ -690,9 +690,9 @@ join_table:
 
 ;
 
-opt_inner_cross: /* nil */ { $$ = JOIN_NONE; }
-  | INNER { $$ = JOIN_INNER; }
-  | CROSS { $$ = JOIN_CROSS; }
+opt_inner_cross: /* nil */ {  }
+  | INNER {  }
+  | CROSS {  }
 ;
 
 opt_outer:
@@ -700,13 +700,13 @@ opt_outer:
   | OUTER { }
 ;
 
-left_or_right: LEFT { $$ = JOIN_LEFT; }
-  | RIGHT { $$ = JOIN_RIGHT; }
+left_or_right: LEFT {  }
+  | RIGHT {  }
 ;
 
-opt_left_or_right_outer: LEFT opt_outer { $$ = JOIN_NATURAL_LEFT; }
-  | RIGHT opt_outer { $$ = JOIN_NATURAL_RIGHT; }
-  | /* nil */ { $$ = JOIN_NATURAL_INNER; }
+opt_left_or_right_outer: LEFT opt_outer {  }
+  | RIGHT opt_outer { }
+  | /* nil */ {  }
 ;
 
 opt_join_condition: 

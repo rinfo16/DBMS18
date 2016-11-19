@@ -73,7 +73,7 @@ ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name, ASTBase *opt_column_nam
   }
   ConstValue *const_value = dynamic_cast<ConstValue*>(file_path);
   assert(const_value);
-  load_stmt->file_path_ = const_value->StringValue();
+  load_stmt->file_path_ = const_value->GetStringValue();
   return load_stmt;
 }
 
