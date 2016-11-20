@@ -136,6 +136,8 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
     }
     assert(name2tuple_index_.find(name.first) != name2tuple_index_.end());
     executor::SlotReference slot_ref(name2tuple_index_[name.first], slot_index);
+    const Attribute & attr = rel->GetAttribute(slot_index);
+    slot_ref.SetDataType(attr.GetDataType());
     if (ref->AliasName().empty()) {
       name.second = ref->AliasName();
     } else {
@@ -217,7 +219,12 @@ State QueryRealizer::Build() {
   bool ok = true;
   if (parse_tree_->ASTType() == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
-    ok = BuildSelect(select_stmt);
+    top_exec_ = BuildJoin(select_stmt->TableReference());
+    if (!select_stmt->OptWhere().empty()) {
+      top_exec_ = BuildFilter(select_stmt->OptWhere()[0]);
+    }
+
+    //ok = BuildSelect(select_stmt);
   }
   if (ok) {
     return kStateOK;
@@ -249,7 +256,7 @@ std::string QueryRealizer::Message() const {
   return message_;
 }
 
-bool QueryRealizer::BuildSelect(ast::SelectStmt *select_stmt) {
+bool QueryRealizer::BuildSelectStmt(ast::SelectStmt *select_stmt) {
   bool ret = false;
   storage::IteratorInterface *iter = NULL;
   std::string table_name;
@@ -303,9 +310,11 @@ bool QueryRealizer::BuildSelect(ast::SelectStmt *select_stmt) {
 executor::ExecInterface* QueryRealizer::BuildJoin(
     const std::vector<ast::TableFactor *> table_factor_list) {
   for (auto i = 0; i < table_factor_list.size(); i++) {
-    BuildJoin(table_factor_list[i]);
+    return BuildJoin(table_factor_list[i]);
   }
-  // TODO ..
+  // TODO only support SQL 92 syntax, don not support SQL 89 syntax
+  // EG. SQL like: select tbl1.col1, tbl2.col2 from tbl1, tbl2 where
+  //               tab1.col1 = tbl2.col1..
   return NULL;
 }
 
@@ -343,6 +352,14 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
     return join_exec;
   }
   assert(false);
+  return NULL;
+}
+
+executor::ExecInterface* QueryRealizer::BuildFilter(
+    const ast::ExpressionBase* opt_where)
+{
+  executor::BooleanExprInterface *bool_expr = BuildBooleanExpression(opt_where);
+  // TODO filter executor ...
   return NULL;
 }
 
@@ -408,7 +425,6 @@ executor::ValueExprInterface *QueryRealizer::BuildValueExpression(
       return NULL;
     }
     ret = new executor::SlotReference(iter->second);
-    // TODO set data_type
     all_datum_items_.push_back(ret);
   } else if (expr_base->ASTType() == kASTConstValue) {
     const ast::ConstValue* const_value =
