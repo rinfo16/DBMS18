@@ -48,8 +48,8 @@ class QueryRealizer : public QueryRealizerInterface {
   executor::ExecInterface* BuildJoin(const ast::TableFactor *table_factor);
   executor::ExecInterface* BuildTableScan(
       const ast::TableReference *table_reference);
-  executor::ExecInterface* BuildFilter(const ast::ExpressionBase* opt_where);
-
+  executor::ExecInterface* BuildSelect(const ast::ExpressionBase* opt_where);
+  executor::ExecInterface* BuildProjection(const std::vector<ast::SelectTarget*> & select_list);
   executor::BooleanExprInterface *BuildBooleanExpression(
       const ast::ExpressionBase *operation);
   executor::ValueExprInterface *BuildValueExpression(
@@ -57,7 +57,7 @@ class QueryRealizer : public QueryRealizerInterface {
 
   bool ExecCreate(ast::CreateStmt *create_stmt);
   bool ExecLoad(ast::LoadStmt *load_stmt);
-  bool ExecSelect();
+  State ExecSelect();
   State CheckFrom(const ast::SelectStmt *select_stmt);
   State CheckWhere(const ast::SelectStmt *select_stmt);
   State CheckGroupBy(const ast::SelectStmt *select_stmt);
@@ -73,15 +73,16 @@ class QueryRealizer : public QueryRealizerInterface {
   storage::StorageServiceInterface *storage_;
   ast::ASTBase *parse_tree_;
   RowDesc output_row_desc_;
-  std::vector<storage::IteratorInterface*> all_iter_;
-  boost::ptr_vector<executor::ExecInterface> all_exec_obj_;
   executor::ExecInterface *top_exec_;
 
   // table name , column name
   typedef std::pair<std::string, std::string> ColumnRefName;
   std::map<std::string, Relation*> name2relation_;
   std::map<std::string, int32_t> name2tuple_index_;
-  std::map<ColumnRefName, executor::SlotReference> name2slot_;
+  std::map<const ast::ColumnReference*, executor::SlotReference> name2slot_;
+
+  std::vector<executor::ValueExprInterface*> projection_list_;
+
   std::vector<const ast::ColumnReference*> column_reference_;
 
   std::vector<const ast::ColumnReference*> select_ref_;
@@ -94,6 +95,8 @@ class QueryRealizer : public QueryRealizerInterface {
 
   std::vector<RowDesc> all_tuple_desc_;
   boost::ptr_vector<executor::DatumInterface> all_datum_items_;
+  std::vector<storage::IteratorInterface*> all_iter_;
+  boost::ptr_vector<executor::ExecInterface> all_exec_obj_;
 };
 
 }  // end namespace realizer

@@ -20,7 +20,7 @@ Session::Session(tcp::socket socket, ConnectionManager& manager_)
 }
 
 Session::~Session() {
-  BOOST_LOG_TRIVIAL(debug) << "delete thread";
+  BOOST_LOG_TRIVIAL(debug)<< "delete thread";
   // before go here, the thread is joinable
   thread_->detach();
   delete thread_;
@@ -340,29 +340,37 @@ void Session::ProcessSimpleQuery(const std::string & sql) {
 
   rlz = realizer::NewRealizer(&out, sql);
   State state = rlz->Parse();
-  if (state != kStateOK)
-  {
-	  SendErrorResponse(rlz->Message());
+  if (state != kStateOK) {
+    SendErrorResponse(rlz->Message());
+    goto RET;
   }
+
+  state = rlz->Check();
+  if (state != kStateOK) {
+    SendErrorResponse(rlz->Message());
+    goto RET;
+  }
+
   state = rlz->Optimize();
-  if (state != kStateOK)
-  {
-	  SendErrorResponse(rlz->Message());
+  if (state != kStateOK) {
+    SendErrorResponse(rlz->Message());
+    goto RET;
   }
 
   state = rlz->Build();
-  if (state != kStateOK)
-  {
-	  SendErrorResponse(rlz->Message());
+  if (state != kStateOK) {
+    SendErrorResponse(rlz->Message());
+    goto RET;
   }
 
   state = rlz->Execute();
-  if (state != kStateOK)
-  {
-	  SendErrorResponse(rlz->Message());
+  if (state != kStateOK) {
+    SendErrorResponse(rlz->Message());
+    goto RET;
   }
   SendCommandComplete(rlz->Message());
 
+RET:
   realizer::DeleteRealizer(rlz);
   SendReadForQuery(READY_FOR_QUERY_IDLE);
 }
@@ -467,8 +475,7 @@ void Session::SendBackendKeyData() {
   Send(write_msg_.Data(), write_msg_.GetSize());
 }
 
-void Session::SendRowDescription(const RowDesc *row_desc
-                              ) {
+void Session::SendRowDescription(const RowDesc *row_desc) {
   BackendMsgBegin(ROW_DESCRIPTION);
   int16_t columns_count = row_desc->GetColumnCount();
   BackendMsgAppendInt16(columns_count);
@@ -497,17 +504,17 @@ void Session::SendRowDescription(const RowDesc *row_desc
 
 void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *row_desc) {
   BackendMsgBegin(DATA_ROW);
-  uint16_t number = (uint16_t)row_desc->GetColumnCount();
+  uint16_t number = (uint16_t) row_desc->GetColumnCount();
 
 // The number of column values that follow (possibly zero).
   BackendMsgAppendInt16(number);
   for (uint16_t i = 0; i < number; i++) {
     const ColumnDesc & col_desc = row_desc->GetColumnDesc(i);
-    uint32_t nth_tuple = col_desc.item_slot_.nth_tuple_;
-    uint32_t nth_item = col_desc.item_slot_.nth_item_;
+    //uint32_t nth_tuple = col_desc.item_slot_.nth_tuple_;
+    //uint32_t nth_item = col_desc.item_slot_.nth_item_;
 
-    const Tuple tuple = tuple_row->GetTuple(nth_tuple);
-    const Slot * slot = tuple->GetSlot(nth_item);
+    const Tuple tuple = tuple_row->GetTuple(0);
+    const Slot * slot = tuple->GetSlot(i);
     // The length of the column value, in bytes (this count does not include
     // itself). Can be zero. As a special case, -1 indicates a NULL column
     // value. No value bytes follow in the NULL case
@@ -547,7 +554,7 @@ void Session::SendCommandComplete(const std::string & msg) {
 
 void Session::SendErrorResponse(const std::string & msg) {
   BackendMsgBegin(ERROR_RESPONSE);
-  BackendMsgAppendInt8(1);
+  BackendMsgAppendInt8(0);
   BackendMsgAppendString(msg);
   BackendMsgEnd(ERROR_RESPONSE);
 }

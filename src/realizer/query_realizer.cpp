@@ -8,6 +8,7 @@
 #include "executor/slot_reference.h"
 #include "executor/compare.h"
 #include "executor/const_value.h"
+#include "executor/project.h"
 
 namespace realizer {
 
@@ -16,7 +17,8 @@ QueryRealizer::QueryRealizer(RowOutputInterface *output,
     : output_(output),
       parser_(NULL),
       parse_tree_(NULL),
-      top_exec_(NULL) {
+      top_exec_(NULL),
+      sql_stmt_(sql) {
   storage_ = storage::StorageServiceInterface::Instance();
 }
 
@@ -44,10 +46,22 @@ State QueryRealizer::Check() {
   if (parse_tree_->ASTType() == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
     state = CheckFrom(select_stmt);
+    if (state != kStateOK)
+      return state;
     state = CheckWhere(select_stmt);
+    if (state != kStateOK)
+      return state;
     state = CheckGroupBy(select_stmt);
+    if (state != kStateOK)
+      return state;
+
     state = CheckSelect(select_stmt);
+    if (state != kStateOK)
+      return state;
+
     state = CheckOrderBy(select_stmt);
+    if (state != kStateOK)
+      return state;
   }
   return kStateOK;
 }
@@ -119,7 +133,7 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
       std::vector<uint32_t> attr_vec;
       for (auto iter = name2relation_.begin(); iter != name2relation_.end();
           ++iter) {
-        Relation *rel = iter->second;
+        rel = iter->second;
         int32_t i = rel->GetAttributeIndex(ref->ColumnName());
         if (i >= 0) {  // OK, we find the right attribute
           attr_vec.push_back(i);
@@ -138,12 +152,7 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
     executor::SlotReference slot_ref(name2tuple_index_[name.first], slot_index);
     const Attribute & attr = rel->GetAttribute(slot_index);
     slot_ref.SetDataType(attr.GetDataType());
-    if (ref->AliasName().empty()) {
-      name.second = ref->AliasName();
-    } else {
-      name.second = ref->ColumnName();
-    }
-    name2slot_.insert(std::make_pair(name, slot_ref));
+    name2slot_.insert(std::make_pair(ref, slot_ref));
     if (type == kSelect) {
       select_ref_.push_back(ref);
     } else if (type == kGroupBy) {
@@ -173,21 +182,29 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
       opt_where_.push_back(operation);
     }
   } else {  // const value expression
+    return kStateNotSupport;
   }
+  return kStateOK;
 }
 
 State QueryRealizer::CheckWhere(const ast::SelectStmt *select_stmt) {
   auto opt_where = select_stmt->OptWhere();
   for (size_t i = 0; i < opt_where.size(); i++) {
-    CheckExpressionBase(opt_where[i], kWhere);
+    State state = CheckExpressionBase(opt_where[i], kWhere);
+    if (state != kStateOK)
+      return state;
   }
+  return kStateOK;
 }
 
 State QueryRealizer::CheckGroupBy(const ast::SelectStmt *select_stmt) {
   auto opt_group_by = select_stmt->OptGroupBy();
   for (size_t i = 0; i < opt_group_by.size(); i++) {
-    CheckExpressionBase(opt_group_by[i], kGroupBy);
+    State state = CheckExpressionBase(opt_group_by[i], kGroupBy);
+    if (state != kStateOK)
+      return state;
   }
+  return kStateOK;
 }
 
 State QueryRealizer::CheckSelect(const ast::SelectStmt *select_stmt) {
@@ -195,7 +212,9 @@ State QueryRealizer::CheckSelect(const ast::SelectStmt *select_stmt) {
   for (auto i = 0; i < select_target.size(); i++) {
     const ast::SelectTarget *t = select_target[i];
     const ast::ExpressionBase *select_expr = t->SelectExpression();
-    CheckExpressionBase(select_expr, kSelect);
+    State state = CheckExpressionBase(select_expr, kSelect);
+    if (state != kStateOK)
+      return state;
   }
   return kStateOK;
 }
@@ -204,8 +223,12 @@ State QueryRealizer::CheckOrderBy(const ast::SelectStmt *select_stmt) {
   auto opt_order_by = select_stmt->OptOrderBy();
   for (size_t i = 0; i < opt_order_by.size(); i++) {
     opt_order_by_is_desc_.push_back(opt_order_by[i]->IsDesc());
-    CheckExpressionBase(opt_order_by[i]->OrderByExpression(), kOrderBy);
+    State state = CheckExpressionBase(opt_order_by[i]->OrderByExpression(),
+                                      kOrderBy);
+    if (state != kStateOK)
+      return state;
   }
+  return kStateOK;
 }
 
 State QueryRealizer::Optimize() {
@@ -220,17 +243,18 @@ State QueryRealizer::Build() {
   if (parse_tree_->ASTType() == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
     top_exec_ = BuildJoin(select_stmt->TableReference());
+    if (top_exec_ == NULL)
+      return kStateBuildError;
     if (!select_stmt->OptWhere().empty()) {
-      top_exec_ = BuildFilter(select_stmt->OptWhere()[0]);
+      top_exec_ = BuildSelect(select_stmt->OptWhere()[0]);
+      if (top_exec_ == NULL)
+        return kStateBuildError;
     }
-
-    //ok = BuildSelect(select_stmt);
+    top_exec_ = BuildProjection(select_stmt->SelectList());
+    if (top_exec_ == NULL)
+      return kStateBuildError;
   }
-  if (ok) {
-    return kStateOK;
-  } else {
-    return kStateExecError;
-  }
+  return kStateOK;
 }
 
 State QueryRealizer::Execute() {
@@ -243,7 +267,7 @@ State QueryRealizer::Execute() {
     ok = ExecLoad(load_stmt);
   } else if (parse_tree_->ASTType() == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
-    ok = ExecSelect();
+    return ExecSelect();
   }
   if (ok) {
     return kStateOK;
@@ -355,12 +379,46 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
   return NULL;
 }
 
-executor::ExecInterface* QueryRealizer::BuildFilter(
-    const ast::ExpressionBase* opt_where)
-{
+executor::ExecInterface* QueryRealizer::BuildSelect(
+    const ast::ExpressionBase* opt_where) {
   executor::BooleanExprInterface *bool_expr = BuildBooleanExpression(opt_where);
   // TODO filter executor ...
-  return NULL;
+  return top_exec_;
+}
+
+executor::ExecInterface* QueryRealizer::BuildProjection(
+    const std::vector<ast::SelectTarget*> & select_list) {
+  for (auto i = 0; i < select_list.size(); i++) {
+    const ast::SelectTarget *t = select_list[i];
+    const ast::ExpressionBase *select_expr = t->SelectExpression();
+    TreeType type = select_expr->ASTType();
+    if (type == kASTColumnReference) {
+      const ast::ColumnReference *ref =
+          static_cast<const ast::ColumnReference*>(select_expr);
+      auto iter = name2slot_.find(ref);
+      if (iter == name2slot_.end()) {
+        return NULL;
+      }
+      executor::SlotReference *expr = new executor::SlotReference(
+          iter->second);
+      projection_list_.push_back(expr);
+
+      assert(all_tuple_desc_.size() > expr->GetTupleIndex());
+      const RowDesc & row_desc = all_tuple_desc_[expr->GetTupleIndex()];
+      assert(row_desc.GetColumnCount() > expr->GetSlotIndex());
+      ColumnDesc col_desc = row_desc.GetColumnDesc(expr->GetSlotIndex());
+      output_row_desc_.PushColumnDesc(col_desc);
+    } else if (type == kASTOperation) {
+    } else if (type == kASTConstValue) {
+      // const value expression
+    } else {
+    }
+  }
+  executor::ExecInterface *ret = NULL;
+  int32_t tuple_count = name2relation_.size();
+  ret = new executor::Project(top_exec_, projection_list_, tuple_count);
+  all_exec_obj_.push_back(ret);
+  return ret;
 }
 
 executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
@@ -380,13 +438,13 @@ executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
     if (left->GetDataType() == right->GetDataType()) {
       DataType data_type = left->GetDataType();
       if (data_type == kDTInteger) {
-        ret = new executor::IntegerCompare(operation->Operator(),left, right);
+        ret = new executor::IntegerCompare(operation->Operator(), left, right);
         all_datum_items_.push_back(ret);
       } else if (data_type == kDTFloat) {
-        ret = new executor::IntegerCompare(operation->Operator(),left, right);
+        ret = new executor::IntegerCompare(operation->Operator(), left, right);
         all_datum_items_.push_back(ret);
       } else if (data_type == kDTVarchar) {
-        ret = new executor::IntegerCompare(operation->Operator(),left, right);
+        ret = new executor::IntegerCompare(operation->Operator(), left, right);
         all_datum_items_.push_back(ret);
       }
     } else {
@@ -408,6 +466,7 @@ executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
   if (right->ASTType() == kASTColumnReference) {
 
   }
+  return ret;
 }
 
 executor::ValueExprInterface *QueryRealizer::BuildValueExpression(
@@ -416,10 +475,7 @@ executor::ValueExprInterface *QueryRealizer::BuildValueExpression(
   if (expr_base->ASTType() == kASTColumnReference) {
     const ast::ColumnReference* col_ref =
         static_cast<const ast::ColumnReference*>(expr_base);
-    ColumnRefName name;
-    name.first = col_ref->TableName();
-    name.second = col_ref->AliasName();
-    auto iter = name2slot_.find(name);
+    auto iter = name2slot_.find(col_ref);
     if (iter == name2slot_.end()) {
       assert(false);
       return NULL;
@@ -478,6 +534,7 @@ executor::ExecInterface* QueryRealizer::BuildTableScan(
   all_tuple_desc_.push_back(relation->ToDesc());
   executor::ExecInterface *exec = new executor::SeqScan(iter, tuple_index);
   all_exec_obj_.push_back(exec);
+  return exec;
 }
 
 bool QueryRealizer::ExecLoad(ast::LoadStmt *load_stmt) {
@@ -516,36 +573,38 @@ bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {
   return ok;
 }
 
-bool QueryRealizer::ExecSelect() {
-  TupleRow *row = NULL;
+State QueryRealizer::ExecSelect() {
   output_->SendRowDescription(&output_row_desc_);
   bool ret = false;
   std::stringstream ssm;
   int rows = 0;
   BOOST_LOG_TRIVIAL(debug)<< "execute the plan";
   // execute the plan
-  if (!top_exec_->Prepare()) {
-    goto RET;
+  State state = top_exec_->Prepare();
+  if (state != kStateOK) {
+    return state;
   }
-  if (!top_exec_->Open()) {
-    goto RET;
+  state = top_exec_->Open();
+  if (state != kStateOK) {
+    return state;
   }
 
-  row = new TupleRow(1);
+  TupleRow row(1);
   while (true) {
-    bool ok = top_exec_->GetNext(row);
-    if (!ok)
+    state = top_exec_->GetNext(&row);
+    if (state != kStateOK) {
       break;
+    }
     rows++;
-    output_->SendRowData(row, &output_row_desc_);
+    output_->SendRowData(&row, &output_row_desc_);
   }
   top_exec_->Close();
-  ssm << "SELECT " << rows << " rows." << std::endl;
-  //SendCommandComplete(ssm.str());
-  ret = true;
-
-  RET: delete row;
-  return ret;
+  if (state == kStateEOF) {
+    ssm << "SELECT " << rows << " rows." << std::endl;
+    message_ = ssm.str();
+    state = kStateOK;
+  }
+  return state;
 }
 
 QueryRealizerInterface* NewRealizer(RowOutputInterface *output,

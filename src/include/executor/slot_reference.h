@@ -12,6 +12,8 @@ class SlotReference : public ValueExprInterface {
   virtual const char *GetValue(TupleRow *row, uint32_t *length) const;
   void SetTupleIndex(int32_t tuple_index) { tuple_index_ = tuple_index ; }
   void SetSlotIndex(int32_t slot_index) { slot_index_ = slot_index ; }
+  int32_t GetTupleIndex() const { return tuple_index_; }
+  int32_t GetSlotIndex() const { return slot_index_;}
  private:
   int32_t tuple_index_;
   int32_t slot_index_;

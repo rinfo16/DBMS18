@@ -11,6 +11,7 @@ enum State {
   kStateTableNotFind,
   kStateNameAmbiguous,
   kStateAttributeNotFound,
+  kStateNotSupport
 };
 
 
