@@ -336,43 +336,44 @@ void Session::ProcessSimpleQuery(const std::string & sql) {
   BOOST_LOG_TRIVIAL(debug)<< sql;
 
   rrportal::RowOutput out(this);
-  realizer::QueryRealizerInterface *rlz;
+  realizer::QueryRealizerInterface *rlz = realizer::NewRealizer(&out, sql);
+  State state = kStateOK;
+  do {
+    state = rlz->Parse();
+    if (state != kStateOK) {
+      break;
+    }
 
-  rlz = realizer::NewRealizer(&out, sql);
-  State state = rlz->Parse();
+    state = rlz->Check();
+    if (state != kStateOK) {
+      break;
+    }
+
+    state = rlz->Optimize();
+    if (state != kStateOK) {
+      break;
+    }
+
+    state = rlz->Build();
+    if (state != kStateOK) {
+      break;
+    }
+
+    state = rlz->Execute();
+    if (state != kStateOK) {
+      break;
+    }
+  }while (0);
+
   if (state != kStateOK) {
     SendErrorResponse(rlz->Message());
-    goto RET;
+    SendReadForQuery(READY_FOR_QUERY_TRANSACTION_FAIL);
   }
-
-  state = rlz->Check();
-  if (state != kStateOK) {
-    SendErrorResponse(rlz->Message());
-    goto RET;
+  else {
+    SendCommandComplete(rlz->Message());
+    SendReadForQuery(READY_FOR_QUERY_IDLE);
   }
-
-  state = rlz->Optimize();
-  if (state != kStateOK) {
-    SendErrorResponse(rlz->Message());
-    goto RET;
-  }
-
-  state = rlz->Build();
-  if (state != kStateOK) {
-    SendErrorResponse(rlz->Message());
-    goto RET;
-  }
-
-  state = rlz->Execute();
-  if (state != kStateOK) {
-    SendErrorResponse(rlz->Message());
-    goto RET;
-  }
-  SendCommandComplete(rlz->Message());
-
-RET:
   realizer::DeleteRealizer(rlz);
-  SendReadForQuery(READY_FOR_QUERY_IDLE);
 }
 
 bool Session::ReadBody() {
@@ -554,7 +555,7 @@ void Session::SendCommandComplete(const std::string & msg) {
 
 void Session::SendErrorResponse(const std::string & msg) {
   BackendMsgBegin(ERROR_RESPONSE);
-  BackendMsgAppendInt8(0);
+  BackendMsgAppendInt8('M');
   BackendMsgAppendString(msg);
   BackendMsgEnd(ERROR_RESPONSE);
 }
