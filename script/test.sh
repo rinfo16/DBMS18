@@ -6,6 +6,7 @@ project_path=$(pwd)
 cd $cur_dir
 cd $project_path/build
 ./unit_test/cmd.test --csv --export --path=/tmp/data.csv --row=100
+
 psql -h localhost -p 8432 -d postgres -c "create table product1 (id INTEGER, price INTEGER, name VARCHAR(256));"
 psql -h localhost -p 8432 -d postgres -c "create table product2 (id INTEGER, price INTEGER, name VARCHAR(256));"
 psql -h localhost -p 8432 -d postgres -c "copy product1 from '/tmp/data.csv';"
