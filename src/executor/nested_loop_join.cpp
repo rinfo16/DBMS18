@@ -38,6 +38,7 @@ State NestedLoopJoin::Open() {
   if (state != kStateOK) {
     return state;
   }
+  // get the first row of left table
   left_state_ = left_->GetNext(row_);
   if (left_state_ != kStateEOF && left_state_ != kStateOK) {
     return left_state_;
@@ -54,27 +55,34 @@ State NestedLoopJoin::GetNext(TupleRow *row) {
     right_state_ = right_->GetNext(row_);
     if (right_state_ == kStateOK) {
       if (join_predicate_->GetValue(row_)) {
+        // output a row
         row_->CopyTo(row);
         return kStateOK;
       }
     }
     else if (right_state_ == kStateEOF){
+      // right table reach EOF, then read the next row of left table
       left_state_ = left_->GetNext(row_);
       if (left_state_ != kStateOK) {
+        // return EOF or an error ..
         return left_state_;
       }
 
+      // seek to begin of the right table and continue ...
       right_state_ = right_->Open();
       if (right_state_ != kStateOK) {
+        // return EOF or an error ..
         return right_state_;
       }
 
+      // get the first row of right table
       right_state_ = right_->GetNext(row_);
       if (right_state_ != kStateOK) {
         return right_state_;
       }
     }
     else {
+      // right GetNext return an error
       return right_state_;
     }
   }
