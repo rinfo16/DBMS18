@@ -228,7 +228,7 @@ FALSE { yylval->intval = 0; return token::BOOL; }
 
 \"(\\.|[^"\n])*$ { }
 
-
+"\." { return token::POINT; }
 "="  { return token::EQUAL; }
 "&&" { return token::ANDOP; }
 "||" { return token::OR; }

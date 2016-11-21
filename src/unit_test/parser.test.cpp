@@ -35,7 +35,8 @@ int main(int argc, char *argv[]) {
     std::cout << sql << std::endl;
     std::cout << "SQL:[" <<  sql << "]" << std::endl;
     parser::SQLParserInterface *parser = parser::ParserServiceInterface::Instance()->CreateSQLParser(sql);
-    ast::ASTBase *tree = parser->Parse();
+    std::string err_msg;
+    ast::ASTBase *tree = parser->Parse(err_msg);
     if (tree) {
       std::cout << "parse TREE : " << std::endl;
       std::cout << "---------------------------------------------" << std::endl;

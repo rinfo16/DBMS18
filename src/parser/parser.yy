@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <vector>
+#include "common/define.h"
 #include "parser/ast_base.h"
 #include "parser_context.h"
 
@@ -255,6 +256,7 @@
 %token RETURN
 %token REVOKE
 %token RIGHT
+%token POINT
 %token ROLLUP
 %token SCHEMA
 %token SCHEMAS
@@ -326,8 +328,8 @@
 %type <intval> select_opts
 %type <intval> val_list opt_val_list case_list
 %type <intval> opt_asc_desc
-%type <intval> opt_inner_cross opt_outer
-%type <intval> left_or_right opt_left_or_right_outer 
+%type <intval> opt_outer
+%type <intval> opt_join_type
 %type <intval> index_list opt_for_join
 %type <intval> column_atts data_type 
 
@@ -342,6 +344,7 @@
 %type <astbase_ptr> insert_stmt ctext_row ctext_expr_list ctext_expr column_list
 %type <astbase_ptr> update_stmt set_clause_list set_clause set_target opt_from_caluse
 %type <astbase_ptr> load_stmt opt_column_name_list column_name_list file_path
+%type <astbase_ptr> boolean_expression
 %{
 
 #include "parser_context.h"
@@ -368,44 +371,33 @@ stmt_list:
   | stmt_list stmt SEMICOLON {}
 ;
 
+boolean_expression:
+  expr EQUAL expr {  
+    $$ = ctx.NewExpression(kEqual, $1, $3); 
+    }
+  | boolean_expression ANDOP boolean_expression {
+    $$ = ctx.NewExpression(kAnd, $1, $3); 
+    }
+  | boolean_expression OR boolean_expression {  
+    $$ = ctx.NewExpression(kOr, $1, $3); 
+    }
+  | boolean_expression XOR boolean_expression {  
+    $$ = ctx.NewExpression(kXor, $1, $3); 
+    }
+  | NOT boolean_expression { 
+    $$ = ctx.NewExpression(kNot, $2, NULL);
+    };
+  
 expr: expr '+' expr { yyerror("not implement"); YYERROR; }
   | expr '-' expr { yyerror("not implement"); YYERROR; }
   | expr '*' expr { yyerror("not implement"); YYERROR; }
   | expr '/' expr {  }
-  | expr '%' expr { }
-  | expr MOD expr { }
-  | '-' expr %prec UMINUS { }
-  | expr ANDOP expr { }
-  | expr OR expr { }
-  | expr XOR expr { }
-  | expr '|' expr { }
-  | expr '&' expr { }
-  | expr '^' expr { }
-  | expr SHIFT expr { }
-  | NOT expr { }
-  | '!' expr { }
-  | expr COMPARISON expr { }
-  /* recursive selects and comparisons thereto */
-  | expr COMPARISON PAREN_LEFT select_stmt PAREN_RIGHT { }
-  | expr COMPARISON ANY PAREN_LEFT select_stmt PAREN_RIGHT { }
-  | expr COMPARISON SOME PAREN_LEFT select_stmt PAREN_RIGHT { }
-  | expr COMPARISON ALL PAREN_LEFT select_stmt PAREN_RIGHT { }
-  | expr IS NULLX { }
-  | expr IS NOT NULLX { }
-  | expr IS BOOL { }
-  | expr IS NOT BOOL { }
-  | USERVAR ASSIGN expr { }
-  |expr BETWEEN expr AND expr %prec BETWEEN  {}
-  | expr EQUAL expr { 
-      $$ = ctx.NewExpression(kEqual, $1, $3); 
-    }
-  
   | column_name      
   { 
     $$ = ctx.NewColumnReference(NULL, $1);
   }
 
-  | table_name '.' column_name 
+  | table_name POINT column_name 
   {
     $$ = ctx.NewColumnReference($1, $3);
   }
@@ -672,41 +664,31 @@ opt_as: AS
 ;
 
 join_table: 
-  table_reference opt_inner_cross JOIN table_factor opt_join_condition 
+  table_reference opt_join_type JOIN table_factor join_condition
   {
     $$ = ctx.NewJoinClause($1, $4, $5, (JoinType)$2); 
   }
-  
-  | table_reference left_or_right opt_outer JOIN table_factor join_condition
-  {
-    $$ = ctx.NewJoinClause($1, $5, $6, (JoinType)$2); 
-  }
 
   
-  | table_reference NATURAL opt_left_or_right_outer JOIN table_factor 
+  | table_reference NATURAL opt_join_type JOIN table_factor 
   {
     $$ = ctx.NewJoinClause($1, $5, NULL, (JoinType)$3); 
   }
 
 ;
 
-opt_inner_cross: /* nil */ {  }
-  | INNER {  }
-  | CROSS {  }
-;
-
 opt_outer:
   /* nil */ { }
-  | OUTER { }
+  | OUTER { $$ = kJoinFullOutter;  }
 ;
 
-left_or_right: LEFT {  }
-  | RIGHT {  }
-;
-
-opt_left_or_right_outer: LEFT opt_outer {  }
-  | RIGHT opt_outer { }
-  | /* nil */ {  }
+opt_join_type:
+  /* nil */ { $$= kJoinInner;  }
+  | INNER { $$ = kJoinInner; }
+  | CROSS { $$ = kJoinCross; }
+  | LEFT opt_outer { $$ = kJoinLeftOutter; }
+  | RIGHT opt_outer { $$ = kJoinRightOutter; }
+  | OUTER { $$ = kJoinFullOutter;  }
 ;
 
 opt_join_condition: 
@@ -714,8 +696,7 @@ opt_join_condition:
   | join_condition { $$ = $1; };
 
 join_condition: 
-  ON expr { $$ = $2; }
-  | USING PAREN_LEFT column_list PAREN_RIGHT { $$ = $3; }
+  ON boolean_expression { $$ = $2; }
 ;
 
 index_hint: 
@@ -738,8 +719,7 @@ table_subquery:
   PAREN_LEFT select_stmt PAREN_RIGHT { $$ = $2; }
 ;
 
-stmt:
-  delete_stmt {  }
+stmt: delete_stmt {  }
 ;
 
 delete_stmt:
@@ -779,19 +759,13 @@ set_clause_list:
 ;
 
 set_clause:
-  set_target COMPARISON expr 
+  set_target EQUAL expr 
   {
-    if ($2 != kAssign)
-    { 
-      
-    }
     $$ = ctx.NewExpression(kAssign, $1, $3);
   }
 ;
 
-/** update **/
-stmt:
-  update_stmt { $$ = $1; };
+stmt: update_stmt { $$ = $1; };
 
 update_stmt:
   UPDATE table_name SET set_clause_list opt_from_caluse opt_where

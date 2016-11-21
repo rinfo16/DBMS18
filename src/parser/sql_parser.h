@@ -11,7 +11,7 @@ class SQLParser : public SQLParserInterface {
  public:
   SQLParser(const std::string & sql);
   virtual ~SQLParser();
-  ASTBase* Parse();
+  ASTBase* Parse(std::string & output_error_message);
  private:
   std::string sql_;
   ParserContext *parser_context_;

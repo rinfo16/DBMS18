@@ -95,7 +95,8 @@ enum OperatorType {
   kLogicBegin,
   kAnd,
   kOr,
-  kXOr,
+  kXor,
+  kNot,
   kLogicEnd,
 
   kBooleanEnd,
@@ -110,10 +111,11 @@ enum OrderType {
 };
 
 enum JoinType {
-  kJoinLeft,
-  kJoinRight,
+  kJoinLeftOutter,
+  kJoinRightOutter,
+  kJoinFullOutter,
   kJoinInner,
-  kJoinOuter
+  kJoinCross
 };
 
 enum TreeType {

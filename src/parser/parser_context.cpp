@@ -56,9 +56,9 @@ ASTBase *ParserContext::NewCreateAsStmt(ASTBase *table_name,
   return stmt;
 }
 
-ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
-                       ASTBase *file_path)
-{
+ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name,
+                                    ASTBase *opt_column_name_list,
+                                    ASTBase *file_path) {
   LoadStmt* load_stmt = new LoadStmt();
   ast_node_list_.push_back(load_stmt);
   ReferenceName *name = dynamic_cast<ReferenceName*>(table_name);
@@ -265,8 +265,8 @@ ASTBase *ParserContext::NewColumnDefine(ASTBase *column_name,
 ASTBase *ParserContext::NewExpression(OperatorType op, ASTBase *left,
                                       ASTBase *right) {
   Operation *expression = new Operation(dynamic_cast<ExpressionBase*>(left),
-                                          dynamic_cast<ExpressionBase*>(right),
-                                          op);
+                                        dynamic_cast<ExpressionBase*>(right),
+                                        op);
   ast_node_list_.push_back(expression);
   return expression;
 }
@@ -302,4 +302,8 @@ ASTBase *ParserContext::NewUpdateStmt(ASTBase *table_name,
     ast->Next();
   }
   return update_stmt;
+}
+
+const std::string & ParserContext::ErrorMessage() {
+  return driver_.ErrorMessage();
 }

@@ -75,6 +75,8 @@ class ParserContext {
   /// type of the variable storage
   typedef std::map<std::string, double> variablemap_type;
 
+  const std::string & ErrorMessage();
+
   /// variable storage. maps variable string to doubles
   variablemap_type variables;
 

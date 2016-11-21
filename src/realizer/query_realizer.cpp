@@ -32,9 +32,8 @@ QueryRealizer::~QueryRealizer() {
 State QueryRealizer::Parse() {
   BOOST_LOG_TRIVIAL(debug)<< sql_stmt_;
   parser_ = parser::ParserServiceInterface::Instance()->CreateSQLParser(sql_stmt_);
-  parse_tree_ = parser_->Parse();
+  parse_tree_ = parser_->Parse(message_);
   if (parse_tree_ == NULL) {
-    message_ = "parse error";
     return kStateParseError;
   }
   return kStateOK;
@@ -84,6 +83,7 @@ State QueryRealizer::CheckTableFactor(const ast::TableFactor *table_factor) {
     Relation *relation = storage_->GetMetaDataManager()->GetRelationByName(
         table_reference->TableName());
     if (relation == NULL) {
+      message_ = "cannot find table [" + table_reference->TableName() + "].";
       return kStateTableNotFind;
     }
     std::string table_name;
@@ -105,6 +105,10 @@ State QueryRealizer::CheckTableFactor(const ast::TableFactor *table_factor) {
     state = CheckTableFactor(join_clause->RightTable());
     if (state != kStateOK)
       return state;
+
+    state = CheckExpressionBase(join_clause->JoinPredicate(), kJoinOn);
+    if (state != kStateOK)
+      return state;
   }
   return kStateOK;
 }
@@ -121,12 +125,14 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
     if (!ref->TableName().empty()) {
       auto iter = name2relation_.find(ref->TableName());
       if (iter == name2relation_.end()) {
+        message_ = "cannot find table name [" + ref->TableName() + "]";
         return kStateTableNotFind;
       }
       rel = iter->second;
       name.first = iter->first;
       slot_index = rel->GetAttributeIndex(ref->ColumnName());
       if (slot_index < 0) {
+        message_ = "cannot find attribute name [" + ref->ColumnName() + "]";
         return kStateAttributeNotFound;
       }
     } else {
@@ -141,8 +147,10 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
         }
       }
       if (attr_vec.size() > 1) {
+        message_ = "attribute [" + ref->ColumnName() + "] ambiguous.";
         return kStateNameAmbiguous;
       } else if (attr_vec.empty()) {
+        message_ = "cannot find attribute name [" + ref->ColumnName() + "]";
         return kStateAttributeNotFound;
       }
       assert(attr_vec.size() == 1);
@@ -159,6 +167,7 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
       opt_group_by_ref_.push_back(ref);
     } else if (type == kOrderBy) {
       opt_order_by_ref_.push_back(ref);
+    } else if (type == kJoinOn) {
     } else {
       assert(false);
     }
@@ -182,6 +191,7 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
       opt_where_.push_back(operation);
     }
   } else {  // const value expression
+    message_ = "unsupported expression";
     return kStateNotSupport;
   }
   return kStateOK;
@@ -339,6 +349,7 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
   // TODO only support SQL 92 syntax, don not support SQL 89 syntax
   // EG. SQL like: select tbl1.col1, tbl2.col2 from tbl1, tbl2 where
   //               tab1.col1 = tbl2.col1..
+  message_ = "unsupported SQL 89 join syntax.";
   return NULL;
 }
 
@@ -364,18 +375,21 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
     if (join_clause->JoinPredicate()->ASTType() != kASTOperation) {
       // join predicate must be an operation expression
       assert(false);
+      message_ = "fatal error, build join error.";
       return NULL;
     }
     const ast::Operation *operation =
         static_cast<const ast::Operation*>(join_clause->JoinPredicate());
     executor::BooleanExprInterface *boolean_expr = BuildBooleanExpression(
         operation);
+    int32_t tuple_count = name2relation_.size();
     executor::ExecInterface* join_exec = new executor::NestedLoopJoin(
-        left_exec, right_exec, boolean_expr);
+        tuple_count, left_exec, right_exec, boolean_expr);
     all_exec_obj_.push_back(join_exec);
     return join_exec;
   }
   assert(false);
+  message_ = "fatal error, build join error.";
   return NULL;
 }
 
@@ -397,10 +411,11 @@ executor::ExecInterface* QueryRealizer::BuildProjection(
           static_cast<const ast::ColumnReference*>(select_expr);
       auto iter = name2slot_.find(ref);
       if (iter == name2slot_.end()) {
+        message_ = "build projection, fatal error, cannot find name ["
+            + ref->ColumnName() + "].";
         return NULL;
       }
-      executor::SlotReference *expr = new executor::SlotReference(
-          iter->second);
+      executor::SlotReference *expr = new executor::SlotReference(iter->second);
       projection_list_.push_back(expr);
 
       assert(all_tuple_desc_.size() > expr->GetTupleIndex());

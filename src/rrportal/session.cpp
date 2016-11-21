@@ -367,12 +367,11 @@ void Session::ProcessSimpleQuery(const std::string & sql) {
 
   if (state != kStateOK) {
     SendErrorResponse(rlz->Message());
-    SendReadForQuery(READY_FOR_QUERY_TRANSACTION_FAIL);
   }
   else {
     SendCommandComplete(rlz->Message());
-    SendReadForQuery(READY_FOR_QUERY_IDLE);
   }
+  SendReadForQuery(READY_FOR_QUERY_IDLE);
   realizer::DeleteRealizer(rlz);
 }
 
@@ -557,6 +556,7 @@ void Session::SendErrorResponse(const std::string & msg) {
   BackendMsgBegin(ERROR_RESPONSE);
   BackendMsgAppendInt8('M');
   BackendMsgAppendString(msg);
+  BackendMsgAppendInt8(0);
   BackendMsgEnd(ERROR_RESPONSE);
 }
 

@@ -11,7 +11,7 @@
 namespace parser {
 
 Driver::Driver()
-    : trace_scanning(false),
+    : trace_scanning(true),
       trace_parsing(true),
       lexer(NULL) {
 }
@@ -43,11 +43,20 @@ bool Driver::parse_string(ParserContext & ctx, const std::string &input,
 }
 
 void Driver::error(const class location& l, const std::string& m) {
-  BOOST_LOG_TRIVIAL(warning) << l << " error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
+  std::stringstream ssm;
+  ssm << l << " error at [" << std::string(lexer->YYText(), lexer->YYLeng())
+      << "], " << m;
+  error_message_ = ssm.str();
+  BOOST_LOG_TRIVIAL(warning)<< error_message_;
 }
 
 void Driver::error(const std::string& m) {
-  BOOST_LOG_TRIVIAL(warning) << "Error at [" <<std::string(lexer->YYText(), lexer->YYLeng()) << "], " << m << std::endl;
+  std::stringstream ssm;
+  ssm << "error at [" << std::string(lexer->YYText(), lexer->YYLeng()) << "], "
+      << m;
+  error_message_ = ssm.str();
+  BOOST_LOG_TRIVIAL(warning)<< error_message_;
 }
 
-}  // namespace parser
+}
+  // namespace parser
