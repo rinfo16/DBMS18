@@ -98,6 +98,7 @@ CONTINUE { return token::CONTINUE; }
 COPY { return token::COPY; }
 CREATE { return token::CREATE; }
 CROSS { return token::CROSS; }
+CSV { return token::CSV; }
 DATABASE { return token::DATABASE; }
 DATABASES { return token::DATABASES; }
 DATE { return token::DATE; }
@@ -111,6 +112,7 @@ DECLARE { return token::DECLARE; }
 DEFAULT { return token::DEFAULT; }
 DELAYED { return token::DELAYED; }
 DELETE { return token::DELETE; }
+DELIMITER { return token::DELIMITER; }
 DESC { return token::DESC; }
 DISTINCT { return token::DISTINCT; }
 FLOAT8|DOUBLE { return token::DOUBLE; }
@@ -154,6 +156,7 @@ OR { return token::OR; }
 ORDER { return token::ORDER; }
 OUT { return token::OUT; }
 OUTER { return token::OUTER; }
+QUOTE { return token::QUOTE; }
 REAL { return token::REAL; }
 REFERENCES { return token::REFERENCES; }
 SCHEMA { return token::SCHEMA; }
@@ -161,6 +164,7 @@ SCHEMAS { return token::SCHEMAS; }
 SELECT { return token::SELECT; }
 SET { return token::SET; }
 SHOW { return token::SHOW; }
+STDIN { return token::STDIN; }
 SOME { return token::SOME; }
 SQL { return token::SQL; }
 TABLE { return token::TABLE; }

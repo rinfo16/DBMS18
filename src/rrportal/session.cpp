@@ -68,7 +68,23 @@ void Session::Thread() {
 
 void Session::MainLoop() {
   while (!IsStop()) {
-    ProcessCommand();
+    char qtype = RecvCommand();
+    switch (qtype) {
+      case 'Q': /* simple query */{
+        std::string query(read_msg_.Data(), read_msg_.GetSize());
+        ProcessSimpleQuery(query);
+        break;
+      }
+
+      case 'X': /* terminate */{
+        state_ = kStateFrontendTerminate;
+        Connection::Stop();
+        break;
+      }
+
+      default:
+        break;
+    }
   }
 }
 
@@ -253,7 +269,7 @@ bool Session::ProcessStartupPacket(bool ssl_done) {
   return SendAuthRequest();;
 }
 
-bool Session::ProcessCommand() {
+char Session::RecvCommand() {
   char qtype;
   if (boost::asio::read(socket_, boost::asio::buffer(&qtype, 1)) != 1) {
     return false;
@@ -275,8 +291,6 @@ bool Session::ProcessCommand() {
       if (PG_PROTOCOL_MAJOR(proto_version_) < 3) {
 
       }
-      std::string query(read_msg_.Data(), read_msg_.GetSize());
-      ProcessSimpleQuery(query);
       break;
     }
 
@@ -286,8 +300,6 @@ bool Session::ProcessCommand() {
       break;
 
     case 'X': /* terminate */{
-      state_ = kStateFrontendTerminate;
-      Connection::Stop();
       break;
     }
 
@@ -329,7 +341,7 @@ bool Session::ProcessCommand() {
   if (PG_PROTOCOL_MAJOR(proto_version_) >= 3) {
 
   }
-  return true;
+  return qtype;
 }
 
 void Session::ProcessSimpleQuery(const std::string & sql) {
@@ -546,6 +558,34 @@ void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *row_desc) {
   BackendMsgEnd(DATA_ROW);
 }
 
+std::string Session::RecvCopyData() {
+
+  while (!IsStop()) {
+    char qtype = RecvCommand();
+    switch (qtype) {
+      case 'd': {
+        std::string row_data(read_msg_.Data(), read_msg_.GetSize());
+        return row_data;
+      }
+      default:
+        return "";
+    }
+  }
+  return "";
+}
+
+void Session::SendCopyData(std::string & msg) {
+  if (!msg.empty()) {
+    BackendMsgBegin(COPY_DATA);
+    BackendMsgAppendString(msg);
+    BackendMsgEnd(COPY_DATA);
+  } else {
+    BackendMsgBegin(COPY_DONE);
+    BackendMsgAppendString(msg);
+    BackendMsgEnd(COPY_DONE);
+  }
+}
+
 void Session::SendCommandComplete(const std::string & msg) {
   BackendMsgBegin(COMMAND_COMPLETE);
   BackendMsgAppendString(msg);
@@ -558,6 +598,16 @@ void Session::SendErrorResponse(const std::string & msg) {
   BackendMsgAppendString(msg);
   BackendMsgAppendInt8(0);
   BackendMsgEnd(ERROR_RESPONSE);
+}
+
+void Session::SendCopyInResponse(int32_t columns) {
+  BackendMsgBegin(COPY_IN_RESPONSE);
+  BackendMsgAppendInt8(0);
+  BackendMsgAppendInt16((int16_t) columns);
+  for (auto i = 0; i < columns; i++) {
+    BackendMsgAppendInt16(0);
+  }
+  BackendMsgEnd(COPY_IN_RESPONSE);
 }
 
 void Session::BackendMsgBegin(int8_t msg_id) {

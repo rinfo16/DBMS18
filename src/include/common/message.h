@@ -14,9 +14,15 @@
 #define DATA_ROW 'D'
 #define ERROR_RESPONSE 'E'
 #define COMMAND_COMPLETE 'C'
+#define COPY_IN_RESPONSE 'G'
+
 #define READY_FOR_QUERY_IDLE 'I'
 #define READY_FOR_QUERY_TRANSACTION_BLOCK 'T'
 #define READY_FOR_QUERY_TRANSACTION_FAIL 'E'
+
+
+#define COPY_DATA 'd'
+#define COPY_DONE 'c'
 
 class MessageBuffer {
  public:

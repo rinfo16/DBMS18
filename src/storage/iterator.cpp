@@ -54,6 +54,9 @@ void Iterator::SeekToFirst() {
   }
   SegmentHeader *segment_header = ToSegmentHeader(segment_header_page);
   PageID data_page_id = segment_header->first_data_page_id_;
+  if (data_page_id.Invalid())
+    return;
+
   buffer_manager_->UnfixPage(segment_header_page);
 
   page_ = buffer_manager_->FixPage(data_page_id);

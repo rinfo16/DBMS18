@@ -29,6 +29,10 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
 
   void SendRowDescription(const RowDesc *row_desc);
   void SendRowData(const TupleRow *tuple_row, const RowDesc *row_desc);
+  // empty string means copy done
+  std::string  RecvCopyData();
+  void SendCopyData(std::string & msg);
+  void SendCopyInResponse(int32_t columns);
  private:
   bool ProcessStartupPacket(bool ssl_done);
   bool SendAuthRequest();
@@ -38,7 +42,8 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
   void SendCommandComplete(const std::string & msg);
   void SendErrorResponse(const std::string & msg);
 
-  bool ProcessCommand();
+
+  char RecvCommand();
   void ProcessSimpleQuery(const std::string & query);
   bool ReadBody();
   void do_read_header();

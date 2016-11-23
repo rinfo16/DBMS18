@@ -1,4 +1,6 @@
 #include "query_realizer.h"
+#include <fstream>
+#include <sstream>
 #include "parser/table_reference.h"
 #include "parser/column_reference.h"
 #include "parser/create_stmt.h"
@@ -553,14 +555,49 @@ executor::ExecInterface* QueryRealizer::BuildTableScan(
 }
 
 bool QueryRealizer::ExecLoad(ast::LoadStmt *load_stmt) {
-  const std::string & table_name = load_stmt->TableName();
-  const std::string & file_path = load_stmt->FilePath();
-  bool ok = storage_->Load(table_name, file_path);
+  std::string table_name = load_stmt->TableName();
+  std::string file_path = load_stmt->FilePath();
+  if (load_stmt->IsFromStdin()) {
+    std::stringstream ssm;
+    ssm << "/tmp/tmpfile_" << this << ".csv";
+    int32_t columns = 0;
+    Relation *rel= storage_->GetMetaDataManager()->GetRelationByName(table_name);
+    if (rel == NULL) {
+      return false;
+    }
+    if (load_stmt->OptColumnNameList().empty()) {
+      columns = rel->GetAttributeCount();
+    }
+    else { // TODO load the specified column
+      columns = rel->GetAttributeCount();
+    }
+    output_->SendCopyInResponse(columns);
+
+    file_path = ssm.str();
+    //remove(file_path.c_str());
+    std::ofstream ofs(file_path);
+    std::string data;
+    do {
+      data = output_->RecvCopyData();
+      ofs << data;
+    } while (!data.empty());
+    ofs.close();
+    return LoadFromFile(table_name, file_path);
+  }
+  else {
+    return LoadFromFile(table_name, file_path);
+  }
+}
+
+
+bool QueryRealizer::LoadFromFile(const std::string table, const std::string path)
+{
+  bool ok = storage_->Load(table, path);
   std::string msg;
   if (ok) {
-    message_ = "copy " + table_name + " from '" + file_path + "' success.";
+    message_ = "copy " + table + " from '" + path + "' success.";
   } else {
-    message_ = "copy " + table_name + " from '" + file_path + "' failed.";
+    message_ = "copy " + table + " from '" + path + "' failed.";
   }
   return ok;
 }

@@ -7,7 +7,7 @@ namespace ast {
 class LoadStmt : public ASTBase {
   friend ParserContext;
  public:
-  LoadStmt() : ASTBase(kASTCopyStmt) {
+  LoadStmt() : from_stdin_(false), ASTBase(kASTCopyStmt) {
   }
   const std::string & TableName() const {
     return table_name_;
@@ -19,7 +19,12 @@ class LoadStmt : public ASTBase {
     return opt_column_name_list_;
   }
   virtual ptree ToPropertyTree() const;
+
+  bool IsFromStdin() const {
+    return from_stdin_;
+  }
  private:
+  bool from_stdin_;
   std::string table_name_;
   std::string file_path_;
   std::vector<std::string> opt_column_name_list_;

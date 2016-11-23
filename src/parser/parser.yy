@@ -132,6 +132,7 @@
 %token COPY
 %token CREATE
 %token CROSS
+%token CSV
 %token CURRENT_DATE
 %token CURRENT_TIME
 %token CURRENT_TIMESTAMP
@@ -150,6 +151,7 @@
 %token DEFAULT
 %token DELAYED
 %token DELETE
+%token DELIMITER
 %token DESC
 %token DESCRIBE
 %token DETERMINISTIC
@@ -243,6 +245,7 @@
 %token PROCEDURE
 %token PURGE
 %token QUICK
+%token QUOTE
 %token READ
 %token READS
 %token REAL
@@ -281,6 +284,7 @@
 %token SQL_SMALL_RESULT
 %token SSL
 %token STARTING
+%token STDIN
 %token STRAIGHT_JOIN
 %token TABLE
 %token TEMPORARY
@@ -343,7 +347,7 @@
 %type <astbase_ptr> stmt stmt_list create_table_stmt create_col_list table_subquery create_definition opt_column_list
 %type <astbase_ptr> insert_stmt ctext_row ctext_expr_list ctext_expr column_list
 %type <astbase_ptr> update_stmt set_clause_list set_clause set_target opt_from_caluse
-%type <astbase_ptr> load_stmt opt_column_name_list column_name_list file_path
+%type <astbase_ptr> load_stmt opt_column_name_list column_name_list file_path stdin_or_file_path
 %type <astbase_ptr> boolean_expression
 %{
 
@@ -363,12 +367,13 @@
 
 
 start:
-  stmt_list SQLEND { ctx.root_ = $1; }
+  stmt SQLEND { ctx.root_ = $1; }
+  | stmt_list SQLEND { ctx.root_ = $1; }
 ;
 
 stmt_list:
   stmt SEMICOLON { $$ = $1; }
-  | stmt_list stmt SEMICOLON {}
+  | stmt_list stmt SEMICOLON { $1->RAppend($2); $$ = $1; }
 ;
 
 boolean_expression:
@@ -887,16 +892,44 @@ set_expr: USERVAR COMPARISON expr {
 stmt: load_stmt { $$ = $1; };
 
 load_stmt:
-COPY table_name opt_column_name_list FROM file_path
+COPY table_name opt_column_name_list FROM stdin_or_file_path copy_delimiter opt_copy_options
  { $$ = ctx.NewLoadStmt($2, $3, $5); };
 
+stdin_or_file_path:
+    file_path { $$ = $1; }
+    | STDIN { $$ = NULL;  }
+    ;
+    
+opt_copy_options:
+    opt_csv opt_quote_as
+    {}
 
+opt_csv:
+    CSV {}
+    | /*empty*/ {}
+
+opt_quote_as:
+    QUOTE opt_as STRING {}
+    | /*empty*/ {}
+
+copy_delimiter:
+    opt_using DELIMITER opt_as STRING
+                {
+                }
+    | /*EMPTY*/ { }
+    ;
+
+opt_using:
+    USING  {}
+    | /*EMPTY*/  {}
+        ;
+        
 file_path:
   STRING {
     $$ = ctx.NewConstValue($1);
   };
 
- opt_column_name_list:
+opt_column_name_list:
   /* nil */ { $$ = NULL; }
   | PAREN_LEFT column_name_list PAREN_RIGHT 
   { $$ = $2; };

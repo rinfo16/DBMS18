@@ -57,6 +57,7 @@ class QueryRealizer : public QueryRealizerInterface {
 
   bool ExecCreate(ast::CreateStmt *create_stmt);
   bool ExecLoad(ast::LoadStmt *load_stmt);
+  bool LoadFromFile(const std::string table, const std::string path);
   State ExecSelect();
   State CheckFrom(const ast::SelectStmt *select_stmt);
   State CheckWhere(const ast::SelectStmt *select_stmt);

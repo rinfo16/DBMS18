@@ -72,8 +72,13 @@ ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name,
     ast = ast->Next();
   }
   ConstValue *const_value = dynamic_cast<ConstValue*>(file_path);
-  assert(const_value);
-  load_stmt->file_path_ = const_value->GetStringValue();
+  assert(const_value == file_path);
+  if (const_value == NULL) {
+    load_stmt->from_stdin_ = true;
+  }
+  else {
+    load_stmt->file_path_ = const_value->GetStringValue();
+  }
   return load_stmt;
 }
 
