@@ -5,8 +5,8 @@ namespace executor {
 Select::Select(ExecInterface *left, const BooleanExprInterface *predicate)
     : left_(left),
       predicate_(predicate) {
-}
 
+     }
 Select::~Select() {
 }
 
@@ -19,7 +19,14 @@ State Select::Open() {
 }
 
 State Select::GetNext(TupleRow *row) {
-  return left_->GetNext(row);
+  State state = left_ -> GetNext(row);
+  while (true) {
+      if (state == kStateEOF )
+        return kStateEOF;
+      else
+        return left_->GetNext(row);
+      state = left_->GetNext(row);
+    }
 }
 
 void Select::Close() {
