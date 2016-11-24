@@ -4,17 +4,11 @@ cd $script_dir
 cd ../
 project_path=$(pwd)
 cd $cur_dir
-cd $project_path/build
-./unit_test/cmd.test --csv --export --path=/tmp/data.csv --row=100
+cd $project_path/test/sql
 
+data_dir=$project_path/test/data
 
-psql -h localhost -p 8432 -d postgres -c "create table product (id INTEGER, price INTEGER, name VARCHAR(256));"
-psql -h localhost -p 8432 -d postgres -c "copy product from '/tmp/data.csv';"
-psql -h localhost -p 8432 -d postgres -c "\copy product to '/tmp/product.csv' delimiter as ',' csv quote as '\"';"
-
-#psql -h localhost -p 8432 -d postgres -c "create table product2 (id INTEGER, price INTEGER, name VARCHAR(256));"
-#psql -h localhost -p 8432 -d postgres -c "copy product1 from '/tmp/data.csv';"
-#psql -h localhost -p 8432 -d postgres -c "copy product2 from '/tmp/data.csv';"
-#psql -h localhost -p 8432 -d postgres -c "select name, id, price from product1;"
-#psql -h localhost -p 8432 -d postgres -c "select name, id, price from product2;"
-#psql -h localhost -p 8432 -d postgres -c "select product1.name, product2.id, product2.price from product1 join product2 on product1.id = product2.id;"
+psql -h localhost -p 8432 -d postgres -f create_table.sql
+psql -h localhost -p 8432 -d postgres -f copy_from_std.sql
+psql -h localhost -p 8432 -d postgres -f copy_to_std.sql
+psql -h localhost -p 8432 -d postgres -f select.sql

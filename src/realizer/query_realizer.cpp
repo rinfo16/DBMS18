@@ -13,6 +13,7 @@
 #include "executor/const_value.h"
 #include "executor/project.h"
 #include "executor/export.h"
+#include "executor/load.h"
 #include "executor/select.h"
 
 namespace realizer {
@@ -89,8 +90,8 @@ State QueryRealizer::CheckTableFactor(const ast::TableFactor *table_factor) {
     Relation *relation = storage_->GetMetaDataManager()->GetRelationByName(
         table_reference->TableName());
     if (relation == NULL) {
-      message_ = "cannot find table [" + table_reference->TableName() + "].";
-      return kStateTableNotFind;
+      message_ = "cannot find relation [" + table_reference->TableName() + "].";
+      return kStateRelationNotFound;
     }
     std::string table_name;
     if (!table_reference->AliasName().empty()) {
@@ -132,7 +133,7 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
       auto iter = name2relation_.find(ref->TableName());
       if (iter == name2relation_.end()) {
         message_ = "cannot find table name [" + ref->TableName() + "]";
-        return kStateTableNotFind;
+        return kStateRelationNotFound;
       }
       rel = iter->second;
       name.first = iter->first;
@@ -174,10 +175,11 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
     } else if (type == kOrderBy) {
       opt_order_by_ref_.push_back(ref);
     } else if (type == kJoinOn) {
+    } else if (type == kWhere) {
     } else {
       assert(false);
     }
-  } else if (kASTOperation) {
+  } else if (expr_base->ASTType() == kASTOperation) {
     //TODO
     assert(type == kJoinOn || type == kWhere);
     const ast::Operation *operation =
@@ -196,9 +198,12 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
     if (type == kWhere) {
       opt_where_.push_back(operation);
     }
-  } else {  // const value expression
-    message_ = "unsupported expression";
-    return kStateNotSupport;
+  } else if (expr_base->ASTType() == kASTOperation) {
+    if (type != kWhere) {
+      // const value expression
+      message_ = "unsupported expression";
+      return kStateNotSupport;
+    }
   }
   return kStateOK;
 }
@@ -281,7 +286,7 @@ State QueryRealizer::Execute() {
     ok = ExecCreate(create_stmt);
   } else if (type == kASTCopyFromStmt) {
     ast::LoadStmt *load_stmt = dynamic_cast<ast::LoadStmt *>(parse_tree_);
-    ok = ExecLoad(load_stmt);
+    return ExecLoad(load_stmt);
   } else if (type == kASTCopyToStmt) {
     ast::ExportStmt *export_stmt = dynamic_cast<ast::ExportStmt *>(parse_tree_);
     return ExecExport(export_stmt);
@@ -563,16 +568,17 @@ executor::ExecInterface* QueryRealizer::BuildTableScan(
   return exec;
 }
 
-bool QueryRealizer::ExecLoad(ast::LoadStmt *load_stmt) {
+State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
   std::string table_name = load_stmt->TableName();
   std::string file_path = load_stmt->FilePath();
   if (load_stmt->IsFromStdin()) {
     std::stringstream ssm;
-    ssm << "/tmp/tmpfile_" << this << ".csv";
+    ssm << "/tmp/tmpfile_import_" << this << ".csv";
     int32_t columns = 0;
     Relation *rel= storage_->GetMetaDataManager()->GetRelationByName(table_name);
     if (rel == NULL) {
-      return false;
+      message_ = "table not found.";
+      return kStateRelationNotFound;
     }
     if (load_stmt->OptColumnNameList().empty()) {
       columns = rel->GetAttributeCount();
@@ -583,30 +589,48 @@ bool QueryRealizer::ExecLoad(ast::LoadStmt *load_stmt) {
     output_->SendCopyInResponse(columns);
 
     file_path = ssm.str();
-    //remove(file_path.c_str());
     std::ofstream ofs(file_path);
+
     std::string data;
     do {
       data = output_->RecvCopyData();
       ofs << data;
     } while (!data.empty());
+    //remove(file_path.c_str());
     ofs.close();
-    return LoadFromFile(table_name, file_path);
   }
-  else {
-    return LoadFromFile(table_name, file_path);
+  executor::CmdInterface *cmd = new executor::Load(file_path, table_name);
+  top_cmd_ = cmd;
+  return ExecCmd();
+}
+
+State QueryRealizer::ExecCmd()
+{
+  assert(top_cmd_);
+  State state = top_cmd_->Prepare();
+  if (state != kStateOK) {
+    message_ = top_cmd_->GetResponse();
+    return state;
   }
+  state = top_cmd_->Exec();
+  if (state != kStateOK)
+  {
+    message_ = top_cmd_->GetResponse();
+    return state;
+  }
+  message_ = top_cmd_->GetResponse();
+  return state;
 }
 
 State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   std::string table_name = export_stmt->TableName();
   Relation *rel= storage_->GetMetaDataManager()->GetRelationByName(table_name);
   if (rel == NULL) {
-    return kStateTableNotFind;
+    return kStateRelationNotFound;
   }
   storage::IteratorInterface *iter = storage_->NewIterator(table_name);
   if (iter == NULL) {
-    return kStateTableNotFind;;
+    return kStateRelationNotFound;;
   }
   all_iter_.push_back(iter);
   executor::ExecInterface *exec = new executor::SeqScan(iter, 0);
@@ -617,7 +641,7 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   if (export_stmt->OptColumnNameList().empty()) {
     columns = rel->GetAttributeCount();
   }
-  else { // TODO load the specified column
+  else { // TODO export the specified column
     columns = rel->GetAttributeCount();
   }
 
@@ -625,7 +649,7 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   std::string file_path = export_stmt->FilePath();
   if (export_stmt->IsToStdout()) {
     std::stringstream ssm;
-    ssm << "/tmp/tmpfile_" << this << ".csv";
+    ssm << "/tmp/tmpfile_export_" << this << ".csv";
     file_path = ssm.str();
     output_->SendCopyOutResponse(columns);
   }
@@ -637,23 +661,19 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   top_cmd_ = cmd;
   all_exec_obj_.push_back(cmd);
 
-  int rows = 0;
-  State state = top_cmd_->Prepare();
-  if (state != kStateOK) {
-    return state;
-  }
-  state = top_cmd_->Exec();
-
+  State state = ExecCmd();
   std::stringstream ssm;
   if (state == kStateOK) {
     std::string line;
     std::ifstream fs(file_path);
+
     while(std::getline(fs, line))
     {
+      line += '\n';
       output_->SendCopyData(line);
     }
-    ssm << "COPY " << rows << " rows." << std::endl;
-    message_ = ssm.str();
+    //remove(file_path.c_str());
+
     return kStateOK;
   }
   return state;
@@ -662,14 +682,7 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
 
 bool QueryRealizer::LoadFromFile(const std::string table, const std::string path)
 {
-  bool ok = storage_->Load(table, path);
-  std::string msg;
-  if (ok) {
-    message_ = "copy " + table + " from '" + path + "' success.";
-  } else {
-    message_ = "copy " + table + " from '" + path + "' failed.";
-  }
-  return ok;
+  return true;
 }
 
 bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {
@@ -688,9 +701,9 @@ bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {
   }
   bool ok = storage_->CreateRelation(schema);
   if (ok) {
-    message_ = ("table " + schema.name_ + " created.");
+    message_ = ("relation " + schema.name_ + " created.");
   } else {
-    message_ = ("table " + schema.name_ + " create failed.");
+    message_ = ("relation " + schema.name_ + " create failed.");
   }
   return ok;
 }

@@ -519,7 +519,7 @@ select_stmt:
 opt_where:
   { $$ = NULL; }
 
-  | WHERE expr 
+  | WHERE boolean_expression 
   { $$ = $2; }
 ;
 

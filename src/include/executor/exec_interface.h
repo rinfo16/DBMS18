@@ -24,6 +24,16 @@ class CmdInterface : public Exec {
    virtual ~CmdInterface() {}
    virtual State Prepare() = 0;
    virtual State Exec() = 0;
+
+   // this message will be sent to the client.
+   const std::string & GetResponse() const {
+     return msg_;
+   }
+   void SetResponse(const std::string & msg) {
+     msg_ = msg;
+   }
+ private:
+   std::string msg_;
 };
 ;
 

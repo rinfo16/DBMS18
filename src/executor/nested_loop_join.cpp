@@ -29,6 +29,7 @@ State NestedLoopJoin::Prepare() {
   }
   return kStateOK;
 }
+
 State NestedLoopJoin::Open() {
   State state = left_->Open();
   if (state != kStateOK) {
@@ -47,6 +48,7 @@ State NestedLoopJoin::Open() {
 
   return kStateOK;
 }
+
 State NestedLoopJoin::GetNext(TupleRow *row) {
   while (true) {
     if (left_state_ == kStateEOF && right_state_ == kStateEOF)

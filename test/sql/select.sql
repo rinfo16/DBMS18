@@ -1,0 +1,1 @@
+select ipaddress, firstname, lastname, gender from user;

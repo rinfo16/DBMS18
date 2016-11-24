@@ -1,4 +1,6 @@
 #include "executor/export.h"
+#include <iostream>
+#include <sstream>
 
 namespace executor {
 Export::Export(ExecInterface *tupler, const RowDesc *row_desc,
@@ -16,7 +18,7 @@ State Export::Prepare() {
   try {
     os_.open(file_path_.c_str());
     os_.set_delimiter(',', "$$");
-    os_.enable_surround_quote_on_str(true, '\"');
+    //os_.enable_surround_quote_on_str(true, '\"');
   } catch (...) {
     return kStateFileNotFind;
   }
@@ -30,7 +32,8 @@ State Export::Exec() {
     state = tupler_->GetNext(&row);
     if (state == kStateOK) {
       rows_++;
-      for (auto i = 0; i < desc_->GetColumnCount(); i++) {
+      auto columns = desc_->GetColumnCount();
+      for (auto i = 0; i < columns; i++) {
         DataType type = desc_->GetColumnDesc(i).data_type_;
         const Tuple tuple = row.GetTuple(0);
         const Slot * slot = tuple->GetSlot(i);
@@ -56,14 +59,20 @@ State Export::Exec() {
           default:
             break;
         }
-        os_ << NEWLINE;
       }
+      os_ << NEWLINE;
     }
   }
   tupler_->Close();
   os_.close();
   if (state == kStateEOF) {
+    std::stringstream response;
+    response << "copy " << rows_ << ".";
+    SetResponse(response.str());
     return kStateOK;
+  }
+  else {
+    SetResponse("copy failed.");
   }
   return state;
 }

@@ -58,7 +58,7 @@ class QueryRealizer : public QueryRealizerInterface {
       const ast::ExpressionBase *expr_base);
 
   bool ExecCreate(ast::CreateStmt *create_stmt);
-  bool ExecLoad(ast::LoadStmt *load_stmt);
+  State ExecLoad(const ast::LoadStmt *load_stmt);
   State ExecExport(const ast::ExportStmt *export_stmt);
   bool LoadFromFile(const std::string table, const std::string path);
   State ExecSelect();
@@ -70,6 +70,8 @@ class QueryRealizer : public QueryRealizerInterface {
   State CheckTableFactor(const ast::TableFactor *table_factor);
   State CheckExpressionBase(const ast::ExpressionBase *expr_base,
                             ClauseType type);
+
+  State ExecCmd();
   std::string sql_stmt_;
   std::string message_;
   RowOutputInterface *output_;
