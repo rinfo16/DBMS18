@@ -6,16 +6,18 @@
 #include <string>
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
+
+#include "../include/executor/exec_interface.h"
 #include "common/row_desc.h"
 #include "parser/operation.h"
 #include "parser/select_stmt.h"
 #include "parser/create_stmt.h"
 #include "parser/load_stmt.h"
+#include "parser/export_stmt.h"
 #include "parser/const_value.h"
 #include "parser/parser_service_interface.h"
 #include "parser/column_reference.h"
 #include "parser/table_reference.h"
-#include "executor/exec_interface.h"
 #include "executor/slot_reference.h"
 #include "storage/storage_service_interface.h"
 #include "executor/boolean_expr_interface.h"
@@ -57,6 +59,7 @@ class QueryRealizer : public QueryRealizerInterface {
 
   bool ExecCreate(ast::CreateStmt *create_stmt);
   bool ExecLoad(ast::LoadStmt *load_stmt);
+  State ExecExport(const ast::ExportStmt *export_stmt);
   bool LoadFromFile(const std::string table, const std::string path);
   State ExecSelect();
   State CheckFrom(const ast::SelectStmt *select_stmt);
@@ -97,7 +100,8 @@ class QueryRealizer : public QueryRealizerInterface {
   std::vector<RowDesc> all_tuple_desc_;
   boost::ptr_vector<executor::DatumInterface> all_datum_items_;
   std::vector<storage::IteratorInterface*> all_iter_;
-  boost::ptr_vector<executor::ExecInterface> all_exec_obj_;
+  boost::ptr_vector<executor::Exec> all_exec_obj_;
+  executor::CmdInterface *top_cmd_;
 };
 
 }  // end namespace realizer

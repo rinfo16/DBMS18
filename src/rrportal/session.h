@@ -33,6 +33,7 @@ class Session : public Connection, public std::enable_shared_from_this<Session> 
   std::string  RecvCopyData();
   void SendCopyData(std::string & msg);
   void SendCopyInResponse(int32_t columns);
+  void SendCopyOutResponse(int32_t columns);
  private:
   bool ProcessStartupPacket(bool ssl_done);
   bool SendAuthRequest();

@@ -285,6 +285,7 @@
 %token SSL
 %token STARTING
 %token STDIN
+%token STDOUT
 %token STRAIGHT_JOIN
 %token TABLE
 %token TEMPORARY
@@ -329,13 +330,14 @@
 %token FDATE_SUB
 %token FCOUNT
 
-%type <intval> select_opts
+%type <intval> select_opts 
 %type <intval> val_list opt_val_list case_list
 %type <intval> opt_asc_desc
 %type <intval> opt_outer
 %type <intval> opt_join_type
 %type <intval> index_list opt_for_join
 %type <intval> column_atts data_type 
+%type <intval> from_or_to
 
 %type <astbase_ptr> table_name column_name opt_as_alias alias_name
 %type <astbase_ptr> select_stmt opt_where opt_groupby opt_having opt_orderby 
@@ -892,12 +894,27 @@ set_expr: USERVAR COMPARISON expr {
 stmt: load_stmt { $$ = $1; };
 
 load_stmt:
-COPY table_name opt_column_name_list FROM stdin_or_file_path copy_delimiter opt_copy_options
- { $$ = ctx.NewLoadStmt($2, $3, $5); };
-
+    COPY table_name opt_column_name_list from_or_to stdin_or_file_path copy_delimiter opt_copy_options { 
+        if ($4 == kFrom)
+            $$ = ctx.NewLoadStmt($2, $3, $5); 
+        else if ($4 == kTo)
+            $$ = ctx.NewExportStmt($2, $3, $5);
+    }
+    ;
+    
+from_or_to:
+    FROM {
+        $$ = kFrom;
+    }
+    | TO {
+        $$ = kTo;
+    }
+    ;
+    
 stdin_or_file_path:
     file_path { $$ = $1; }
     | STDIN { $$ = NULL;  }
+    | STDOUT { $$ = NULL; }
     ;
     
 opt_copy_options:

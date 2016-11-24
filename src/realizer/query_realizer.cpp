@@ -1,4 +1,5 @@
 #include "query_realizer.h"
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include "parser/table_reference.h"
@@ -11,6 +12,8 @@
 #include "executor/compare.h"
 #include "executor/const_value.h"
 #include "executor/project.h"
+#include "executor/export.h"
+#include "executor/select.h"
 
 namespace realizer {
 
@@ -20,6 +23,7 @@ QueryRealizer::QueryRealizer(RowOutputInterface *output,
       parser_(NULL),
       parse_tree_(NULL),
       top_exec_(NULL),
+      top_cmd_(NULL),
       sql_stmt_(sql) {
   storage_ = storage::StorageServiceInterface::Instance();
 }
@@ -271,13 +275,17 @@ State QueryRealizer::Build() {
 
 State QueryRealizer::Execute() {
   bool ok = false;
-  if (parse_tree_->ASTType() == kASTCreateStmt) {
+  TreeType type = parse_tree_->ASTType();
+  if (type == kASTCreateStmt) {
     ast::CreateStmt *create_stmt = dynamic_cast<ast::CreateStmt *>(parse_tree_);
     ok = ExecCreate(create_stmt);
-  } else if (parse_tree_->ASTType() == kASTCopyStmt) {
+  } else if (type == kASTCopyFromStmt) {
     ast::LoadStmt *load_stmt = dynamic_cast<ast::LoadStmt *>(parse_tree_);
     ok = ExecLoad(load_stmt);
-  } else if (parse_tree_->ASTType() == kASTSelectStmt) {
+  } else if (type == kASTCopyToStmt) {
+    ast::ExportStmt *export_stmt = dynamic_cast<ast::ExportStmt *>(parse_tree_);
+    return ExecExport(export_stmt);
+  } else if (type == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
     return ExecSelect();
   }
@@ -398,8 +406,9 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
 executor::ExecInterface* QueryRealizer::BuildSelect(
     const ast::ExpressionBase* opt_where) {
   executor::BooleanExprInterface *bool_expr = BuildBooleanExpression(opt_where);
-  // TODO filter executor ...
-  return top_exec_;
+  executor::ExecInterface *exec = new executor::Select(top_exec_, bool_expr);
+  all_exec_obj_.push_back(exec);
+  return exec;
 }
 
 executor::ExecInterface* QueryRealizer::BuildProjection(
@@ -589,6 +598,67 @@ bool QueryRealizer::ExecLoad(ast::LoadStmt *load_stmt) {
   }
 }
 
+State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
+  std::string table_name = export_stmt->TableName();
+  Relation *rel= storage_->GetMetaDataManager()->GetRelationByName(table_name);
+  if (rel == NULL) {
+    return kStateTableNotFind;
+  }
+  storage::IteratorInterface *iter = storage_->NewIterator(table_name);
+  if (iter == NULL) {
+    return kStateTableNotFind;;
+  }
+  all_iter_.push_back(iter);
+  executor::ExecInterface *exec = new executor::SeqScan(iter, 0);
+  top_exec_ = exec;
+  all_exec_obj_.push_back(exec);
+
+  int32_t columns;
+  if (export_stmt->OptColumnNameList().empty()) {
+    columns = rel->GetAttributeCount();
+  }
+  else { // TODO load the specified column
+    columns = rel->GetAttributeCount();
+  }
+
+  RowDesc desc = rel->ToDesc();
+  std::string file_path = export_stmt->FilePath();
+  if (export_stmt->IsToStdout()) {
+    std::stringstream ssm;
+    ssm << "/tmp/tmpfile_" << this << ".csv";
+    file_path = ssm.str();
+    output_->SendCopyOutResponse(columns);
+  }
+  else {
+    std::ofstream ofs(file_path);
+    std::string data;
+  }
+  executor::CmdInterface *cmd = new executor::Export(top_exec_, & desc, file_path);
+  top_cmd_ = cmd;
+  all_exec_obj_.push_back(cmd);
+
+  int rows = 0;
+  State state = top_cmd_->Prepare();
+  if (state != kStateOK) {
+    return state;
+  }
+  state = top_cmd_->Exec();
+
+  std::stringstream ssm;
+  if (state == kStateOK) {
+    std::string line;
+    std::ifstream fs(file_path);
+    while(std::getline(fs, line))
+    {
+      output_->SendCopyData(line);
+    }
+    ssm << "COPY " << rows << " rows." << std::endl;
+    message_ = ssm.str();
+    return kStateOK;
+  }
+  return state;
+
+}
 
 bool QueryRealizer::LoadFromFile(const std::string table, const std::string path)
 {

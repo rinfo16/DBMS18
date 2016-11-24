@@ -610,6 +610,16 @@ void Session::SendCopyInResponse(int32_t columns) {
   BackendMsgEnd(COPY_IN_RESPONSE);
 }
 
+void Session::SendCopyOutResponse(int32_t columns) {
+  BackendMsgBegin(COPY_OUT_RESPONSE);
+  BackendMsgAppendInt8(0);
+  BackendMsgAppendInt16((int16_t) columns);
+  for (auto i = 0; i < columns; i++) {
+    BackendMsgAppendInt16(0);
+  }
+  BackendMsgEnd(COPY_OUT_RESPONSE);
+}
+
 void Session::BackendMsgBegin(int8_t msg_id) {
 // 1 byte message id,  4 byte message body
   write_msg_.SetSize(0);

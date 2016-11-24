@@ -39,6 +39,10 @@ class ParserContext {
   ASTBase *NewLoadStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
                          ASTBase *file_path);
 
+  ASTBase *NewExportStmt(ASTBase *table_name,
+                         ASTBase *opt_column_name_list,
+                         ASTBase *file_path);
+
   ASTBase *NewInsertStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
                          ASTBase *value_list);
 

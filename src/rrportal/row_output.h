@@ -12,6 +12,7 @@ public:
 	virtual std::string  RecvCopyData();
 	virtual void SendCopyData(std::string & msg);
 	virtual void SendCopyInResponse(int32_t columns);
+  virtual void SendCopyOutResponse(int32_t columns);
 private:
 	Session *ss_;
 };

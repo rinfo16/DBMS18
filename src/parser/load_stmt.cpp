@@ -1,5 +1,6 @@
 #include "parser/load_stmt.h"
 namespace ast {
+
 ptree LoadStmt::ToPropertyTree() const {
   ptree load_stmt;
   if (!table_name_.empty()) {

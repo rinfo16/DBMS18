@@ -9,6 +9,7 @@ enum State {
   kStateExecError,
   kStateFrontendTerminate,
   kStateTableNotFind,
+  kStateFileNotFind,
   kStateNameAmbiguous,
   kStateAttributeNotFound,
   kStateNotSupport

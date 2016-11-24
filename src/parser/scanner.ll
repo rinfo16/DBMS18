@@ -165,6 +165,7 @@ SELECT { return token::SELECT; }
 SET { return token::SET; }
 SHOW { return token::SHOW; }
 STDIN { return token::STDIN; }
+STDOUT { return token::STDOUT; }
 SOME { return token::SOME; }
 SQL { return token::SQL; }
 TABLE { return token::TABLE; }
