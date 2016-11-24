@@ -23,13 +23,14 @@ A database POC
 ##### __Realizer__  
 - [ ] Semantic Check
 - [ ] Optimizer RBO/CBO
-- [ ] Build Execution Tree
+- [x] Build Execution Tree
 
 
 ##### __Executor__  
 - [x] Scan
-- [ ] Porject
-- [ ] Nest Loop Join
+- [ ] Select
+- [x] Porject
+- [x] Nest Loop Join
 - [ ] Hash Join
 - [ ] Merge Join
 - [ ] Sort
@@ -63,7 +64,7 @@ A database POC
 #### Support SQL: 
 > CREATE TABLE table_name ( column_define_list );  
 > SELECT column_name_list FROM table_name;  
-> LOAD table_name ( column_name_list) FROM ‘csv_file_path’;  
+> COPY table_name ( column_name_list) FROM ‘csv_file_path’;  
 
 #### Support data type: 
 > INTEGER, VARCHAR，FLOAT
