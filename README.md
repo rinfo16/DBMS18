@@ -79,6 +79,7 @@ Connect to the backend use psql
 Creat table 
 > psql -h localhost -p 8432 -d postgres -f create_table.sql  
 > cat create_table.sql 
+
 	```sql
 	create table user ( 
 		id INTEGER,  
@@ -93,6 +94,7 @@ Creat table
 Load from CSV file  
 > psql -h localhost -p 8432 -d postgres -f copy_from_std.sql 
 > cat copy_from_std.sql 
+
 	```sql
 	\copy user from 'data/testdata.csv' delimiter as ',';  
 	```
@@ -100,6 +102,7 @@ Load from CSV file
 SELECT query 
 > psql -h localhost -p 8432 -d postgres -f select.sql 
 > cat select.sql  
+
 	```sql
 	select ipaddress, firstname, lastname, gender from user;  
 	```
