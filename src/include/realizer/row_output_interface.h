@@ -15,6 +15,7 @@ public:
   virtual std::string  RecvCopyData() = 0;
   virtual void SendCopyData(std::string & msg) = 0;
   virtual void SendCopyInResponse(int32_t columns) = 0;
+  virtual void SendCopyOutResponse(int32_t columns) = 0;
 	virtual ~RowOutputInterface() {
 	}
 	;

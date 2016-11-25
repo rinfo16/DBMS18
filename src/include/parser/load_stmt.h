@@ -4,10 +4,11 @@
 #include <string>
 #include <vector>
 namespace ast {
+
 class LoadStmt : public ASTBase {
   friend ParserContext;
  public:
-  LoadStmt() : from_stdin_(false), ASTBase(kASTCopyStmt) {
+  LoadStmt() : from_stdin_(false), ASTBase(kASTCopyFromStmt) {
   }
   const std::string & TableName() const {
     return table_name_;

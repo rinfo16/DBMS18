@@ -125,7 +125,8 @@ enum TreeType {
   kASTCreateAsStmt,
   kASTUpdateStmt,
   kASTInsertStmt,
-  kASTCopyStmt,
+  kASTCopyFromStmt,
+  kASTCopyToStmt,
   kASTOperation,
   kASTSelectTarget,
   kASTJoinClause,
@@ -139,6 +140,10 @@ enum TreeType {
   kASTSubQuery
 };
 
+enum FromOrTo {
+  kFrom,
+  kTo
+};
 
 bool IsArithmeticOperator(OperatorType);
 bool IsBooleanOperator(OperatorType);

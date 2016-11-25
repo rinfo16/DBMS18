@@ -1,7 +1,7 @@
 #ifndef SORT_H_
 #define SORT_H_
 
-#include "executor/exec_interface.h"
+#include "exec_interface.h"
 #include "executor/boolean_expr_interface.h"
 
 namespace executor {

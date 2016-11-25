@@ -3,6 +3,7 @@ namespace executor {
 
 HashJoin::HashJoin(Hash *left, Hash *right,
                    const BooleanExprInterface *join_predicate) {
+
 }
 
-} // end namespace executor
+}  // end namespace executor

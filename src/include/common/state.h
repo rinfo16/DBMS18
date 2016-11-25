@@ -4,11 +4,14 @@
 enum State {
   kStateOK,
   kStateEOF,
+  kStateOpenFileError,
+  kStateLoadError,
   kStateParseError,
   kStateBuildError,
   kStateExecError,
   kStateFrontendTerminate,
-  kStateTableNotFind,
+  kStateRelationNotFound,
+  kStateFileNotFind,
   kStateNameAmbiguous,
   kStateAttributeNotFound,
   kStateNotSupport

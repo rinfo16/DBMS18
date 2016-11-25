@@ -1,49 +1,62 @@
-#include "storage/loader.h"
+#include "executor/load.h"
 #include "common/minicsv.h"
 #include "common/config.h"
 #include "common/datetime.h"
-#include "storage_service.h"
+#include "storage/storage_service.h"
+#include <sstream>
 
-namespace storage {
+namespace executor {
 
-Loader::Loader(const std::string & path, const std::string & rel_name)
+Load::Load(const std::string & path, const std::string & rel_name)
     : batch_(NULL),
       csv_(path),
-      rel_name_(rel_name),
-      is_(path.c_str()) {
+      rel_name_(rel_name) {
   tuple_ = memory::CreateTuple(config::Setting::instance().page_size_);
 }
 
-Loader::~Loader() {
+Load::~Load() {
   storage::Storage::instance().DeleteIOObject(batch_);
 }
 
-bool Loader::Prepare() {
-  return true;
+State Load::Prepare() {
+  std::stringstream response;
+  is_.set_delimiter(',', "$$");
+  try {
+    is_.open(csv_.c_str());
+    //is_.enable_trim_quote_on_str(true, '\"');
+    if (!is_.is_open()) {
+      response << "file is already open.";
+      SetResponse(response.str());
+      return kStateOpenFileError;
+    }
+  } catch (...) {
+    response << "open file failed.";
+    SetResponse(response.str());
+    return kStateOpenFileError;
+  }
+  return kStateOK;
 }
 
-bool Loader::Load() {
-  is_.set_delimiter(',', "$$");
-  //is_.enable_trim_quote_on_str(true, '\"');
-  if (!is_.is_open()) {
-    return false;
-  }
-  MetaDataManagerInterface *meta_data = storage::Storage::instance()
+State Load::Exec() {
+
+  storage::MetaDataManagerInterface *meta_data = storage::Storage::instance()
       .GetMetaDataManager();
   Relation *rel = meta_data->GetRelationByName(rel_name_);
   if (rel == NULL) {
-    return false;
+    return kStateRelationNotFound;
   }
   RowDesc desc = rel->ToDesc();
   batch_ = storage::Storage::instance().NewWriteBatch(rel_name_);
   if (batch_ == NULL) {
-    return false;
+    return kStateRelationNotFound;
   }
 
   int32_t columns = desc.GetColumnCount();
   //desc.mapping_.resize(attributes_.size(), 0);
 
   int i = 0;
+  int rows = 0;
+  std::stringstream response;
   uint32_t slot_length = sizeof(Slot) * desc.GetColumnCount();
   while (is_.read_line()) {
     try {
@@ -91,21 +104,26 @@ bool Loader::Load() {
       assert(off > 0);
       TupleWarpper t(tuple_->Data(), off);
       batch_->Put(&t);
+      rows++;
 #if OUTPUT
       std::string tuple_string((const char*)t.Data() + slot_length, t.Size() - slot_length);
       BOOST_LOG_TRIVIAL(debug) << tuple_string;
 #endif
       if (i != 0 && i % 10000 == 0) {
-        BOOST_LOG_TRIVIAL(debug) << "write " << i << " rows ...";
+        BOOST_LOG_TRIVIAL(debug)<< "write " << i << " rows ...";
       }
 
       i++;
     } catch (std::runtime_error& e) {
-      BOOST_LOG_TRIVIAL(error) << e.what();
-      return false;
+      BOOST_LOG_TRIVIAL(error)<< e.what();
+      response << "copy to relation " << rel_name_ << " failed.";
+      SetResponse(response.str());
+      return kStateLoadError;
     }
   }
-  return true;
+  response << "copy " << rows << " to relation " << rel_name_ << ".";
+  SetResponse(response.str());
+  return kStateOK;
 }
 
 }  // namespace storage

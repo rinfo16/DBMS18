@@ -15,6 +15,7 @@
 #include "parser/create_as_stmt.h"
 #include "parser/column_reference.h"
 #include "parser/load_stmt.h"
+#include "parser/export_stmt.h"
 
 using namespace ast;
 ParserContext::~ParserContext() {
@@ -75,11 +76,35 @@ ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name,
   assert(const_value == file_path);
   if (const_value == NULL) {
     load_stmt->from_stdin_ = true;
-  }
-  else {
+  } else {
     load_stmt->file_path_ = const_value->GetStringValue();
   }
   return load_stmt;
+}
+
+ASTBase *ParserContext::NewExportStmt(ASTBase *table_name,
+                                      ASTBase *opt_column_name_list,
+                                      ASTBase *file_path) {
+  ExportStmt* export_stmt = new ExportStmt();
+  ast_node_list_.push_back(export_stmt);
+  ReferenceName *name = dynamic_cast<ReferenceName*>(table_name);
+  assert(name);
+  export_stmt->table_name_ = name->String();
+  ASTBase *ast = opt_column_name_list;
+  while (ast) {
+    ReferenceName *column_name = dynamic_cast<ReferenceName*>(ast);
+    assert(column_name);
+    export_stmt->opt_column_name_list_.push_back(column_name->String());
+    ast = ast->Next();
+  }
+  ConstValue *const_value = dynamic_cast<ConstValue*>(file_path);
+  assert(const_value == file_path);
+  if (const_value == NULL) {
+    export_stmt->to_stdout_ = true;
+  } else {
+    export_stmt->file_path_ = const_value->GetStringValue();
+  }
+  return export_stmt;
 }
 
 ASTBase *ParserContext::NewInsertStmt(ASTBase *table_name,

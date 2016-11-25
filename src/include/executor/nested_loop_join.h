@@ -1,9 +1,9 @@
 #ifndef NESTED_LOOP_JOIN_H__
 #define NESTED_LOOP_JOIN_H__
 
-#include "executor/exec_interface.h"
 #include "executor/boolean_expr_interface.h"
 #include "common/tuple_row.h"
+#include "executor/exec_interface.h"
 
 namespace executor {
 

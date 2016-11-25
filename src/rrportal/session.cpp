@@ -494,7 +494,7 @@ void Session::SendRowDescription(const RowDesc *row_desc) {
   for (int16_t i = 0; i < columns_count; i++) {
     const ColumnDesc & col_desc = row_desc->GetColumnDesc(i);
     // The field name
-    BackendMsgAppendString(col_desc.column_name_);
+    BackendMsgAppendCString(col_desc.column_name_.c_str());
     // The object ID of the table
     BackendMsgAppendInt32(col_desc.relation_id_);
     // The attribute number of the column
@@ -552,7 +552,7 @@ void Session::SendRowData(const TupleRow *tuple_row, const RowDesc *row_desc) {
         break;
     }
     int32_t length = value.size();
-    BackendMsgAppendInt32(length + 1);
+    BackendMsgAppendInt32(length);
     BackendMsgAppendString(value);
   }
   BackendMsgEnd(DATA_ROW);
@@ -588,14 +588,14 @@ void Session::SendCopyData(std::string & msg) {
 
 void Session::SendCommandComplete(const std::string & msg) {
   BackendMsgBegin(COMMAND_COMPLETE);
-  BackendMsgAppendString(msg);
+  BackendMsgAppendCString(msg.c_str());
   BackendMsgEnd(COMMAND_COMPLETE);
 }
 
 void Session::SendErrorResponse(const std::string & msg) {
   BackendMsgBegin(ERROR_RESPONSE);
   BackendMsgAppendInt8('M');
-  BackendMsgAppendString(msg);
+  BackendMsgAppendCString(msg.c_str());
   BackendMsgAppendInt8(0);
   BackendMsgEnd(ERROR_RESPONSE);
 }
@@ -608,6 +608,16 @@ void Session::SendCopyInResponse(int32_t columns) {
     BackendMsgAppendInt16(0);
   }
   BackendMsgEnd(COPY_IN_RESPONSE);
+}
+
+void Session::SendCopyOutResponse(int32_t columns) {
+  BackendMsgBegin(COPY_OUT_RESPONSE);
+  BackendMsgAppendInt8(0);
+  BackendMsgAppendInt16((int16_t) columns);
+  for (auto i = 0; i < columns; i++) {
+    BackendMsgAppendInt16(0);
+  }
+  BackendMsgEnd(COPY_OUT_RESPONSE);
 }
 
 void Session::BackendMsgBegin(int8_t msg_id) {
@@ -631,8 +641,12 @@ void Session::BackendMsgAppendInt32(int32_t value) {
   write_msg_.Append(&value, sizeof(value));
 }
 
+void Session::BackendMsgAppendCString(const char *str) {
+  write_msg_.Append(str, strlen(str) + 1);
+}
+
 void Session::BackendMsgAppendString(const std::string & value) {
-  write_msg_.Append(value.c_str(), value.size() + 1);
+  write_msg_.Append(value.c_str(), value.size());
 }
 
 void Session::BackendMsgAppend(const void *value, size_t length) {

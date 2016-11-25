@@ -51,11 +51,11 @@ bool StorageService::CreateRelation(const TableSchema & schema) {
       columns.push_back(std::make_pair(schema.column_list_[i], i));
     }
 
-    std::sort(
+    /*std::sort(
         columns.begin(), columns.end(),
         [](const std::pair<ColumnSchema, int> & x, const std::pair<ColumnSchema, int> & y)
         { return x.first.data_type_ < y.first.data_type_;});
-
+    */
     for (size_t i = 0; i < columns.size(); i++) {
       ColumnSchema & col = columns[i].first;
       Attribute attribute;

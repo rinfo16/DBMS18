@@ -10,14 +10,8 @@ class BooleanExprInterface : public DatumInterface {
   virtual ~BooleanExprInterface() {
   }
   ;
-  virtual bool GetValue(TupleRow *row) const {
-    return true;
-  }
-  ;
-  virtual bool GetValue(TupleRow *row1, TupleRow *row2) const {
-    return true;
-  }
-  ;
+  virtual bool GetValue(TupleRow *row) const = 0;
+  virtual bool GetValue(TupleRow *row1, TupleRow *row2) const = 0;
 };
 }
 #endif // BOOLEAN_EXPR_INTERFACE_H__

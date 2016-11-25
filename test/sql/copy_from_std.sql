@@ -1,0 +1,1 @@
+\copy user from '../data/testdata.csv' delimiter as ',';
