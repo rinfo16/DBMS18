@@ -80,23 +80,23 @@ Creat table
 > psql -h localhost -p 8432 -d postgres -f create_table.sql  
 >
 > cat create_table.sql 
->	create table user (
->		id INTEGER, 
->		firstname VARCHAR(256), 
->		lastname VARCHAR(256) , 
->		email VARCHAR(256), 
->		gender INTEGER, 
->		ipaddress VARCHAR(256)
->	);
+>	create table user ( 
+>		id INTEGER,  
+>		firstname VARCHAR(256),  
+>		lastname VARCHAR(256) ,  
+>		email VARCHAR(256),  
+>		gender INTEGER,  
+>		ipaddress VARCHAR(256) 
+>	); 
 
-Load from CSV file 
+Load from CSV file  
 > psql -h localhost -p 8432 -d postgres -f copy_from_std.sql 
 > cat copy_from_std.sql 
 >	\copy user from 'data/testdata.csv' delimiter as ',';  
 
 SELECT query 
 > psql -h localhost -p 8432 -d postgres -f select.sql 
->
-> cat select.sql 
->	select ipaddress, firstname, lastname, gender from user; 
+> 
+> cat select.sql  
+>	select ipaddress, firstname, lastname, gender from user;  
 
