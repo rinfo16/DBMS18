@@ -2,7 +2,7 @@
 
 namespace executor {
 
-Select::Select(ExecInterface *left, const BooleanExprInterface *predicate)
+Select::Select(ExecInterface *left, const BooleanExprInterface *predicate)//predicate shiyigeguolvqi,yejiushi where tiaojian
     : left_(left),
       predicate_(predicate) {
 
@@ -19,13 +19,16 @@ State Select::Open() {
 }
 
 State Select::GetNext(TupleRow *row) {
-  State state = left_ -> GetNext(row);
   while (true) {
+      State state = left_ -> GetNext(row);
       if (state == kStateEOF )
         return kStateEOF;
       else
-        return left_->GetNext(row);
-      state = left_->GetNext(row);
+      {
+        bool pre = predicate_->GetValue(row);
+        if(pre)
+          return kStateOK;
+      }
     }
 }
 
