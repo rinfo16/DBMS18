@@ -28,7 +28,7 @@ A database POC
 
 ##### __Executor__  
 - [x] Scan
-- [ ] Select
+- [x] Select
 - [x] Porject
 - [x] Nest Loop Join
 - [ ] Hash Join
@@ -76,11 +76,26 @@ Backend start
 Connect to the backend use psql 
 > psql -h localhost -p 8432 -d postgres
 
-Creat table product 
-> create table product (id INTEGER, price INTEGER, name VARCHAR(256));
+Creat table 
+> psql -h localhost -p 8432 -d postgres -f create_table.sql  
+ 
+> cat create_table.sql
+	create table user (
+		id INTEGER, 
+		firstname VARCHAR(256), 
+		lastname VARCHAR(256) , 
+		email VARCHAR(256), 
+		gender INTEGER, 
+		ipaddress VARCHAR(256)
+	);
 
-Load from cvs file 
-> copy product from '/tmp/data.csv';
+Load from CSV file 
+> psql -h localhost -p 8432 -d postgres -f copy_from_std.sql 
+> cat copy_from_std.sql 
+	\copy user from 'data/testdata.csv' delimiter as ',';  
 
 SELECT query 
-> select name, id, price from product;
+> psql -h localhost -p 8432 -d postgres -f select.sql 
+> cat select.sql 
+	select ipaddress, firstname, lastname, gender from user; 
+
