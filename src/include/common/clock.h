@@ -3,6 +3,7 @@
 
 #include "common/define.h"
 #include <string>
+#include <time.h>
 
 namespace utils {
 
@@ -13,21 +14,15 @@ class Clock {
 
   ~Clock();
 
-  void Start() {
+  void Start();
+  void Stop();
 
-  }
-  void Stop() {
+  uint64_t Elapse() const ;
 
-  }
-
-  uint64_t Elapse() const {
-    return 0;
-  }
-
-  std::string Format(std::string & format) const {
-    return "";
-  }
-
+  std::string Format() const ;
+ private:
+  uint64_t duration;
+  clock_t start, stop;
 };
 
 }  // namespace utils
