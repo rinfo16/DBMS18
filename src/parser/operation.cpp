@@ -17,7 +17,7 @@ ptree Operation::ToPropertyTree() const {
     case kLessOrEqual:
       op = "<=";
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       op = ">=";
       break;
     default:

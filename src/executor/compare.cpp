@@ -27,7 +27,7 @@ bool StringCompare::GetValue(TupleRow *row) const {
     case kLessOrEqual:
       return str_left <= str_right;
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       return str_left >= str_right;
       break;
     default:
@@ -56,7 +56,7 @@ bool StringCompare::GetValue(TupleRow *row1, TupleRow *row2) const {
     case kLessOrEqual:
       return str_left <= str_right;
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       return str_left >= str_right;
       break;
     default:
@@ -89,7 +89,7 @@ bool IntegerCompare::GetValue(TupleRow *row) const {
     case kLessOrEqual:
       return int_left <= int_right;
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       return int_left >= int_right;
       break;
     default:
@@ -115,7 +115,7 @@ bool IntegerCompare::GetValue(TupleRow *row1, TupleRow *row2) const {
     case kLessOrEqual:
       return int_left <= int_right;
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       return int_left >= int_right;
       break;
     default:
@@ -148,7 +148,7 @@ bool FloatCompare::GetValue(TupleRow *row) const {
     case kLessOrEqual:
       return float_left <= float_right;
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       return float_left >= float_right;
       break;
     default:
@@ -174,7 +174,7 @@ bool FloatCompare::GetValue(TupleRow *row1, TupleRow *row2) const {
     case kLessOrEqual:
       return float_left <= float_right;
       break;
-    case kGreaterOrEaual:
+    case kGreaterOrEqual:
       return float_left >= float_right;
       break;
     default:

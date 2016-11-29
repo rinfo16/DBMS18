@@ -6,3 +6,8 @@ create table user (
 	gender INTEGER, 
 	ipaddress VARCHAR(256)
 );
+
+create table gender_dim (
+  gender_code INTEGER, 
+  gender_desc VARCHAR(10)
+);

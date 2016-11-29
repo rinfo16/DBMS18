@@ -76,12 +76,6 @@ State NestedLoopJoin::GetNext(TupleRow *row) {
         // return EOF or an error ..
         return right_state_;
       }
-
-      // get the first row of right table
-      right_state_ = right_->GetNext(row_);
-      if (right_state_ != kStateOK) {
-        return right_state_;
-      }
     }
     else {
       // right GetNext return an error

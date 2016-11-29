@@ -12,3 +12,5 @@ psql -h localhost -p 8432 -d postgres -f create_table.sql
 psql -h localhost -p 8432 -d postgres -f copy_from_std.sql
 psql -h localhost -p 8432 -d postgres -f copy_to_std.sql
 psql -h localhost -p 8432 -d postgres -f select.sql
+psql -h localhost -p 8432 -d postgres -f where.sql
+psql -h localhost -p 8432 -d postgres -f join.sql

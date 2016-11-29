@@ -89,7 +89,7 @@ enum OperatorType {
   kLess,
   kGreater,
   kLessOrEqual,
-  kGreaterOrEaual,
+  kGreaterOrEqual,
   kCompareEnd,
 
   kLogicBegin,

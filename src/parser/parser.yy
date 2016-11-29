@@ -180,6 +180,8 @@
 %token FROM
 %token FULLTEXT
 %token GRANT
+%token GREATER
+%token GREATER_OR_EQUAL
 %token GROUP
 %token HAVING
 %token HIGH_PRIORITY
@@ -206,6 +208,8 @@
 %token LEADING
 %token LEAVE
 %token LEFT
+%token LESS
+%token LESS_OR_EQUAL
 %token LIMIT
 %token LINES
 %token LOAD
@@ -382,6 +386,19 @@ boolean_expression:
   expr EQUAL expr {  
     $$ = ctx.NewExpression(kEqual, $1, $3); 
     }
+  | expr LESS expr {
+      $$ = ctx.NewExpression(kLess, $1, $3);
+  }
+  | expr GREATER expr {
+      $$ = ctx.NewExpression(kGreater, $1, $3);
+  }
+  | expr LESS_OR_EQUAL expr {
+      $$ = ctx.NewExpression(kLessOrEqual, $1, $3);
+  }
+  | expr GREATER_OR_EQUAL expr {
+      $$ = ctx.NewExpression(kGreaterOrEqual, $1, $3);
+  }
+
   | boolean_expression ANDOP boolean_expression {
     $$ = ctx.NewExpression(kAnd, $1, $3); 
     }

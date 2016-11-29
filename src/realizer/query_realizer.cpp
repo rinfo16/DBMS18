@@ -9,12 +9,13 @@
 #include "executor/seq_scan.h"
 #include "executor/nested_loop_join.h"
 #include "executor/slot_reference.h"
-#include "executor/compare.h"
-#include "executor/const_value.h"
 #include "executor/project.h"
 #include "executor/export.h"
 #include "executor/load.h"
 #include "executor/select.h"
+#include "executor/compare.h"
+#include "executor/const_value.h"
+#include "executor/logic_expr.h"
 
 namespace realizer {
 
@@ -411,6 +412,9 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
 executor::ExecInterface* QueryRealizer::BuildSelect(
     const ast::ExpressionBase* opt_where) {
   executor::BooleanExprInterface *bool_expr = BuildBooleanExpression(opt_where);
+  if (bool_expr == NULL) {
+    return NULL;
+  }
   executor::ExecInterface *exec = new executor::Select(top_exec_, bool_expr);
   all_exec_obj_.push_back(exec);
   return exec;
@@ -482,20 +486,25 @@ executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
       // TODO  type cast ...
     }
     // TODO and/or/xor support...
-  } else if (IsCompareOperator(operation->Operator())) {
+  } else if (IsLogicOperator(operation->Operator())) {
+    const ast::ExpressionBase *left = operation->Left();
+    const ast::ExpressionBase *right = operation->Right();
+    executor::BooleanExprInterface *bool_left = BuildBooleanExpression(left);
+    executor::BooleanExprInterface *bool_right = BuildBooleanExpression(right);
+    if (bool_left == NULL || bool_right == NULL) {
+      return NULL;
+    }
+    ret = new executor::LogicExpr(operation->Operator(), bool_left, bool_right);
+    if (left->ASTType() == kASTColumnReference) {
+      //static_cast<const ast::ColumnReference*>(left);
+    } else if (left->ASTType() == kASTConstValue) {
 
-  }
-  const ast::ExpressionBase *left = operation->Left();
-  if (left->ASTType() == kASTColumnReference) {
-    //static_cast<const ast::ColumnReference*>(left);
-  } else if (left->ASTType() == kASTConstValue) {
+    } else if (left->ASTType() == kASTOperation) {
 
-  } else if (left->ASTType() == kASTOperation) {
+    }
+    if (right->ASTType() == kASTColumnReference) {
 
-  }
-  const ast::ExpressionBase *right = operation->Right();
-  if (right->ASTType() == kASTColumnReference) {
-
+    }
   }
   return ret;
 }
@@ -575,15 +584,15 @@ State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
     std::stringstream ssm;
     ssm << "/tmp/tmpfile_import_" << this << ".csv";
     int32_t columns = 0;
-    Relation *rel= storage_->GetMetaDataManager()->GetRelationByName(table_name);
+    Relation *rel = storage_->GetMetaDataManager()->GetRelationByName(
+        table_name);
     if (rel == NULL) {
       message_ = "table not found.";
       return kStateRelationNotFound;
     }
     if (load_stmt->OptColumnNameList().empty()) {
       columns = rel->GetAttributeCount();
-    }
-    else { // TODO load the specified column
+    } else {  // TODO load the specified column
       columns = rel->GetAttributeCount();
     }
     output_->SendCopyInResponse(columns);
@@ -604,8 +613,7 @@ State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
   return ExecCmd();
 }
 
-State QueryRealizer::ExecCmd()
-{
+State QueryRealizer::ExecCmd() {
   assert(top_cmd_);
   State state = top_cmd_->Prepare();
   if (state != kStateOK) {
@@ -613,8 +621,7 @@ State QueryRealizer::ExecCmd()
     return state;
   }
   state = top_cmd_->Exec();
-  if (state != kStateOK)
-  {
+  if (state != kStateOK) {
     message_ = top_cmd_->GetResponse();
     return state;
   }
@@ -624,7 +631,7 @@ State QueryRealizer::ExecCmd()
 
 State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   std::string table_name = export_stmt->TableName();
-  Relation *rel= storage_->GetMetaDataManager()->GetRelationByName(table_name);
+  Relation *rel = storage_->GetMetaDataManager()->GetRelationByName(table_name);
   if (rel == NULL) {
     return kStateRelationNotFound;
   }
@@ -640,8 +647,7 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   int32_t columns;
   if (export_stmt->OptColumnNameList().empty()) {
     columns = rel->GetAttributeCount();
-  }
-  else { // TODO export the specified column
+  } else {  // TODO export the specified column
     columns = rel->GetAttributeCount();
   }
 
@@ -652,12 +658,12 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
     ssm << "/tmp/tmpfile_export_" << this << ".csv";
     file_path = ssm.str();
     output_->SendCopyOutResponse(columns);
-  }
-  else {
+  } else {
     std::ofstream ofs(file_path);
     std::string data;
   }
-  executor::CmdInterface *cmd = new executor::Export(top_exec_, & desc, file_path);
+  executor::CmdInterface *cmd = new executor::Export(top_exec_, &desc,
+                                                     file_path);
   top_cmd_ = cmd;
   all_exec_obj_.push_back(cmd);
 
@@ -667,8 +673,7 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
     std::string line;
     std::ifstream fs(file_path);
 
-    while(std::getline(fs, line))
-    {
+    while (std::getline(fs, line)) {
       line += '\n';
       output_->SendCopyData(line);
     }
@@ -680,8 +685,8 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
 
 }
 
-bool QueryRealizer::LoadFromFile(const std::string table, const std::string path)
-{
+bool QueryRealizer::LoadFromFile(const std::string table,
+                                 const std::string path) {
   return true;
 }
 

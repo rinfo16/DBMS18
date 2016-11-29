@@ -233,12 +233,14 @@ FALSE { yylval->intval = 0; return token::BOOL; }
 
 \"(\\.|[^"\n])*$ { }
 
-"\." { return token::POINT; }
+">"  { return token::GREATER; }
+"<"  { return token::LESS; }
+">=" { return token::GREATER_OR_EQUAL; }
+"<=" { return token::LESS_OR_EQUAL; }
 "="  { return token::EQUAL; }
+"\." { return token::POINT; }
 "&&" { return token::ANDOP; }
 "||" { return token::OR; }
-
-
 "<<" { yylval->subtok = 1; return token::SHIFT; }
 ">>" { yylval->subtok = 2; return token::SHIFT; }
 ":=" { return token::ASSIGN; }
