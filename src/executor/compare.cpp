@@ -1,13 +1,13 @@
 #include "executor/compare.h"
 namespace executor {
-StringCompare::StringCompare(OperatorType op, ValueExprInterface *left,
+VarcharCompare::VarcharCompare(OperatorType op, ValueExprInterface *left,
                              ValueExprInterface *right)
     : op_(op),
       left_(left),
       right_(right) {
 }
 
-bool StringCompare::GetValue(TupleRow *row) const {
+bool VarcharCompare::GetValue(TupleRow *row) const {
   char *str;
   uint32_t len;
   str = (char*) left_->GetValue(row, &len);
@@ -36,7 +36,7 @@ bool StringCompare::GetValue(TupleRow *row) const {
   return false;
 }
 
-bool StringCompare::GetValue(TupleRow *row1, TupleRow *row2) const {
+bool VarcharCompare::GetValue(TupleRow *row1, TupleRow *row2) const {
   char *str;
   uint32_t len;
   str = (char*) left_->GetValue(row1, &len);

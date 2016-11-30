@@ -68,7 +68,7 @@ bool SpaceManager::CreateDataFile(fileno_t *no) {
 bool SpaceManager::CreateFile(fileno_t fileno) {
   bool ok = false;
   std::stringstream ssm;
-  ssm << data_directory_ << "/nutshell.data." << fileno;
+  ssm << data_directory_ << "/owl.data." << fileno;
   std::string path = ssm.str();
   File file(path);
   if (!file.Create()) {
@@ -515,7 +515,7 @@ bool SpaceManager::RecyclePage(Page *data_page) {
 
 bool SpaceManager::Exists() {
   std::stringstream ssm;
-  ssm << data_directory_ << "/nutshell.data." << 0;
+  ssm << data_directory_ << "/owl.data." << 0;
   std::ifstream infile(ssm.str().c_str());
   return infile.good();
 }

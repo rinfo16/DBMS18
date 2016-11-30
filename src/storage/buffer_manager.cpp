@@ -243,7 +243,7 @@ File* BufferManager::GetFile(fileno_t no) {
   File *f = NULL;
   if (iter == files_.end()) {
     std::stringstream ssm;
-    ssm << data_path_ << "/nutshell.data." << no;
+    ssm << data_path_ << "/owl.data." << no;
     f = new File(ssm.str());
     if (!f->Open()) {
       return NULL;

@@ -44,7 +44,6 @@ class QueryRealizer : public QueryRealizerInterface {
     kHaving
   };
 
-  bool BuildSelectStmt(ast::SelectStmt *select_stmt);
   executor::ExecInterface* BuildJoin(
       const std::vector<ast::TableFactor *> table_factor_list);
   executor::ExecInterface* BuildJoin(const ast::TableFactor *table_factor);
@@ -60,7 +59,6 @@ class QueryRealizer : public QueryRealizerInterface {
   bool ExecCreate(ast::CreateStmt *create_stmt);
   State ExecLoad(const ast::LoadStmt *load_stmt);
   State ExecExport(const ast::ExportStmt *export_stmt);
-  bool LoadFromFile(const std::string table, const std::string path);
   State ExecSelect();
   State CheckFrom(const ast::SelectStmt *select_stmt);
   State CheckWhere(const ast::SelectStmt *select_stmt);

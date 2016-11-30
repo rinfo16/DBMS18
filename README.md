@@ -71,7 +71,7 @@ A database POC
 
 #### Example:
 Backend start 
-> nutshell --port=8432
+> owl --port=8432
 
 Connect to the backend use psql 
 > psql -h localhost -p 8432 -d postgres

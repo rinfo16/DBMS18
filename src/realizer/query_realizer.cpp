@@ -306,57 +306,6 @@ std::string QueryRealizer::Message() const {
   return message_;
 }
 
-bool QueryRealizer::BuildSelectStmt(ast::SelectStmt *select_stmt) {
-  bool ret = false;
-  storage::IteratorInterface *iter = NULL;
-  std::string table_name;
-  auto table_factor_list = select_stmt->TableReference();
-  const ast::TableFactor * table_factor = table_factor_list[0];
-  if (table_factor->ASTType() == kASTTableReference) {
-    const ast::TableReference *table_reference =
-        dynamic_cast<const ast::TableReference*>(table_factor);
-    table_name = table_reference->TableName();
-  } else {
-    // NOT SUPPORT TODO
-    assert(false);
-  }
-
-  Relation *relation = storage_->GetMetaDataManager()->GetRelationByName(
-      table_name);
-  if (relation == NULL) {
-    return false;
-  }
-  std::vector<uint32_t> projection_mapping;
-  auto select_list = select_stmt->SelectList();
-  for (size_t i = 0; i < select_list.size(); i++) {
-    const ast::ExpressionBase *expr = select_list[i]->SelectExpression();
-    if (expr->ASTType() == kASTColumnReference) {
-      const ast::ColumnReference *column_reference =
-          dynamic_cast<const ast::ColumnReference*>(expr);
-      int32_t index = relation->GetAttributeIndex(
-          column_reference->ColumnName());
-      if (index < 0)
-        return false;
-      projection_mapping.push_back(index);
-    }
-  }
-
-  iter = storage_->NewIterator(table_name);
-  if (iter == NULL) {
-    return false;
-  }
-  all_iter_.push_back(iter);
-
-  output_row_desc_ = relation->ToDesc();
-  BOOST_LOG_TRIVIAL(debug)<< "build execution tree";
-  // begin build execution tree ...
-
-  executor::ExecInterface *exec = new executor::SeqScan(iter, 0);
-  all_exec_obj_.push_back(exec);
-  top_exec_ = exec;
-  return true;
-}
-
 executor::ExecInterface* QueryRealizer::BuildJoin(
     const std::vector<ast::TableFactor *> table_factor_list) {
   for (auto i = 0; i < table_factor_list.size(); i++) {
@@ -476,10 +425,10 @@ executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
         ret = new executor::IntegerCompare(operation->Operator(), left, right);
         all_datum_items_.push_back(ret);
       } else if (data_type == kDTFloat) {
-        ret = new executor::IntegerCompare(operation->Operator(), left, right);
+        ret = new executor::FloatCompare(operation->Operator(), left, right);
         all_datum_items_.push_back(ret);
       } else if (data_type == kDTVarchar) {
-        ret = new executor::IntegerCompare(operation->Operator(), left, right);
+        ret = new executor::VarcharCompare(operation->Operator(), left, right);
         all_datum_items_.push_back(ret);
       }
     } else {
@@ -495,6 +444,7 @@ executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
       return NULL;
     }
     ret = new executor::LogicExpr(operation->Operator(), bool_left, bool_right);
+    all_datum_items_.push_back(ret);
     if (left->ASTType() == kASTColumnReference) {
       //static_cast<const ast::ColumnReference*>(left);
     } else if (left->ASTType() == kASTConstValue) {
@@ -609,6 +559,7 @@ State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
     ofs.close();
   }
   executor::CmdInterface *cmd = new executor::Load(file_path, table_name);
+  all_exec_obj_.push_back(cmd);
   top_cmd_ = cmd;
   return ExecCmd();
 }
@@ -683,11 +634,6 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   }
   return state;
 
-}
-
-bool QueryRealizer::LoadFromFile(const std::string table,
-                                 const std::string path) {
-  return true;
 }
 
 bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {

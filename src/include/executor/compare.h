@@ -5,9 +5,9 @@
 #include "executor/value_expr_interface.h"
 #include "executor/boolean_expr_interface.h"
 namespace executor {
-class StringCompare : public BooleanExprInterface {
+class VarcharCompare : public BooleanExprInterface {
  public:
-  StringCompare(OperatorType op, ValueExprInterface *left,
+  VarcharCompare(OperatorType op, ValueExprInterface *left,
                 ValueExprInterface *right);
   virtual bool GetValue(TupleRow *row) const;
   virtual bool GetValue(TupleRow *row1, TupleRow *row2) const;

@@ -6,6 +6,22 @@ select firstname, lastname, ipaddress
 from user
 where ipaddress = '49.114.31.119';
 
+select firstname, lastname, ipaddress 
+from user
+where ipaddress > '49.114.31.119';
+
+select firstname, lastname, ipaddress 
+from user
+where ipaddress < '49.114.31.119';
+
+select firstname, lastname, ipaddress 
+from user
+where ipaddress >= '49.114.31.119';
+
+select firstname, lastname, ipaddress 
+from user
+where ipaddress <= '49.114.31.119';
+
 select id, firstname, lastname
 from user
 where id < 50;

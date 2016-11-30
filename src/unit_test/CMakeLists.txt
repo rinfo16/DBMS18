@@ -38,7 +38,7 @@ target_link_libraries (parser.test parser common pthread boost_log)
 if (ENABLE_CODE_COVERAGE)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
   include(CodeCoverage)
-  setup_target_for_coverage(coverage loader.test coverage)
+  setup_target_for_coverage(loader_coverage loader.test loader_coverage)
 endif()
 
 
