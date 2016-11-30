@@ -7,7 +7,9 @@
 using std::vector;
 using std::string;
 using std::pair;
+
 namespace ast {
+
 ptree CreateAsStmt::ToPropertyTree() const {
   ptree create_as;
   create_as.put(STR_TABLE_NAME, table_name_);

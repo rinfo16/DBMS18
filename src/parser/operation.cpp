@@ -1,5 +1,7 @@
 #include "parser/operation.h"
+
 namespace ast {
+
 ptree Operation::ToPropertyTree() const {
   ptree expr;
   std::string op;
@@ -34,4 +36,5 @@ ptree Operation::ToPropertyTree() const {
   }
   return expr;
 }
+
 }

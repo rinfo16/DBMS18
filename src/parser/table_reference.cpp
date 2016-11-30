@@ -1,5 +1,7 @@
 #include "parser/table_reference.h"
+
 namespace ast {
+
 ptree TableReference::ToPropertyTree() const {
   ptree table_reference;
   if (!table_name_.empty()) {
@@ -10,4 +12,5 @@ ptree TableReference::ToPropertyTree() const {
   }
   return table_reference;
 }
+
 }

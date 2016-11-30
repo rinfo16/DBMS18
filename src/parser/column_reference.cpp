@@ -13,4 +13,5 @@ ptree ColumnReference::ToPropertyTree() const {
   }
   return column_reference;
 }
+
 }

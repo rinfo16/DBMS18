@@ -862,6 +862,7 @@ inline mini::csv::ostringstream& operator <<(mini::csv::ostringstream& ostm,
 
   return ostm;
 }
+
 template<>
 inline mini::csv::ostringstream& operator <<(mini::csv::ostringstream& ostm,
                                              const char* val) {

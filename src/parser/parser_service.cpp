@@ -17,11 +17,14 @@ ParserService::~ParserService() {
 SQLParserInterface *ParserService::CreateSQLParser(const std::string sql) {
   return new SQLParser(sql);
 }
+
 void ParserService::DestroySQLParser(SQLParserInterface * sql_parser) {
   delete sql_parser;
 }
+
 ParserServiceInterface *ParserServiceInterface::Instance() {
   return & utils::Singleton<ParserService>::instance();
 }
+
 }
 // namespace Parser
