@@ -13,3 +13,9 @@ target_link_libraries (
   boost_date_time
   boost_log
 )
+
+if (ENABLE_CODE_COVERAGE)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
+  include(CodeCoverage)
+  setup_target_for_coverage(owl_coverage Owl owl_coverage)
+endif()
