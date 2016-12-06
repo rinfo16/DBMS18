@@ -39,6 +39,15 @@ class RowDesc {
     return all_columns_desc_.size();
   }
 
+  // max size of row
+  size_t MaxSize() const {
+    size_t size = 0;
+    for (int i = 0; i < all_columns_desc_.size(); i++)
+    {
+      size += all_columns_desc_[i].data_type_size_;
+    }
+    return size;
+  }
 private:
   std::vector<uint32_t> mapping_;
   uint32_t column_count_;

@@ -22,7 +22,9 @@ class MetaDataManager : public MetaDataManagerInterface {
   virtual void Stop();
  private:
   MetaDataManager();
-
+  void ReadSysTable();
+  void CreateSysTable();
+  bool InsertRelation(Relation *rel);
   std::vector<Relation*> all_relations_;
   std::map<relationid_t, Relation*> id_rel_map_;
   std::map<std::string, Relation*> name_rel_map_;

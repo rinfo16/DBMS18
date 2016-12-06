@@ -28,6 +28,14 @@ class Relation {
     return name_;
   }
 
+  void SetSegmentID(const PageID & id) {
+    segment_id_ = id;
+  }
+
+  const PageID & GetSegmentID() const {
+    return segment_id_;
+  }
+
   void SetID(relationid_t id) {
     id_ = id;
   }
@@ -91,6 +99,7 @@ class Relation {
     }
     return -1;
   }
+
   boost::property_tree::ptree ToPropertyTree() {
     boost::property_tree::ptree relation;
     boost::property_tree::ptree attributes;
@@ -190,7 +199,9 @@ class Relation {
   PageID last_data_pageid_;
   PageID last_extent_pageid_;
   PageID first_extent_pageid_;
+  PageID segment_id_;
   std::vector<Attribute> attributes_;
 };
+
 
 #endif // RELATION_H_

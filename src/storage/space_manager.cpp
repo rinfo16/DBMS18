@@ -26,16 +26,17 @@ SpaceManager::SpaceManager(BufferManager *buffer_manager)
 SpaceManager::~SpaceManager() {
 }
 
-bool SpaceManager::InitDB() {
+State SpaceManager::InitDB() {
   if (!Exists()) {
     bool ok = CreateFile(SEGMENT_DESCRIPT_FILE_NO);
     if (!ok) {
-      return false;
+      return kStateOpenFileError;
     }
     BOOST_LOG_TRIVIAL(info) << "initialize database file in [" << data_directory_ << "]";
+    return kStateOK;
   }
   BOOST_LOG_TRIVIAL(info) << "space manager start.";
-  return true;
+  return kStateOpenFileError;
 }
 
 bool SpaceManager::CreateDataFile(fileno_t *no) {

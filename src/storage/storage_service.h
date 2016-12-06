@@ -24,10 +24,10 @@ class StorageService : public StorageServiceInterface {
 
   void FlushAll();
 
-  void InitDB();
-
   MetaDataManagerInterface *GetMetaDataManager() { return meta_data_manager_; }
+
  private:
+  uint32_t NewRelationID();
   BufferManager *buffer_manager_;
   SpaceManager *space_manager_;
   MetaDataManagerInterface *meta_data_manager_;

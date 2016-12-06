@@ -3,6 +3,7 @@
 #include "iterator.h"
 #include "meta_data_manager.h"
 #include "storage/loader.h"
+#include <stdlib.h>
 
 namespace storage {
 
@@ -19,8 +20,7 @@ StorageService::~StorageService() {
 }
 
 bool StorageService::Start() {
-  space_manager_->InitDB();
-
+  State state = space_manager_->InitDB();
   if (!buffer_manager_->Start()) {
     return false;
   }
@@ -36,7 +36,7 @@ void StorageService::Stop() {
   // Since it call buffer manager to flush its data
   meta_data_manager_->Stop();
   buffer_manager_->Stop();
-  BOOST_LOG_TRIVIAL(info) << "storage service stop.";
+  BOOST_LOG_TRIVIAL(info)<< "storage service stop.";
 }
 
 bool StorageService::CreateRelation(const TableSchema & schema) {
@@ -45,17 +45,18 @@ bool StorageService::CreateRelation(const TableSchema & schema) {
   if (ok) {
     Relation* rel = new Relation();
     rel->SetName(schema.name_);
-    rel->SetID(id.pageno_);
+    rel->SetID(NewRelationID());
+    rel->SetSegmentID(id);
     std::vector<std::pair<ColumnSchema, int> > columns;
     for (int i = 0; i < schema.column_list_.size(); i++) {
       columns.push_back(std::make_pair(schema.column_list_[i], i));
     }
 
     /*std::sort(
-        columns.begin(), columns.end(),
-        [](const std::pair<ColumnSchema, int> & x, const std::pair<ColumnSchema, int> & y)
-        { return x.first.data_type_ < y.first.data_type_;});
-    */
+     columns.begin(), columns.end(),
+     [](const std::pair<ColumnSchema, int> & x, const std::pair<ColumnSchema, int> & y)
+     { return x.first.data_type_ < y.first.data_type_;});
+     */
     for (size_t i = 0; i < columns.size(); i++) {
       ColumnSchema & col = columns[i].first;
       Attribute attribute;
@@ -111,7 +112,7 @@ IteratorInterface * StorageService::NewIterator(const std::string & rel_name) {
   if (rel == NULL) {
     return NULL;
   }
-  return new Iterator(rel->GetID(),  buffer_manager_ );
+  return new Iterator(rel->GetSegmentID(), buffer_manager_);
 }
 
 WriteBatchInterface * StorageService::NewWriteBatch(
@@ -120,43 +121,45 @@ WriteBatchInterface * StorageService::NewWriteBatch(
   if (rel == NULL) {
     return NULL;
   }
-  return new WriteBatch(rel->GetID(), space_manager_);
+  return new WriteBatch(rel->GetSegmentID(), space_manager_);
 }
 
 void StorageService::DeleteIOObject(IOObjectInterface* io_object) {
   delete io_object;
 }
 
-void StorageService::InitDB() {
-  space_manager_->InitDB();
-}
-
 void StorageService::FlushAll() {
   buffer_manager_->FlushAll();
 }
 
-
-StorageServiceInterface* StorageServiceInterface::Instance()
-{
-  return & Storage::instance();
+StorageServiceInterface* StorageServiceInterface::Instance() {
+  return &Storage::instance();
 }
 
 int import_from_csv(const std::string table, const std::string path) {
   storage::Loader *loader = new storage::Loader(path, table);
   bool ok = loader->Load();
   if (!ok) {
-    BOOST_LOG_TRIVIAL(info) << "load failed ...";
+    BOOST_LOG_TRIVIAL(info)<< "load failed ...";
     delete loader;
     return -1;
   }
   delete loader;
-  BOOST_LOG_TRIVIAL(info) << "load finish ...";
+  BOOST_LOG_TRIVIAL(info)<< "load finish ...";
   return 0;
 }
 
-bool StorageServiceInterface::Load(const std::string & table_name, const std::string & file_path)
-{
+bool StorageServiceInterface::Load(const std::string & table_name,
+                                   const std::string & file_path) {
   return import_from_csv(table_name, file_path) == 0;
 }
 
+uint32_t StorageService::NewRelationID() {
+  uint32_t relid = rand();
+  while (relid < 10000 || meta_data_manager_->GetRelationByID(relid) != NULL)
+  {
+    relid = rand();
+  }
+  return relid;
+}
 }  // namespace storage

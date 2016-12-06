@@ -9,7 +9,7 @@ namespace storage {
 
 class Iterator : public IteratorInterface {
  public:
-  Iterator(relationid_t rel_id, BufferManager *buffer_manager);
+  Iterator(PageID rel_id, BufferManager *buffer_manager);
   ~Iterator();
   virtual bool Get(TupleWarpper *tuple);
   virtual const void* Get(uint32_t *length);
@@ -21,7 +21,7 @@ class Iterator : public IteratorInterface {
   virtual Status GetStatus();
 private:
   void SeekNext();
-  relationid_t relation_id_;
+  PageID relation_id_;
   Status status_;
   const void* tuple_data_;
   uint32_t tuple_length_;

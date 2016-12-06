@@ -105,7 +105,6 @@ void test3() {
 
 int main(int argc, char* argv[]) {
   std::cout << "Storage unit test !!!" << std::endl;
-  storage::Storage::instance().InitDB();
   storage::Storage::instance().Start();
   test1();
   test2();

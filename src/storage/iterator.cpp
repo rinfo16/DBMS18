@@ -4,7 +4,7 @@
 
 namespace storage {
 
-Iterator::Iterator(relationid_t id, BufferManager *buffer_manager)
+Iterator::Iterator(PageID id, BufferManager *buffer_manager)
     : relation_id_(id),
       tuple_data_(NULL),
       tuple_length_(0),
@@ -43,11 +43,8 @@ bool Iterator::Delete() {
 }
 
 void Iterator::SeekToFirst() {
-  PageID segment_header_pageid;
-  segment_header_pageid.pageno_ = 0;
-  segment_header_pageid.fileno_ = 0;
+  PageID segment_header_pageid = relation_id_;
   void *tuple = NULL;
-  segment_header_pageid.pageno_ = relation_id_;
   Page *segment_header_page = buffer_manager_->FixPage(segment_header_pageid);
   if (segment_header_page == NULL) {
     return;

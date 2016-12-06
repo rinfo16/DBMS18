@@ -59,6 +59,11 @@
 #define STR_ORDER_BY_LIST "ORDER_BY_LIST"
 
 
+#define SYS_SEGMENT_RELATION 1
+#define SYS_SEGMENT_ATTRIBUTE 2
+
+
+
 #define LOW_INT16(l)              ((int16_t)((int32_t)(l) & 0xffff))
 #define HIGH_INT16(l)             ((int16_t)((int32_t)(l) >> 16))
 #define MAKE_INT32(high16, low16) ((int32_t) high16 << 16 | (int32_t) low16)

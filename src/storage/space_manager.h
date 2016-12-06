@@ -4,6 +4,7 @@
 
 #include "buffer_manager.h"
 #include "storage_define.h"
+#include "common/state.h"
 
 namespace storage {
 
@@ -13,7 +14,7 @@ class SpaceManager {
 
   virtual ~SpaceManager();
 
-  bool InitDB();
+  State InitDB();
 
   void Vacuum();
 

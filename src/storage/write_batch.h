@@ -8,12 +8,12 @@ namespace storage {
 
 class WriteBatch : public WriteBatchInterface {
  public:
-  WriteBatch(relationid_t rel_id, SpaceManager *space_manager);
+  WriteBatch(const PageID & id, SpaceManager *space_manager);
   virtual ~WriteBatch();
   virtual bool Put(TupleWarpper *tuple);
  private:
   SpaceManager *space_manager_;
-  relationid_t rel_id_;
+  PageID pageid_;
 };
 
 }  // namespace storage
