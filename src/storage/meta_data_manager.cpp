@@ -43,26 +43,31 @@ void MetaDataManager::AddRelation(Relation *rel) {
   Tuple tuple = memory::CreateTuple(512);
 
   uint32_t offset = 0;
-  offset += sizeof(Slot) * 4;
+  offset += sizeof(Slot) * 3;
+
+  // select id, name, seg_id from sys_relation;
 
   // id
+  Slot *slot = tuple->GetSlot(0);
   uint64_t relation_id = rel->GetID();
   tuple->SetValue(offset, &relation_id, sizeof(relation_id));
+  slot->offset_ = offset;
+  slot->length_ = sizeof(relation_id);
   offset += sizeof(relation_id);
-
   // name
   std::string rel_name = rel->GetName();
+  slot = tuple->GetSlot(1);
   tuple->SetValue(offset, rel_name.c_str(), rel_name.size());
+  slot->offset_ = offset;
+  slot->length_ = rel_name.size();
   offset += rel_name.size();
-
-  // is_rel
-  uint64_t is_rel = 1;
-  tuple->SetValue(offset, &is_rel, sizeof(is_rel));
-  offset += sizeof(is_rel);
 
   // seg_id
   uint64_t seg_id = *((uint64_t*) &rel->GetSegmentID());
+  slot = tuple->GetSlot(2);
   tuple->SetValue(offset, &seg_id, sizeof(seg_id));
+  slot->offset_ = offset;
+  slot->length_ = sizeof(seg_id);
   offset += sizeof(seg_id);
 
   PageID segid_class;
@@ -78,29 +83,45 @@ void MetaDataManager::AddRelation(Relation *rel) {
     const Attribute &attr = rel->GetAttribute(i);
 
     //id
-    uint64_t attr_id = attr.GetID();
-    tuple->SetValue(offset, &attr_id, sizeof(relation_id));
-    offset += sizeof(attr_id);
+    uint64_t attr_id = (uint64_t)attr.GetID();
 
-    // name
-    std::string name = attr.GetName();
-    tuple->SetValue(offset, name.c_str(), name.length());
-    offset += sizeof(name.length());
+    tuple->SetValue(offset, &attr_id, sizeof(attr_id));
+    slot = tuple->GetSlot(0);
+    slot->offset_ = offset;
+    slot->length_ = sizeof(attr_id);
+    offset += sizeof(attr_id);
 
     // rel_id
     uint64_t rel_id = attr.GetRelationID();
     tuple->SetValue(offset, &rel_id, sizeof(rel_id));
+    slot = tuple->GetSlot(1);
+    slot->offset_ = offset;
+    slot->length_ = sizeof(rel_id);
     offset += sizeof(rel_id);
+
+    // name
+    std::string name = attr.GetName();
+    tuple->SetValue(offset, name.c_str(), name.length());
+    slot = tuple->GetSlot(2);
+    slot->offset_ = offset;
+    slot->length_ = name.length();
+    offset += name.length();
 
     // type
     uint64_t type = attr.GetDataType();
     tuple->SetValue(offset, &type, sizeof(type));
+    slot = tuple->GetSlot(3);
+    slot->offset_ = offset;
+    slot->length_ = sizeof(type);
     offset += sizeof(type);
 
     // size
     uint64_t size = attr.GetMaxLength();
     tuple->SetValue(offset, &size, sizeof(size));
-    offset += sizeof(size);
+    slot = tuple->GetSlot(4);
+    slot->offset_ = offset;
+    slot->length_ = size;
+    offset += size;
 
     segid_class.fileno_ = 0;
     segid_class.pageno_ = 2;
@@ -138,6 +159,7 @@ bool MetaDataManager::RemoveRelationByName(const std::string & name) {
   id_rel_map_.erase(rel->GetID());
   std::remove(all_relations_.begin(), all_relations_.end(), rel);
   delete rel;
+
   return true;
 }
 
@@ -147,6 +169,54 @@ bool MetaDataManager::RemoveRelationByID(relationid_t id) {
     return false;
   }
   Relation *rel = ret->second;
+  PageID segment_id = rel->GetSegmentID();
+  relationid_t rel_id = rel->GetID();
+  // Drop the segment of the table
+  space_manager_->DropSegment(&segment_id);
+
+  // delete the record from sys_relation table
+  PageID seg_class;
+  seg_class.fileno_ = 0;
+  seg_class.pageno_ = 1;
+  Iterator iter_class(seg_class, buffer_manager_);
+  iter_class.SeekToFirst();
+  uint32_t length;
+  while (true) {
+    const void *p = iter_class.Get(&length);
+    if (p) {
+      Tuple tuple = memory::CreateTuple(length);
+      memcpy(tuple->Data(), p, length);
+
+      Slot *slot = tuple->GetSlot(0);
+      if (rel_id == tuple->GetInteger(slot->offset_)) {
+        iter_class.Delete();
+      }
+      iter_class.Next();
+    } else {
+      break;
+    }
+  }
+  // delete the record from sys_relation table
+  PageID seg_attr;
+  seg_attr.fileno_ = 0;
+  seg_attr.pageno_ = 2;
+  Iterator iter_attr(seg_attr, buffer_manager_);
+  iter_attr.SeekToFirst();
+  while (true) {
+    const void *p = iter_attr.Get(&length);
+    if (p) {
+      Tuple tuple = memory::CreateTuple(length);
+      memcpy(tuple->Data(), p, length);
+
+      Slot *slot = tuple->GetSlot(1);
+      if (rel_id == tuple->GetInteger(slot->offset_)) {
+        iter_attr.Delete();
+      }
+      iter_attr.Next();
+    } else {
+      break;
+    }
+  }
   id_rel_map_.erase(ret);
   name_rel_map_.erase(rel->GetName());
   std::remove(all_relations_.begin(), all_relations_.end(), rel);
@@ -212,7 +282,10 @@ void MetaDataManager::ReadSysTable() {
     }
   }
 
-  Iterator iter_attr(seg_class, buffer_manager_);
+  PageID seg_attr;
+  seg_attr.fileno_ = 0;
+  seg_attr.pageno_ = 2;
+  Iterator iter_attr(seg_attr, buffer_manager_);
   iter_attr.SeekToFirst();
   while (true) {
     const void *p = iter_attr.Get(&length);
@@ -221,20 +294,25 @@ void MetaDataManager::ReadSysTable() {
       memcpy(tuple->Data(), p, length);
 
       Attribute attr;
+      // attribute id
       Slot *slot = tuple->GetSlot(0);
       attr.SetID(tuple->GetInteger(slot->offset_));
 
+      // relation id
       slot = tuple->GetSlot(1);
+      attr.SetRelationID(tuple->GetInteger(slot->offset_));
+
+      // attribute name
+      slot = tuple->GetSlot(2);
       attr.SetName(
           std::string((const char*) tuple->GetValue(slot->offset_),
                       slot->length_));
 
-      slot = tuple->GetSlot(2);
-      attr.SetNull(tuple->GetInteger(slot->offset_));
-
+      // data type
       slot = tuple->GetSlot(3);
       attr.SetDataType((DataType) tuple->GetInteger(slot->offset_));
 
+      // data size
       slot = tuple->GetSlot(4);
       attr.SetMaxLength(tuple->GetInteger(slot->offset_));
 
@@ -252,7 +330,6 @@ void MetaDataManager::CreateSysTable() {
   PageID id1, id2;
   // sys_class
   bool ok = space_manager_->CreateSegment(&id1);
-  // sys_attribute
   ok = space_manager_->CreateSegment(&id2);
 
   Relation* rel = new Relation();
@@ -267,7 +344,6 @@ void MetaDataManager::CreateSysTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
   attribute.SetVariable(false);
-
   rel->AddAttribute(attribute);
 
   attribute.SetName("name");
@@ -300,19 +376,19 @@ void MetaDataManager::CreateSysTable() {
   attribute.SetVariable(false);
   rel->AddAttribute(attribute);
 
-  attribute.SetName("name");
-  attribute.SetID(1);
-  attribute.SetDataType(kDTVarchar);
-  attribute.SetNull(false);
-  attribute.SetMaxLength(512);
-  attribute.SetVariable(false);
-  rel->AddAttribute(attribute);
-
   attribute.SetName("rel_id");
-  attribute.SetID(2);
+  attribute.SetID(1);
   attribute.SetDataType(kDTInteger);
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
+  attribute.SetVariable(false);
+  rel->AddAttribute(attribute);
+
+  attribute.SetName("name");
+  attribute.SetID(2);
+  attribute.SetDataType(kDTVarchar);
+  attribute.SetNull(false);
+  attribute.SetMaxLength(512);
   attribute.SetVariable(false);
   rel->AddAttribute(attribute);
 
