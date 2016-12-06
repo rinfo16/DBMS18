@@ -150,6 +150,12 @@ enum FromOrTo {
   kTo
 };
 
+
+enum IndexType {
+  kIndexHash,
+  kIndexBTree
+};
+
 bool IsArithmeticOperator(OperatorType);
 bool IsBooleanOperator(OperatorType);
 bool IsCompareOperator(OperatorType);

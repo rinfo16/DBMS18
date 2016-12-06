@@ -17,5 +17,10 @@ struct TableSchema {
   std::vector<ColumnSchema> column_list_;
 };
 
+struct IndexSchema {
+  std::string relation_name_;
+  std::string attribute_name_;
+  IndexType index_type_;
+};
 
 #endif // SRC_INCLUDE_COMMON_TABLE_SCHEMA_H_

@@ -14,6 +14,8 @@ class MetaDataManager : public MetaDataManagerInterface {
   MetaDataManager(BufferManager *buffer_manager, SpaceManager *space_manager);
   virtual ~MetaDataManager();
   virtual void AddRelation(Relation *rel);
+  virtual bool CreateIndex(std::string & relation_name,
+                           std::string & attribute_name, IndexType type);
   virtual Relation* GetRelationByName(const std::string &);
   virtual Relation* GetRelationByID(relationid_t id);
   virtual bool RemoveRelationByName(const std::string &);

@@ -9,8 +9,11 @@ namespace storage {
 
 class MetaDataManagerInterface : boost::noncopyable {
  public:
-  virtual ~MetaDataManagerInterface() {}
+  virtual ~MetaDataManagerInterface() {
+  }
   virtual void AddRelation(Relation *rel) = 0;
+  virtual bool CreateIndex(std::string & relation_name,
+                           std::string & attribute_name, IndexType type) = 0;
   virtual Relation* GetRelationByName(const std::string &) = 0;
   virtual Relation* GetRelationByID(relationid_t id) = 0;
   virtual bool RemoveRelationByName(const std::string &) = 0;

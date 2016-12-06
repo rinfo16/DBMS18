@@ -18,6 +18,7 @@ class StorageService : public StorageServiceInterface {
   virtual void Stop();
   virtual bool CreateRelation(const TableSchema & schema);
   virtual bool DropRelation(const std::string & rel_name);
+  virtual bool CreateIndex(const IndexSchema & index_schema);
   virtual IteratorInterface * NewIterator(const std::string & rel_name);
   virtual WriteBatchInterface * NewWriteBatch(const std::string & rel_name);
   virtual void DeleteIOObject(IOObjectInterface* io_object);

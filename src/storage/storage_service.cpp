@@ -95,6 +95,10 @@ bool StorageService::CreateRelation(const TableSchema & schema) {
   return ok;
 }
 
+bool StorageService::CreateIndex(const IndexSchema & index_schema) {
+  return false;
+}
+
 bool StorageService::DropRelation(const std::string & rel_name) {
   Relation *rel = meta_data_manager_->GetRelationByName(rel_name);
   if (rel == NULL) {

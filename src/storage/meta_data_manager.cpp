@@ -83,7 +83,7 @@ void MetaDataManager::AddRelation(Relation *rel) {
     const Attribute &attr = rel->GetAttribute(i);
 
     //id
-    uint64_t attr_id = (uint64_t)attr.GetID();
+    uint64_t attr_id = (uint64_t) attr.GetID();
 
     tuple->SetValue(offset, &attr_id, sizeof(attr_id));
     slot = tuple->GetSlot(0);
@@ -131,6 +131,11 @@ void MetaDataManager::AddRelation(Relation *rel) {
 
 }
 
+bool MetaDataManager::CreateIndex(std::string & relation_name,
+                                  std::string & attribute_name,
+                                  IndexType type) {
+  return true;
+}
 Relation* MetaDataManager::GetRelationByName(const std::string &name) {
   auto ret = name_rel_map_.find(name);
   if (ret == name_rel_map_.end()) {
