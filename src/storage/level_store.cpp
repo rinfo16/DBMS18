@@ -74,8 +74,8 @@ bool LevelStore::InitDB() {
   return true;
 }
 bool LevelStore::Start() {
-  if (!FileExists(GetDBFilePath(SYS_RELATION)) ||
-      ! FileExists(GetDBFilePath(SYS_ATTRIBUTE))) {
+  if (!FileExists(GetDBFilePath(SYS_RELATION))
+      || !FileExists(GetDBFilePath(SYS_ATTRIBUTE))) {
     bool ok = InitDB();
     if (!ok)
       exit(1);
@@ -162,10 +162,25 @@ bool LevelStore::CreateIndex(const IndexSchema & index_schema) {
 }
 
 IteratorHandler * LevelStore::NewIterator(relationid_t relid) {
-  return new IteratorHandlerImpl(GetDBFilePath(relid));
+  std::lock_guard<std::mutex> lock(iterator_map_mutex_);
+  auto i = iterator_handler_map_.find(relid);
+  if (i == iterator_handler_map_.end()) {
+    IteratorHandler *handler = new IteratorHandlerImpl(GetDBFilePath(relid));
+    return handler;
+  } else {
+    return i->second;
+  }
 }
 
 WriteHandler * LevelStore::NewWriteHandler(relationid_t relid) {
+  std::lock_guard<std::mutex> lock(write_map_mutex_);
+  auto i = write_handler_map_.find(relid);
+  if (i == write_handler_map_.end()) {
+    WriteHandler *handler = new WriteHandlerImpl(GetDBFilePath(relid));
+    return handler;
+  } else {
+    return i->second;
+  }
   return new WriteHandlerImpl(GetDBFilePath(relid));
 }
 void LevelStore::DeleteIOObject(IOHandler* io_object) {
@@ -196,9 +211,8 @@ void LevelStore::WriteRelMeta(const Relation *r) {
 }
 
 bool LevelStore::InsertRelation(Relation *r) {
-  if (name_rel_map_.find(r->GetName()) != name_rel_map_.end() ||
-      id_rel_map_.find(r->GetID()) != id_rel_map_.end())
-  {
+  if (name_rel_map_.find(r->GetName()) != name_rel_map_.end()
+      || id_rel_map_.find(r->GetID()) != id_rel_map_.end()) {
     return false;
     delete r;
   }

@@ -5,6 +5,7 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <memory>
 #include <map>
+#include <mutex>
 #include "storage/storage_service_interface.h"
 #include "leveldb/db.h"
 
@@ -43,6 +44,10 @@ class LevelStore : public StorageServiceInterface {
   std::map<std::string, Relation*> name_rel_map_;
   std::map<relationid_t, Relation*> id_rel_map_;
   boost::ptr_vector<Relation> all_relations_;
+  std::mutex write_map_mutex_;
+  std::mutex iterator_map_mutex_;
+  std::map<relationid_t, WriteHandler*> write_handler_map_;
+  std::map<relationid_t, IteratorHandler*> iterator_handler_map_;
   std::string dbname_;
 };
 
