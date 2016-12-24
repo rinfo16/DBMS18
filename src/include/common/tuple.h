@@ -16,6 +16,9 @@ union ItemValue {
 
 class RawTuple {
  public:
+  const char * Ptr() {
+    return reinterpret_cast<const char*>(this);
+  }
   const char *GetValue(uint32_t offset) const {
     return reinterpret_cast<const char*>(this) + offset;
   }
@@ -67,8 +70,8 @@ class TupleWarpper {
   }
 
   // Return a pointer to the beginning of the referenced data
-  const void* Data() const {
-    return data_;
+  const char* Data() const {
+    return (const char*)data_;
   }
 
   // Return the length (in bytes) of the referenced data

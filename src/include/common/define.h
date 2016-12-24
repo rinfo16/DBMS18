@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string>
 #include "common/boost_log.h"
 
 #define PAGE_SIZE                 8192
@@ -74,6 +75,7 @@ typedef uint32_t extentno_t;
 typedef uint32_t pageno_t;
 typedef uint32_t slotno_t;
 typedef uint32_t relationid_t;
+typedef std::string tupleid_t;
 typedef uint32_t attributeid_t;
 typedef double double_t;
 

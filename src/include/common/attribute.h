@@ -2,13 +2,29 @@
 #define ATTRIBUTE_H_
 
 #include <string>
+#include <boost/property_tree/ptree.hpp>
 #include "common/data_type.h"
 #include "common/define.h"
-#include <boost/property_tree/ptree.hpp>
+#include "common/tuple.h"
 
 
 class Attribute {
  public:
+  Attribute(const std::string & name,
+            std::string & relation_id,
+            uint32_t attribute_id,
+            DataType data_type,
+            uint32_t length,
+            bool is_null = false,
+            bool is_variable = false)
+      : id_(attribute_id),
+        relation_id_(relation_id),
+        max_length_(length),
+        data_type_(data_type),
+        is_null_(is_null),
+        is_variable_(is_variable),
+        attribute_index_(0) {
+  }
   Attribute()
       : id_(0),
         relation_id_(0),
@@ -16,7 +32,7 @@ class Attribute {
         data_type_(kDTInvalid),
         is_null_(false),
         is_variable_(false),
-        attribute_index_(0){
+        attribute_index_(0) {
   }
 
   ~Attribute() {
@@ -29,25 +45,18 @@ class Attribute {
     return name_;
   }
 
-  void SetID(attributeid_t id) {
+  void SetID(attributeid_t  id) {
     id_ = id;
   }
   attributeid_t GetID() const {
     return id_;
   }
 
-  void SetRelationName(const std::string & relation_name) {
-    relation_name_ = relation_name;
-  }
-
-  const std::string & GetRelationName() const{
-    return relation_name_;
-  }
 
   void SetRelationID(relationid_t id) {
     relation_id_ = id;
   }
-  relationid_t GetRelationID() const {
+  const std::string & GetRelationID() const {
     return relation_id_;
   }
 
@@ -79,7 +88,6 @@ class Attribute {
     return is_variable_;
   }
 
-
   // position in relation attribute list
   void SetAttributeIndex(uint32_t i) {
     attribute_index_ = i;
@@ -95,7 +103,7 @@ class Attribute {
     attribute.put(STR_ID, id_);
     attribute.put(STR_RELATION_ID, relation_id_);
     attribute.put(STR_MAX_LENGTH, max_length_);
-    attribute.put(STR_DATA_TYPE, (uint32_t)data_type_);
+    attribute.put(STR_DATA_TYPE, (uint32_t) data_type_);
     attribute.put(STR_IS_NULL, is_null_);
     attribute.put(STR_IS_VARIABLE, is_variable_);
 
@@ -103,23 +111,24 @@ class Attribute {
   }
 
   void InitFromPropertyTree(const boost::property_tree::ptree &tree) {
-    name_ = tree.get<std::string>(STR_NAME);
-    id_ = tree.get<attributeid_t>(STR_ID);
-    relation_id_ = tree.get<relationid_t>(STR_RELATION_ID);
-    max_length_ = tree.get<uint32_t>(STR_MAX_LENGTH);
-    data_type_ = (DataType)tree.get<uint32_t>(STR_DATA_TYPE);
+    name_ = tree.get < std::string > (STR_NAME);
+    id_ = tree.get < attributeid_t > (STR_ID);
+    relation_id_ = tree.get < relationid_t > (STR_RELATION_ID);
+    max_length_ = tree.get < uint32_t > (STR_MAX_LENGTH);
+    data_type_ = (DataType) tree.get < uint32_t > (STR_DATA_TYPE);
     is_null_ = tree.get<bool>(STR_IS_NULL);
     is_variable_ = tree.get<bool>(STR_IS_VARIABLE);
   }
-
+  void FromTuple(const Tuple & tuple, uint32_t size);
+  void ToTuple(Tuple *t, uint32_t *size) const;
  private:
   std::string name_;
-  std::string relation_name_;
   uint32_t attribute_index_;
   attributeid_t id_;
-  relationid_t relation_id_;
+  std::string relation_id_;
   uint32_t max_length_;
   DataType data_type_;
+  std::string attribute_id_;
   bool is_null_;
   bool is_variable_;
 };

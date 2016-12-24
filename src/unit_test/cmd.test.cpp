@@ -1,7 +1,7 @@
 #include "storage.test.h"
 #include <iostream>
 #include <boost/program_options.hpp>
-#include "storage/storage_service.h"
+#include "storage/storage_service_interface.h"
 #include "common/config.h"
 
 using namespace boost::program_options;
@@ -64,13 +64,13 @@ int main(int argc, const char *argv[]) {
   if (create_test_csv_file && rows != 0 && path != "") {
     create_csv(rows, path);
   } else if (import_csv && path != "" && table != "") {
-    storage::Storage::instance().Start();
+    storage::StorageServiceInterface::Instance()->Start();
     create_table(table);
     import_from_csv(table, path);
-    storage::Storage::instance().Stop();
+    storage::StorageServiceInterface::Instance()->Stop();
   } else if (export_csv && path != "" && table != "") {
-    storage::Storage::instance().Start();
+    storage::StorageServiceInterface::Instance()->Start();
     export_to_csv(table, path);
-    storage::Storage::instance().Stop();
+    storage::StorageServiceInterface::Instance()->Stop();
   }
 }

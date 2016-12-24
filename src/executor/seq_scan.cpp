@@ -3,7 +3,7 @@
 
 namespace executor {
 
-SeqScan::SeqScan(storage::IteratorInterface *iterator, int n)
+SeqScan::SeqScan(storage::IteratorHandler *iterator, int n)
     : iterator_(iterator),
       tuple_index_(n),
       rows_(0) {
@@ -25,7 +25,8 @@ State SeqScan::Open() {
 State SeqScan::GetNext(TupleRow *row) {
 
   uint32_t length = 0;
-  const void *p = iterator_->Get(&length);
+  //const void *p = iterator_->Get(&length);
+  const void *p = NULL;
   if (p) {
     rows_++;
     Tuple tuple = memory::CreateTuple(length);

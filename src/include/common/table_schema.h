@@ -18,6 +18,7 @@ struct TableSchema {
 };
 
 struct IndexSchema {
+  std::string index_name_;
   std::string relation_name_;
   std::string attribute_name_;
   IndexType index_type_;

@@ -40,6 +40,8 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(include)
+include_directories(storage/leveldb/include)
+include_directories(storage/leveldb)
 
 add_subdirectory(executor)
 add_subdirectory(common)

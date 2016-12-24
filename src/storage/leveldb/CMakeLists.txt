@@ -1,0 +1,9 @@
+add_definitions(-DLEVELDB_PLATFORM_POSIX)
+add_definitions(-DOS_MACOSX)
+aux_source_directory(./db SRC_LIST1)
+aux_source_directory(./helpers SRC_LIST2)
+aux_source_directory(./port SRC_LIST3)
+aux_source_directory(./table SRC_LIST4)
+aux_source_directory(./util SRC_LIST5)
+
+add_library(leveldb ${SRC_LIST1} ${SRC_LIST2} ${SRC_LIST3} ${SRC_LIST4} ${SRC_LIST5})

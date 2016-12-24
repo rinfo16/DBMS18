@@ -2,8 +2,8 @@
 #include "common/minicsv.h"
 #include "common/config.h"
 #include "common/datetime.h"
-#include "storage/storage_service.h"
 #include <sstream>
+#include "../storage/level_store.h"
 
 namespace executor {
 
@@ -15,7 +15,7 @@ Load::Load(const std::string & path, const std::string & rel_name)
 }
 
 Load::~Load() {
-  storage::Storage::instance().DeleteIOObject(batch_);
+  storage::StorageServiceInterface::Instance()->DeleteIOObject(batch_);
 }
 
 State Load::Prepare() {
@@ -39,14 +39,16 @@ State Load::Prepare() {
 
 State Load::Exec() {
 
-  storage::MetaDataManagerInterface *meta_data = storage::Storage::instance()
-      .GetMetaDataManager();
-  Relation *rel = meta_data->GetRelationByName(rel_name_);
+ // storage::MetaDataManagerInterface *meta_data = storage::Storage::instance()
+ //     .GetMetaDataManager();
+  Relation *rel; // = meta_data->GetRelationByName(rel_name_);
   if (rel == NULL) {
     return kStateRelationNotFound;
   }
   RowDesc desc = rel->ToDesc();
-  batch_ = storage::Storage::instance().NewWriteBatch(rel_name_);
+
+
+  //batch_ = storage::Storage::instance().NewWriteBatch(rel_name_);
   if (batch_ == NULL) {
     return kStateRelationNotFound;
   }

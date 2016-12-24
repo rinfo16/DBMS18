@@ -9,6 +9,7 @@
 #include "common/page_id.h"
 #include "common/attribute.h"
 #include "row_desc.h"
+#include "common/tuple.h"
 
 boost::property_tree::ptree PageIDToPropertyTree(PageID pageid);
 PageID PropertyTreeToPageID(boost::property_tree::ptree tree);
@@ -16,7 +17,7 @@ PageID PropertyTreeToPageID(boost::property_tree::ptree tree);
 class Relation {
  public:
   Relation()
-      : id_(0) {
+      : relation_id_(0) {
   }
   ~Relation() {
   }
@@ -37,14 +38,22 @@ class Relation {
   }
 
   void SetID(relationid_t id) {
-    id_ = id;
+    relation_id_ = id;
   }
 
   relationid_t GetID() const {
-    return id_;
+    return relation_id_;
   }
 
   size_t GetAttributeCount() const {
+    return attributes_.size();
+  }
+
+  size_t FindAttribute(const std::string & name) {
+    for (auto i = 0; i < attributes_.size(); i++) {
+      if (attributes_[i].GetName() == name)
+        return i;
+    }
     return attributes_.size();
   }
 
@@ -58,8 +67,7 @@ class Relation {
 
   void AddAttribute(const Attribute & attribute) {
     attributes_.push_back(attribute);
-    attributes_.back().SetRelationName(name_);
-    attributes_.back().SetRelationID(id_);
+    attributes_.back().SetRelationID(relation_id_);
   }
 
   void SetFirstExtentPageID(PageID pageid) {
@@ -104,7 +112,7 @@ class Relation {
     boost::property_tree::ptree relation;
     boost::property_tree::ptree attributes;
     relation.put(STR_NAME, name_);
-    relation.put(STR_ID, id_);
+    relation.put(STR_ID, relation_id_);
     relation.put_child(STR_FIRST_DATA_PAGE,
                        PageIDToPropertyTree(first_data_pageid_));
     relation.put_child(STR_LAST_DATA_PAGE,
@@ -124,25 +132,25 @@ class Relation {
   }
 
   void InitByPropertyTree(const boost::property_tree::ptree & tree) {
-    name_ = tree.get<std::string>(STR_NAME);
-    id_ = tree.get<uint32_t>(STR_ID);
+    name_ = tree.get < std::string > (STR_NAME);
+    relation_id_ = tree.get < uint32_t > (STR_ID);
 
     boost::property_tree::ptree id_tree;
     id_tree = tree.get_child(STR_FIRST_DATA_PAGE);
-    first_data_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    first_data_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    first_data_pageid_.fileno_ = id_tree.get < uint32_t > (STR_FILE_NO);
+    first_data_pageid_.pageno_ = id_tree.get < uint32_t > (STR_PAGE_NO);
 
     id_tree = tree.get_child(STR_LAST_DATA_PAGE);
-    last_data_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    last_data_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    last_data_pageid_.fileno_ = id_tree.get < uint32_t > (STR_FILE_NO);
+    last_data_pageid_.pageno_ = id_tree.get < uint32_t > (STR_PAGE_NO);
 
     id_tree = tree.get_child(STR_FIRST_EXTENT);
-    first_extent_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    first_extent_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    first_extent_pageid_.fileno_ = id_tree.get < uint32_t > (STR_FILE_NO);
+    first_extent_pageid_.pageno_ = id_tree.get < uint32_t > (STR_PAGE_NO);
 
     id_tree = tree.get_child(STR_LAST_EXTENT);
-    last_extent_pageid_.fileno_ = id_tree.get<uint32_t>(STR_FILE_NO);
-    last_extent_pageid_.pageno_ = id_tree.get<uint32_t>(STR_PAGE_NO);
+    last_extent_pageid_.fileno_ = id_tree.get < uint32_t > (STR_FILE_NO);
+    last_extent_pageid_.pageno_ = id_tree.get < uint32_t > (STR_PAGE_NO);
 
     boost::property_tree::ptree attributes_tree;
     attributes_tree = tree.get_child(STR_ATTRIBUTE_LIST);
@@ -192,9 +200,13 @@ class Relation {
     return desc;
   }
 
+  void FromTuple(const Tuple & tuple, uint32_t);
+
+  void ToTuple(Tuple *tuple, uint32_t *length) const;
+
  private:
   std::string name_;
-  relationid_t id_;
+  relationid_t relation_id_;
   PageID first_data_pageid_;
   PageID last_data_pageid_;
   PageID last_extent_pageid_;
@@ -202,6 +214,5 @@ class Relation {
   PageID segment_id_;
   std::vector<Attribute> attributes_;
 };
-
 
 #endif // RELATION_H_

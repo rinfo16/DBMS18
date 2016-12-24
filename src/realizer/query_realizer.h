@@ -99,7 +99,7 @@ class QueryRealizer : public QueryRealizerInterface {
 
   std::vector<RowDesc> all_tuple_desc_;
   boost::ptr_vector<executor::DatumInterface> all_datum_items_;
-  std::vector<storage::IteratorInterface*> all_iter_;
+  std::vector<storage::IteratorHandler*> all_iter_;
   boost::ptr_vector<executor::Exec> all_exec_obj_;
   executor::CmdInterface *top_cmd_;
 };

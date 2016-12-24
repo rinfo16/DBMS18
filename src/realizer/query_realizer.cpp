@@ -88,7 +88,7 @@ State QueryRealizer::CheckTableFactor(const ast::TableFactor *table_factor) {
   if (table_factor->ASTType() == kASTTableReference) {
     const ast::TableReference *table_reference =
         dynamic_cast<const ast::TableReference*>(table_factor);
-    Relation *relation = storage_->GetMetaDataManager()->GetRelationByName(
+    Relation *relation = storage_->GetRelation(
         table_reference->TableName());
     if (relation == NULL) {
       message_ = "cannot find relation [" + table_reference->TableName() + "].";
@@ -501,7 +501,8 @@ executor::ValueExprInterface *QueryRealizer::BuildValueExpression(
 executor::ExecInterface* QueryRealizer::BuildTableScan(
     const ast::TableReference *table_reference) {
   std::string table_name = table_reference->TableName();
-  storage::IteratorInterface *iter = storage_->NewIterator(table_name);
+  Relation *rel = storage_->GetRelation(table_name);
+  storage::IteratorHandler *iter = storage_->NewIterator(rel->GetID());
   assert(iter);
   if (iter == NULL) {
     return NULL;
@@ -534,7 +535,7 @@ State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
     std::stringstream ssm;
     ssm << "/tmp/tmpfile_import_" << this << ".csv";
     int32_t columns = 0;
-    Relation *rel = storage_->GetMetaDataManager()->GetRelationByName(
+    Relation *rel = storage_->GetRelation(
         table_name);
     if (rel == NULL) {
       message_ = "table not found.";
@@ -582,11 +583,11 @@ State QueryRealizer::ExecCmd() {
 
 State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
   std::string table_name = export_stmt->TableName();
-  Relation *rel = storage_->GetMetaDataManager()->GetRelationByName(table_name);
+  Relation *rel = storage_->GetRelation(table_name);
   if (rel == NULL) {
     return kStateRelationNotFound;
   }
-  storage::IteratorInterface *iter = storage_->NewIterator(table_name);
+  storage::IteratorHandler *iter = storage_->NewIterator(rel->GetID());
   if (iter == NULL) {
     return kStateRelationNotFound;;
   }

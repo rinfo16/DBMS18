@@ -6,7 +6,7 @@
 #include "common/define.h"
 #include "common/datetime.h"
 #include "storage/loader.h"
-#include "storage/storage_service.h"
+#include "storage/storage_service_interface.h"
 
 
 using namespace std;
@@ -78,7 +78,7 @@ int create_table(std::string table_name) {
 
   sch.name_ = table_name;
 
-  if (!storage::Storage::instance().CreateRelation(sch)) {
+  if (!storage::StorageServiceInterface::Instance()->CreateRelation(sch)) {
     return false;
   }
 
@@ -106,10 +106,9 @@ int export_to_csv(std::string table, std::string path) {
   if (!os2.is_open()) {
     return -1;
   }
-  Relation *rel = storage::Storage::instance().GetMetaDataManager()
-      ->GetRelationByName(table);
+  Relation *rel = storage::StorageServiceInterface::Instance()->GetRelationByName(table);
   RowDesc desc = rel->ToDesc();
-  storage::IteratorInterface *iter = storage::Storage::instance().NewIterator(
+  storage::IteratorInterface *iter = storage::StorageServiceInterface::Instance()->NewIterator(
       table);
   iter->SeekToFirst();
   size_t slot_length = sizeof(Slot) * desc.GetColumnCount();

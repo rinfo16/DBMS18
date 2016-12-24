@@ -7,6 +7,7 @@ target_link_libraries (
   executor
   parser
   common
+  leveldb
   pthread
   boost_system
   boost_program_options

@@ -1,12 +1,12 @@
 #ifndef STORAGE_SERVICE_INTERFACE_H_
 #define STORAGE_SERVICE_INTERFACE_H_
 
-#include "storage/iterator_interface.h"
 #include <boost/utility.hpp>
 #include "common/define.h"
-#include "storage/write_batch_interface.h"
-#include "storage/meta_data_manager.h"
 #include "common/table_schema.h"
+#include "common/relation.h"
+#include "iterator_handler.h"
+#include "write_handler.h"
 
 namespace storage {
 
@@ -16,16 +16,15 @@ class StorageServiceInterface : public boost::noncopyable {
   virtual ~StorageServiceInterface(){};
   virtual bool Start() = 0;
   virtual void Stop() = 0;
-  virtual bool CreateRelation(const TableSchema & schema) = 0;
-  virtual bool DropRelation(const std::string & rel_name) = 0;
-  virtual bool CreateIndex(const IndexSchema & index_schema) = 0;
-  virtual IteratorInterface * NewIterator(const std::string & rel_name) = 0;
-  virtual WriteBatchInterface * NewWriteBatch(const std::string & rel_name) = 0;
-  virtual void DeleteIOObject(IOObjectInterface* io_object) = 0;
-  virtual MetaDataManagerInterface *GetMetaDataManager() = 0;
 
+  virtual bool CreateRelation(const TableSchema & schema) = 0;
+  virtual bool CreateIndex(const IndexSchema & index_schema) = 0;
+  virtual bool DropRelation(const std::string & rel_name) = 0;
+  virtual IteratorHandler * NewIterator(relationid_t relid) = 0;
+  virtual WriteHandler * NewWriteHandler(relationid_t relid) = 0;
+  virtual void DeleteIOObject(IOHandler* handler) = 0;
+  virtual Relation *GetRelation(const std::string &rel_name) = 0;
   static StorageServiceInterface* Instance();
-  static bool Load(const std::string & table_name, const std::string & file_path);
 };
 
 }

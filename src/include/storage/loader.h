@@ -1,9 +1,9 @@
 #ifndef SRC_INCLUDE_STORAGE_LOADER_H_
 #define SRC_INCLUDE_STORAGE_LOADER_H_
 
-#include "storage/write_batch_interface.h"
 #include "common/minicsv.h"
 #include "common/tuple.h"
+#include "write_handler.h"
 
 namespace storage {
 
