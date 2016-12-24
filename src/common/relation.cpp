@@ -39,10 +39,11 @@ void Relation::ToTuple(Tuple *t, uint32_t *length) const {
 
 // relation id
   Slot *slot = tuple->GetSlot(0);
-  tuple->SetValue(offset, &relation_id_, sizeof(relation_id_));
+  uint64_t relid = relation_id_;
+  tuple->SetValue(offset, &relid, sizeof(relid));
   slot->offset_ = offset;
-  slot->length_ = sizeof(relation_id_);
-  offset += sizeof(relation_id_);
+  slot->length_ = sizeof(relid);
+  offset += sizeof(relid);
 
 // name
   slot = tuple->GetSlot(1);
@@ -52,5 +53,5 @@ void Relation::ToTuple(Tuple *t, uint32_t *length) const {
   offset += name_.size();
 
   *t = tuple;
-  *length + offset;
+  *length = offset;
 }

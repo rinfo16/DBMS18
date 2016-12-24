@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <sstream>
-#include <boost/filesystem.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "common/config.h"
 #include "leveldb/db.h"
 #include "leveldb/comparator.h"
 #include "iterator_handler_impl.h"
@@ -21,9 +24,18 @@ std::string ToString(const T & v) {
   return ssm.str();
 }
 
+bool FileExists(const std::string& filename) {
+  struct stat buf;
+  if (stat(filename.c_str(), &buf) != -1) {
+    return true;
+  }
+  return false;
+}
+
 LevelStore::LevelStore() {
   db_attribute_ = NULL;
   db_class_ = NULL;
+  path_ = config::Setting::instance().data_directory_ + "/owl.data";
 }
 
 LevelStore::~LevelStore() {
@@ -32,13 +44,20 @@ LevelStore::~LevelStore() {
 }
 
 bool LevelStore::InitDB() {
+  int ret = mkdir(path_.c_str(), 0775);
+  if (ret < 0)
+    return false;
+
   leveldb::Options options;
   options.create_if_missing = true;
-  leveldb::Status status = leveldb::DB::Open(options, GetDBFilePath(SYS_RELATION), &db_class_);
+  leveldb::Status status = leveldb::DB::Open(options,
+                                             GetDBFilePath(SYS_RELATION),
+                                             &db_class_);
   if (!status.ok())
     return false;
 
-  status = leveldb::DB::Open(options, GetDBFilePath(SYS_ATTRIBUTE), &db_attribute_);
+  status = leveldb::DB::Open(options, GetDBFilePath(SYS_ATTRIBUTE),
+                             &db_attribute_);
   if (!status.ok())
     return false;
 
@@ -55,25 +74,28 @@ bool LevelStore::InitDB() {
   return true;
 }
 bool LevelStore::Start() {
-  //if (! boost::filesystem::exists(GetDBFilePath(SYS_RELATION)))
-  {
-    InitDB();
+  if (!FileExists(GetDBFilePath(SYS_RELATION)) ||
+      ! FileExists(GetDBFilePath(SYS_ATTRIBUTE))) {
+    bool ok = InitDB();
+    if (!ok)
+      exit(1);
   }
 
   leveldb::Options options;
-  leveldb::Status status = leveldb::DB::Open(options, GetDBFilePath(SYS_RELATION), &db_class_);
+  leveldb::Status status = leveldb::DB::Open(options,
+                                             GetDBFilePath(SYS_RELATION),
+                                             &db_class_);
   if (!status.ok())
     return false;
-
-  status = leveldb::DB::Open(options, GetDBFilePath(SYS_ATTRIBUTE), &db_attribute_);
+  status = leveldb::DB::Open(options, GetDBFilePath(SYS_ATTRIBUTE),
+                             &db_attribute_);
   if (!status.ok())
     return false;
 
   assert(db_class_);
   assert(db_attribute_);
 
-  ReadSystemTable();
-  return true;
+  return ReadSystemTable();
 }
 
 void LevelStore::Stop() {
@@ -85,7 +107,7 @@ void LevelStore::Stop() {
 }
 
 bool LevelStore::CreateRelation(const TableSchema & schema) {
-  std::auto_ptr<Relation> rel(new Relation());
+  Relation *rel = new Relation();
   rel->SetName(schema.name_);
   rel->SetID(GenRelationID());
 
@@ -150,7 +172,7 @@ void LevelStore::DeleteIOObject(IOHandler* io_object) {
   delete io_object;
 }
 
-void LevelStore::WriteRelMeta(std::auto_ptr<Relation> r) {
+void LevelStore::WriteRelMeta(const Relation *r) {
   // auto_ptr r is release now ..
   leveldb::WriteOptions write_options;
   write_options.sync = true;
@@ -161,7 +183,6 @@ void LevelStore::WriteRelMeta(std::auto_ptr<Relation> r) {
   r->ToTuple(&tuple, &size);
   leveldb::Slice key(GenUUID());
   leveldb::Slice value(tuple->Ptr(), size);
-  assert(key.size() == 16);
   db_class_->Put(write_options, key, value);
   for (int i = 0; i < r->GetAttributeCount(); i++) {
     const Attribute & attr = r->GetAttribute(i);
@@ -170,25 +191,27 @@ void LevelStore::WriteRelMeta(std::auto_ptr<Relation> r) {
     attr.ToTuple(&tuple, &size);
     leveldb::Slice key(GenUUID());
     leveldb::Slice value(tuple->Ptr(), size);
-    assert(key.size() == 32);
     db_attribute_->Put(write_options, key, value);
   }
 }
 
-bool LevelStore::InsertRelation(std::auto_ptr<Relation> r) {
-  auto ret1 = name_rel_map_.insert(std::make_pair(r->GetName(), r.get()));
-  if (!ret1.second) {
+bool LevelStore::InsertRelation(Relation *r) {
+  if (name_rel_map_.find(r->GetName()) != name_rel_map_.end() ||
+      id_rel_map_.find(r->GetID()) != id_rel_map_.end())
+  {
     return false;
+    delete r;
   }
-
+  name_rel_map_.insert(std::make_pair(r->GetName(), r));
+  id_rel_map_.insert(std::make_pair(r->GetID(), r));
   all_relations_.push_back(r);
   return true;
 }
 
 bool LevelStore::CreateSystemTable() {
-  std::auto_ptr<Relation> rel_class(new Relation());
-  rel_class->SetName("sys_class");
-  rel_class->SetID(SYS_RELATION);
+  Relation rel_class;
+  rel_class.SetName("sys_class");
+  rel_class.SetID(SYS_RELATION);
 
   Attribute attribute;
   attribute.SetName("id");
@@ -197,7 +220,7 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
   attribute.SetVariable(false);
-  rel_class->AddAttribute(attribute);
+  rel_class.AddAttribute(attribute);
 
   attribute.SetName("name");
   attribute.SetID(1);
@@ -205,13 +228,11 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(512);
   attribute.SetVariable(false);
-  rel_class->AddAttribute(attribute);
+  rel_class.AddAttribute(attribute);
 
-  this->WriteRelMeta(rel_class);
-
-  std::auto_ptr<Relation> rel_attr(new Relation());
-  rel_attr->SetName("sys_attribute");
-  rel_attr->SetID(SYS_ATTRIBUTE);
+  Relation rel_attr;
+  rel_attr.SetName("sys_attribute");
+  rel_attr.SetID(SYS_ATTRIBUTE);
 
   attribute.SetName("id");
   attribute.SetID(0);
@@ -219,7 +240,7 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
   attribute.SetVariable(false);
-  rel_attr->AddAttribute(attribute);
+  rel_attr.AddAttribute(attribute);
 
   attribute.SetName("rel_id");
   attribute.SetID(1);
@@ -227,7 +248,7 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
   attribute.SetVariable(false);
-  rel_attr->AddAttribute(attribute);
+  rel_attr.AddAttribute(attribute);
 
   attribute.SetName("name");
   attribute.SetID(2);
@@ -235,7 +256,7 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(512);
   attribute.SetVariable(false);
-  rel_attr->AddAttribute(attribute);
+  rel_attr.AddAttribute(attribute);
 
   attribute.SetName("type");
   attribute.SetID(3);
@@ -243,7 +264,7 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
   attribute.SetVariable(false);
-  rel_attr->AddAttribute(attribute);
+  rel_attr.AddAttribute(attribute);
 
   attribute.SetName("size");
   attribute.SetID(4);
@@ -251,20 +272,20 @@ bool LevelStore::CreateSystemTable() {
   attribute.SetNull(false);
   attribute.SetMaxLength(8);
   attribute.SetVariable(false);
-  rel_attr->AddAttribute(attribute);
+  rel_attr.AddAttribute(attribute);
 
-  this->WriteRelMeta(rel_attr);
+  WriteRelMeta(&rel_class);
+  WriteRelMeta(&rel_attr);
 
   return true;
 
 }
 bool LevelStore::ReadSystemTable() {
-
   leveldb::Iterator *it_rel = db_class_->NewIterator(leveldb::ReadOptions());
   for (it_rel->SeekToFirst(); it_rel->Valid(); it_rel->Next()) {
     Tuple tuple = memory::CreateTuple(it_rel->value().size());
     memcpy(tuple.get(), it_rel->value().data(), it_rel->value().size());
-    std::auto_ptr<Relation> r(new Relation());
+    Relation *r = new Relation();
     r->FromTuple(tuple, it_rel->value().size());
     InsertRelation(r);
   }
@@ -278,8 +299,8 @@ bool LevelStore::ReadSystemTable() {
     memcpy(tuple.get(), it_attr->value().data(), it_attr->value().size());
     Attribute attribute;
     attribute.FromTuple(tuple, it_attr->value().size());
-    auto iter = name_rel_map_.find(attribute.GetName());
-    assert(iter != name_rel_map_.end());
+    auto iter = id_rel_map_.find(attribute.GetRelationID());
+    assert(iter != id_rel_map_.end());
     Relation *rel = iter->second;
     rel->AddAttribute(attribute);
   }

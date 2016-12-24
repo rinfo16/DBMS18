@@ -1,11 +1,13 @@
 #ifndef STORAGE_H_
 #define STORAGE_H_
 
-#include "storage/storage_service_interface.h"
-#include "leveldb/db.h"
+
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <memory>
 #include <map>
+#include "storage/storage_service_interface.h"
+#include "leveldb/db.h"
+
 namespace storage {
 
 class LevelStore : public StorageServiceInterface {
@@ -22,18 +24,19 @@ class LevelStore : public StorageServiceInterface {
   virtual WriteHandler * NewWriteHandler(relationid_t relid);
   virtual void DeleteIOObject(IOHandler* handler);
   virtual Relation *GetRelation(const std::string &rel_name);
+ private:
+  bool InitDB();
 
   void FlushAll();
 
- private:
-  bool InitDB();
   std::string GetDBFilePath(relationid_t id);
   relationid_t GenRelationID();
-  void WriteRelMeta(std::auto_ptr<Relation> r);
-  bool InsertRelation(std::auto_ptr<Relation> r);
+  void WriteRelMeta(const Relation *r);
+  bool InsertRelation(Relation *r);
   bool CreateSystemTable();
   bool ReadSystemTable();
   uint32_t NewRelationID();
+
   std::string path_;
   leveldb::DB* db_class_;
   leveldb::DB* db_attribute_;

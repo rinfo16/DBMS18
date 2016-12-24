@@ -10,6 +10,7 @@ namespace storage {
 class WriteHandlerImpl : public WriteHandler {
  public:
   WriteHandlerImpl(const std::string & path);
+  ~WriteHandlerImpl();
   void Put(const TupleWarpper *tuple);
   void Put(tupleid_t tuple_id, const TupleWarpper *tuple);
   void Delete(tupleid_t tuple_id);

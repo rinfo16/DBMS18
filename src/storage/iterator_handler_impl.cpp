@@ -2,10 +2,15 @@
 
 namespace storage {
 
-IteratorHandlerImpl::IteratorHandlerImpl(const std::string & path):db_(NULL),iter_(NULL) {
+IteratorHandlerImpl::IteratorHandlerImpl(const std::string & path)
+    : db_(NULL),
+      iter_(NULL) {
   leveldb::Options options;
   options.create_if_missing = true;
   leveldb::Status status = leveldb::DB::Open(options, path, &db_);
+  if (!status.ok()) {
+    BOOST_LOG_TRIVIAL(error)<< "DB [" << path << " ] open error : " << status.ToString();
+  }
   assert(status.ok());
   assert(db_);
   iter_ = db_->NewIterator(leveldb::ReadOptions());
@@ -13,6 +18,9 @@ IteratorHandlerImpl::IteratorHandlerImpl(const std::string & path):db_(NULL),ite
 }
 
 IteratorHandlerImpl::~IteratorHandlerImpl() {
+  // do not change the delete order ...
+  delete iter_;
+  delete db_;
 }
 
 bool IteratorHandlerImpl::Valid() const {
@@ -44,11 +52,10 @@ tupleid_t IteratorHandlerImpl::TupleID() const {
   return std::string(iter_->key().data(), iter_->key().size());
 }
 
-void IteratorHandlerImpl::GetTuple(TupleWarpper *tw) const  {
+void IteratorHandlerImpl::GetTuple(TupleWarpper *tw) const {
   assert(iter_->Valid());
   TupleWarpper tmp(iter_->value().data(), iter_->value().size());
   *tw = tmp;
 }
-
 
 }

@@ -23,14 +23,12 @@ State SeqScan::Open() {
 }
 
 State SeqScan::GetNext(TupleRow *row) {
-
-  uint32_t length = 0;
-  //const void *p = iterator_->Get(&length);
-  const void *p = NULL;
-  if (p) {
+  if (iterator_->Valid()) {
     rows_++;
-    Tuple tuple = memory::CreateTuple(length);
-    memcpy(tuple->Data(), p, length);
+    TupleWarpper t;
+    iterator_->GetTuple(&t);
+    Tuple tuple = memory::CreateTuple(t.Size());
+    memcpy(tuple->Data(), t.Data(), t.Size());
     row->SetTuple(tuple_index_, tuple);
     iterator_->Next();
     return kStateOK;

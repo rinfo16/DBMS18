@@ -11,6 +11,7 @@ Load::Load(const std::string & path, const std::string & rel_name)
     : batch_(NULL),
       csv_(path),
       rel_name_(rel_name) {
+  store_ = storage::StorageServiceInterface::Instance();
   tuple_ = memory::CreateTuple(config::Setting::instance().page_size_);
 }
 
@@ -38,17 +39,14 @@ State Load::Prepare() {
 }
 
 State Load::Exec() {
-
- // storage::MetaDataManagerInterface *meta_data = storage::Storage::instance()
- //     .GetMetaDataManager();
-  Relation *rel; // = meta_data->GetRelationByName(rel_name_);
+  Relation *rel =  store_->GetRelation(rel_name_);
   if (rel == NULL) {
     return kStateRelationNotFound;
   }
   RowDesc desc = rel->ToDesc();
 
 
-  //batch_ = storage::Storage::instance().NewWriteBatch(rel_name_);
+  batch_ = store_->NewWriteHandler(rel->GetID());
   if (batch_ == NULL) {
     return kStateRelationNotFound;
   }
@@ -123,6 +121,8 @@ State Load::Exec() {
       return kStateLoadError;
     }
   }
+  bool ok = batch_->Commit();
+  assert(ok);
   response << "copy " << rows << " to relation " << rel_name_ << ".";
   SetResponse(response.str());
   return kStateOK;

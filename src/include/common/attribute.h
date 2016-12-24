@@ -11,7 +11,7 @@
 class Attribute {
  public:
   Attribute(const std::string & name,
-            std::string & relation_id,
+            relationid_t relation_id,
             uint32_t attribute_id,
             DataType data_type,
             uint32_t length,
@@ -56,7 +56,8 @@ class Attribute {
   void SetRelationID(relationid_t id) {
     relation_id_ = id;
   }
-  const std::string & GetRelationID() const {
+
+  relationid_t GetRelationID() const {
     return relation_id_;
   }
 
@@ -125,7 +126,7 @@ class Attribute {
   std::string name_;
   uint32_t attribute_index_;
   attributeid_t id_;
-  std::string relation_id_;
+  relationid_t relation_id_;
   uint32_t max_length_;
   DataType data_type_;
   std::string attribute_id_;

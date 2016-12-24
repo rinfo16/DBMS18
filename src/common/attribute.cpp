@@ -3,11 +3,11 @@
 void Attribute::FromTuple(const Tuple & tuple, uint32_t size) {
   // attribute id
   Slot *slot = tuple->GetSlot(0);
-  attribute_id_ = std::string(tuple->GetValue(slot->offset_), slot->length_);
+  id_ = tuple->GetInteger(slot->offset_);
 
   // relation id
   slot = tuple->GetSlot(1);
-  relation_id_ = std::string(tuple->GetValue(slot->offset_), slot->length_);
+  relation_id_ = tuple->GetInteger(slot->offset_);
 
 
   // attribute name
@@ -28,18 +28,20 @@ void Attribute::ToTuple(Tuple *t, uint32_t *length) const {
   Tuple tuple =  memory::CreateTuple(1024);
 
   uint32_t offset = sizeof(Slot) * 4;
-  tuple->SetValue(offset, attribute_id_.c_str(), attribute_id_.size());
+  uint64_t attr_id = id_;
+  tuple->SetValue(offset, &attr_id, sizeof(&attr_id));
   Slot *slot = tuple->GetSlot(0);
   slot->offset_ = offset;
-  slot->length_ = attribute_id_.size();
-  offset += attribute_id_.size();
+  slot->length_ = sizeof(&attr_id);
+  offset += sizeof(&attr_id);
 
   // rel_id
-  tuple->SetValue(offset, relation_id_.c_str(), relation_id_.length());
+  uint64_t relid = relation_id_;
+  tuple->SetValue(offset, &relid, sizeof(relid));
   slot = tuple->GetSlot(1);
   slot->offset_ = offset;
-  slot->length_ = relation_id_.length();
-  offset += relation_id_.length();
+  slot->length_ = sizeof(relid);
+  offset += sizeof(relid);
 
   // name
   tuple->SetValue(offset, name_.c_str(), name_.length());
