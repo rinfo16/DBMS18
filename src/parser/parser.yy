@@ -520,13 +520,7 @@ stmt: select_stmt { $$ = $1; }
 
 /* simple select with no tables */
 select_stmt:
-  SELECT select_opts select_expr_list 
-  {
-     
-    $$ = NULL;
-  }
-  
-  | SELECT select_opts select_expr_list FROM table_references 
+  SELECT select_opts select_expr_list FROM table_references 
     opt_where opt_groupby opt_having opt_orderby opt_limit
   { 
     $$ = ctx.NewSelectStmt($3, $5, $6, $7, $8, $9);
