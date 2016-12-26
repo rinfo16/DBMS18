@@ -39,8 +39,7 @@ LevelStore::LevelStore() {
 }
 
 LevelStore::~LevelStore() {
-  delete db_attribute_;
-  delete db_class_;
+  Stop();
 }
 
 bool LevelStore::InitDB() {
@@ -99,7 +98,16 @@ bool LevelStore::Start() {
 }
 
 void LevelStore::Stop() {
+  for (auto i = write_handler_map_.begin(); write_handler_map_.end(); i++) {
+    delete i->second;
+  }
 
+  for (auto i = iterator_handler_map_.begin(); iterator_handler_map_.end();
+      i++) {
+    delete i->second;
+  }
+  write_handler_map_.clear();
+  iterator_handler_map_.clear();
   delete db_attribute_;
   delete db_class_;
   db_attribute_ = NULL;
@@ -162,7 +170,7 @@ bool LevelStore::CreateIndex(const IndexSchema & index_schema) {
 }
 
 IteratorHandler * LevelStore::NewIterator(relationid_t relid) {
-  std::lock_guard < std::mutex > lock(iterator_map_mutex_);
+  std::lock_guard<std::mutex> lock(iterator_map_mutex_);
   auto i = iterator_handler_map_.find(relid);
   if (i == iterator_handler_map_.end()) {
     IteratorHandler *handler = new IteratorHandlerImpl(GetDBFilePath(relid));
@@ -178,7 +186,7 @@ IteratorHandler * LevelStore::NewIterator(relationid_t relid) {
 }
 
 WriteHandler * LevelStore::NewWriteHandler(relationid_t relid) {
-  std::lock_guard < std::mutex > lock(write_map_mutex_);
+  std::lock_guard<std::mutex> lock(write_map_mutex_);
   auto i = write_handler_map_.find(relid);
   if (i == write_handler_map_.end()) {
     WriteHandler *handler = new WriteHandlerImpl(GetDBFilePath(relid));
@@ -197,12 +205,12 @@ void LevelStore::DeleteIOObject(IOHandler* io_object) {
 
   if (io_object->Ref() == 0) {
     if (dynamic_cast<WriteHandler*>(io_object)) {
-      std::lock_guard < std::mutex > lock(write_map_mutex_);
+      std::lock_guard<std::mutex> lock(write_map_mutex_);
       size_t n = write_handler_map_.erase(io_object->GetRelationID());
       assert(n == 1);
       delete io_object;
     } else if (dynamic_cast<IteratorHandler*>(io_object)) {
-      std::lock_guard < std::mutex > lock(iterator_map_mutex_);
+      std::lock_guard<std::mutex> lock(iterator_map_mutex_);
       size_t n = iterator_handler_map_.erase(io_object->GetRelationID());
       assert(n == 1);
       delete io_object;

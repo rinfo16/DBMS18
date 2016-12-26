@@ -147,9 +147,9 @@ State QueryRealizer::CheckExpressionBase(const ast::ExpressionBase *expr_base,
       std::vector<uint32_t> attr_vec;
       for (auto iter = name2relation_.begin(); iter != name2relation_.end();
           ++iter) {
-        rel = iter->second;
-        int32_t i = rel->GetAttributeIndex(ref->ColumnName());
+        int32_t i = iter->second->GetAttributeIndex(ref->ColumnName());
         if (i >= 0) {  // OK, we find the right attribute
+          rel = iter->second;
           attr_vec.push_back(i);
           name.first = iter->first;
         }
@@ -350,6 +350,7 @@ executor::ExecInterface* QueryRealizer::BuildJoin(
         static_cast<const ast::Operation*>(join_clause->JoinPredicate());
     executor::BooleanExprInterface *boolean_expr = BuildBooleanExpression(
         operation);
+    assert(boolean_expr);
     int32_t tuple_count = name2relation_.size();
     executor::ExecInterface* join_exec = new executor::NestedLoopJoin(
         tuple_count, left_exec, right_exec, boolean_expr);
@@ -422,6 +423,7 @@ executor::BooleanExprInterface *QueryRealizer::BuildBooleanExpression(
         operation->Left());
     executor::ValueExprInterface *right = BuildValueExpression(
         operation->Right());
+    assert(left->GetDataType() == right->GetDataType());
     if (left->GetDataType() == right->GetDataType()) {
       DataType data_type = left->GetDataType();
       if (data_type == kDTInteger) {
