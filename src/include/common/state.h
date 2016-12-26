@@ -14,7 +14,8 @@ enum State {
   kStateFileNotFind,
   kStateNameAmbiguous,
   kStateAttributeNotFound,
-  kStateNotSupport
+  kStateNotSupport,
+  kStateInsertFailed,
 };
 
 

@@ -162,29 +162,54 @@ bool LevelStore::CreateIndex(const IndexSchema & index_schema) {
 }
 
 IteratorHandler * LevelStore::NewIterator(relationid_t relid) {
-  std::lock_guard<std::mutex> lock(iterator_map_mutex_);
+  std::lock_guard < std::mutex > lock(iterator_map_mutex_);
   auto i = iterator_handler_map_.find(relid);
   if (i == iterator_handler_map_.end()) {
     IteratorHandler *handler = new IteratorHandlerImpl(GetDBFilePath(relid));
+    handler->SetRelationID(relid);
+    handler->AddRef();
+    iterator_handler_map_.insert(
+        std::make_pair(handler->GetRelationID(), handler));
     return handler;
   } else {
+    i->second->AddRef();
     return i->second;
   }
 }
 
 WriteHandler * LevelStore::NewWriteHandler(relationid_t relid) {
-  std::lock_guard<std::mutex> lock(write_map_mutex_);
+  std::lock_guard < std::mutex > lock(write_map_mutex_);
   auto i = write_handler_map_.find(relid);
   if (i == write_handler_map_.end()) {
     WriteHandler *handler = new WriteHandlerImpl(GetDBFilePath(relid));
+    handler->SetRelationID(relid);
+    handler->AddRef();
+    write_handler_map_.insert(
+        std::make_pair(handler->GetRelationID(), handler));
     return handler;
   } else {
+    i->second->AddRef();
     return i->second;
   }
-  return new WriteHandlerImpl(GetDBFilePath(relid));
 }
 void LevelStore::DeleteIOObject(IOHandler* io_object) {
-  delete io_object;
+  io_object->SubRef();
+
+  if (io_object->Ref() == 0) {
+    if (dynamic_cast<WriteHandler*>(io_object)) {
+      std::lock_guard < std::mutex > lock(write_map_mutex_);
+      size_t n = write_handler_map_.erase(io_object->GetRelationID());
+      assert(n == 1);
+      delete io_object;
+    } else if (dynamic_cast<IteratorHandler*>(io_object)) {
+      std::lock_guard < std::mutex > lock(iterator_map_mutex_);
+      size_t n = iterator_handler_map_.erase(io_object->GetRelationID());
+      assert(n == 1);
+      delete io_object;
+    } else {
+      assert(false);
+    }
+  }
 }
 
 void LevelStore::WriteRelMeta(const Relation *r) {
@@ -213,8 +238,8 @@ void LevelStore::WriteRelMeta(const Relation *r) {
 bool LevelStore::InsertRelation(Relation *r) {
   if (name_rel_map_.find(r->GetName()) != name_rel_map_.end()
       || id_rel_map_.find(r->GetID()) != id_rel_map_.end()) {
-    return false;
     delete r;
+    return false;
   }
   name_rel_map_.insert(std::make_pair(r->GetName(), r));
   id_rel_map_.insert(std::make_pair(r->GetID(), r));

@@ -6,21 +6,22 @@
 #include <string>
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
-
-#include "../include/executor/exec_interface.h"
 #include "common/row_desc.h"
 #include "parser/operation.h"
 #include "parser/select_stmt.h"
 #include "parser/create_stmt.h"
 #include "parser/load_stmt.h"
 #include "parser/export_stmt.h"
+#include "parser/insert_stmt.h"
 #include "parser/const_value.h"
 #include "parser/parser_service_interface.h"
 #include "parser/column_reference.h"
 #include "parser/table_reference.h"
-#include "executor/slot_reference.h"
-#include "storage/storage_service_interface.h"
 #include "executor/boolean_expr_interface.h"
+#include "executor/slot_reference.h"
+#include "executor/exec_interface.h"
+#include "storage/storage_service_interface.h"
+
 namespace realizer {
 
 class QueryRealizer : public QueryRealizerInterface {
@@ -59,6 +60,7 @@ class QueryRealizer : public QueryRealizerInterface {
   bool ExecCreate(ast::CreateStmt *create_stmt);
   State ExecLoad(const ast::LoadStmt *load_stmt);
   State ExecExport(const ast::ExportStmt *export_stmt);
+  State ExecInsert(const ast::InsertStmt *insert_stmt);
   State ExecSelect();
   State CheckFrom(const ast::SelectStmt *select_stmt);
   State CheckWhere(const ast::SelectStmt *select_stmt);
@@ -99,7 +101,7 @@ class QueryRealizer : public QueryRealizerInterface {
 
   std::vector<RowDesc> all_tuple_desc_;
   boost::ptr_vector<executor::DatumInterface> all_datum_items_;
-  std::vector<storage::IteratorHandler*> all_iter_;
+  std::vector<storage::IOHandler*> all_iter_;
   boost::ptr_vector<executor::Exec> all_exec_obj_;
   executor::CmdInterface *top_cmd_;
 };

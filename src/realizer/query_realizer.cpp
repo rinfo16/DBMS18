@@ -16,6 +16,7 @@
 #include "executor/compare.h"
 #include "executor/const_value.h"
 #include "executor/logic_expr.h"
+#include "executor/insert_value.h"
 
 namespace realizer {
 
@@ -88,8 +89,7 @@ State QueryRealizer::CheckTableFactor(const ast::TableFactor *table_factor) {
   if (table_factor->ASTType() == kASTTableReference) {
     const ast::TableReference *table_reference =
         dynamic_cast<const ast::TableReference*>(table_factor);
-    Relation *relation = storage_->GetRelation(
-        table_reference->TableName());
+    Relation *relation = storage_->GetRelation(table_reference->TableName());
     if (relation == NULL) {
       message_ = "cannot find relation [" + table_reference->TableName() + "].";
       return kStateRelationNotFound;
@@ -294,6 +294,9 @@ State QueryRealizer::Execute() {
   } else if (type == kASTSelectStmt) {
     ast::SelectStmt *select_stmt = dynamic_cast<ast::SelectStmt *>(parse_tree_);
     return ExecSelect();
+  } else if (type == kASTInsertStmt) {
+    ast::InsertStmt *insert_stmt = dynamic_cast<ast::InsertStmt*>(parse_tree_);
+    return ExecInsert(insert_stmt);
   }
   if (ok) {
     return kStateOK;
@@ -535,8 +538,7 @@ State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
     std::stringstream ssm;
     ssm << "/tmp/tmpfile_import_" << this << ".csv";
     int32_t columns = 0;
-    Relation *rel = storage_->GetRelation(
-        table_name);
+    Relation *rel = storage_->GetRelation(table_name);
     if (rel == NULL) {
       message_ = "table not found.";
       return kStateRelationNotFound;
@@ -658,6 +660,83 @@ bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {
     message_ = ("relation " + schema.name_ + " create failed.");
   }
   return ok;
+}
+
+State QueryRealizer::ExecInsert(const ast::InsertStmt *insert_stmt) {
+  std::string table_name = insert_stmt->TableName();
+  Relation *relation = storage_->GetRelation(table_name);
+  if (relation == NULL)
+    return kStateRelationNotFound;
+
+  uint32_t size = 8192;
+  Tuple tuple = memory::CreateTuple(size);
+  uint32_t off = sizeof(Slot) * relation->GetAttributeCount();
+
+  std::map<std::string, ast::ConstValue *> name2val;
+  if (insert_stmt->ValueList().empty()) {
+    assert(insert_stmt->ValueList().size() == relation->GetAttributeCount());
+    for (int i = 0; i < relation->GetAttributeCount(); i++) {
+      Attribute & attr = relation->GetAttribute(i);
+      std::string attr_name = attr.GetName();
+      name2val.insert(std::make_pair(attr_name, insert_stmt->ValueList()[i]));
+    }
+  } else {
+    for (int i = 0; i < insert_stmt->ValueList().size(); i++) {
+      std::string attr_name = insert_stmt->OptColumnNameList()[i];
+      name2val.insert(std::make_pair(attr_name, insert_stmt->ValueList()[i]));
+    }
+  }
+
+  for (int i = 0; i < relation->GetAttributeCount(); i++) {
+    Slot *slot = tuple->GetSlot(i);
+    uint32_t length = 0;
+    const Attribute attr = relation->GetAttribute(i);
+    std::string attr_name = attr.GetName();
+    DataType type = attr.GetDataType();
+    auto ret = name2val.find(attr_name);
+    if (ret != name2val.end()) {
+      ast::ConstValue *const_val = ret->second;
+      if (type == kDTInteger) {
+        int64_t v = const_val->GetIntegerValue();
+        length = sizeof(v);
+        tuple->SetValue(off, &v, length);
+      } else if (type == kDTFloat) {
+        double_t v = 0.0;
+        length = sizeof(v);
+        tuple->SetValue(off, &v, length);
+      } else if (type == kDTVarchar) {
+        std::string v = const_val->GetStringValue();
+        length = v.size();
+        tuple->SetValue(off, v.c_str(), v.size());
+      }
+
+    } else {
+      if (type == kDTInteger) {
+        int64_t v = 0;
+        length = sizeof(v);
+        tuple->SetValue(off, &v, length);
+      } else if (type == kDTFloat) {
+        double_t v = 0.0;
+        length = sizeof(v);
+        tuple->SetValue(off, &v, length);
+      } else if (type == kDTVarchar) {
+        std::string v = "";
+        length = v.size();
+        tuple->SetValue(off, v.c_str(), length);
+      }
+      slot->offset_ = off;
+      slot->length_ = length;
+      off += length;
+    }
+
+  }
+  storage::WriteHandler *handler = storage_->NewWriteHandler(relation->GetID());
+  all_iter_.push_back(handler);
+  executor::CmdInterface *cmd = new executor::InsertValue(handler, tuple, off);
+  top_cmd_ = cmd;
+  all_exec_obj_.push_back(cmd);
+  top_cmd_ = cmd;
+  return ExecCmd();
 }
 
 State QueryRealizer::ExecSelect() {
