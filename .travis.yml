@@ -12,8 +12,6 @@ matrix:
             - ubuntu-toolchain-r-test
             - boost-latest
           packages:
-            - lcov
-            - gcov
             - postgresql-client-9.5
             - postgresql-common
             - gcc-5
