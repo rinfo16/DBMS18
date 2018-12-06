@@ -18,7 +18,7 @@ matrix:
             - g++-5
             - flex
             - bison
-            - libboost1.55-all-dev
+            - libboost1.68-all-dev
             - cmake
       env:   
         global:
