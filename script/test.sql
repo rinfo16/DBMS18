@@ -15,3 +15,17 @@ CREATE TABLE REGION (
 
 \copy NATION FROM 'data/nation.tbl' DELIMITER AS '|';
 \copy REGION FROM 'data/region.tbl' DELIMITER AS '|';
+
+
+select N_NATIONKEY, N_NAME from NATION;
+
+select R_REGIONKEY, R_NAME, R_COMMENT from REGION;
+
+select N_NATIONKEY, N_NAME from NATION where N_NAME = 'JAPAN';
+select N_NATIONKEY, N_NAME from NATION where N_NAME = 'CHINA';
+
+select N_NAME, R_NAME from NATION join REGION on R_REGIONKEY = N_REGIONKEY where N_NAME = 'CHINA';
+
+select N_NAME, R_NAME from NATION join REGION on R_REGIONKEY = N_REGIONKEY where R_NAME = 'ASIA';
+
+select * from NATION join REGION on R_REGIONKEY = N_REGIONKEY where R_NAME = 'ASIA';

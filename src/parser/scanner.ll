@@ -248,6 +248,7 @@ FALSE { yylval->intval = 0; return token::BOOL; }
 ";" { return token::SEMICOLON; }
 "(" { return token::PAREN_LEFT; }
 ")" { return token::PAREN_RIGHT; }
+"*" { return token::STAR; }
 
 SUBSTR(ING)?/"(" { return token::FSUBSTRING; }
 TRIM/"(" { return token::FTRIM; }

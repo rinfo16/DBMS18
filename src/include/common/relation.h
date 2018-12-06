@@ -71,6 +71,8 @@ class Relation {
     if (append) {
       attributes_.push_back(attribute);
       attributes_.back().SetAttributeIndex(attributes_.size() - 1);
+    } else if (attributes_.empty()) {
+        attributes_.push_back(attribute);
     } else {
       for (auto i = attributes_.begin(); i < attributes_.end(); i++) {
           if (i->GetAttributeIndex() > attribute.GetAttributeIndex()) {

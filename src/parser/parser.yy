@@ -289,6 +289,7 @@
 %token SQL_SMALL_RESULT
 %token SSL
 %token STARTING
+%token STAR
 %token STDIN
 %token STDOUT
 %token STRAIGHT_JOIN
@@ -521,10 +522,10 @@ stmt: select_stmt { $$ = $1; }
 
 /* simple select with no tables */
 select_stmt:
-  SELECT select_opts select_expr_list FROM table_references 
+  SELECT select_expr_list FROM table_references
     opt_where opt_groupby opt_having opt_orderby opt_limit
   { 
-    $$ = ctx.NewSelectStmt($3, $5, $6, $7, $8, $9);
+    $$ = ctx.NewSelectStmt($2, $4, $5, $6, $7, $8);
   }
 ;
 
@@ -583,6 +584,7 @@ opt_having:
 
 opt_orderby: 
   /* nil */
+
   { $$ = NULL; }
 
   | ORDER BY orderby_list
@@ -629,19 +631,18 @@ select_expr_list:
   }
   
   | select_expr_list COMMA select_expr 
-  { 
-     
+  {
     $1->RAppend($3); $$ = $1; 
   }
-  
-  | '*' {  $$ = NULL; }
 ;
 
 select_expr:
   expr opt_as_alias 
   { 
     $$ = ctx.NewSelectTarget($1, $2);
-  };
+  }
+  | STAR {  $$ = NULL; }
+;
 
 
 table_references: table_reference 

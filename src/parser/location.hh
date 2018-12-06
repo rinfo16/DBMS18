@@ -31,12 +31,12 @@
 // version 2.2 of Bison.
 
 /**
- ** \file /Users/ybbh/git/DBMS16/src/parser/location.hh
+ ** \file /Users/ybbh/git/DBMS18/src/parser/location.hh
  ** Define the parser::location class.
  */
 
-#ifndef YY_PARSER_USERS_YBBH_GIT_DBMS16_SRC_PARSER_LOCATION_HH_INCLUDED
-# define YY_PARSER_USERS_YBBH_GIT_DBMS16_SRC_PARSER_LOCATION_HH_INCLUDED
+#ifndef YY_PARSER_USERS_YBBH_GIT_DBMS18_SRC_PARSER_LOCATION_HH_INCLUDED
+# define YY_PARSER_USERS_YBBH_GIT_DBMS18_SRC_PARSER_LOCATION_HH_INCLUDED
 
 # include <algorithm> // std::max
 # include <iostream>
@@ -56,7 +56,7 @@
 
 
 namespace parser {
-#line 60 "/Users/ybbh/git/DBMS16/src/parser/location.hh" // location.cc:360
+#line 60 "/Users/ybbh/git/DBMS18/src/parser/location.hh" // location.cc:360
   /// A point in a source file.
   class position
   {
@@ -318,5 +318,5 @@ namespace parser {
 
 
 } // parser
-#line 322 "/Users/ybbh/git/DBMS16/src/parser/location.hh" // location.cc:360
-#endif // !YY_PARSER_USERS_YBBH_GIT_DBMS16_SRC_PARSER_LOCATION_HH_INCLUDED
+#line 322 "/Users/ybbh/git/DBMS18/src/parser/location.hh" // location.cc:360
+#endif // !YY_PARSER_USERS_YBBH_GIT_DBMS18_SRC_PARSER_LOCATION_HH_INCLUDED

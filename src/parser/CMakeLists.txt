@@ -20,7 +20,7 @@ add_custom_command(OUTPUT ${FLEX_OUTPUT}
                    COMMENT "Generating lexer"
                    VERBATIM)
 add_custom_command(OUTPUT ${BISON_OUTPUT}
-                   COMMAND ${BISON} --output=${BISON_OUTPUT} ${CMAKE_CURRENT_SOURCE_DIR}/parser.yy ${BISON_DEBUG}
+                   COMMAND ${BISON} --verbose --output=${BISON_OUTPUT} ${CMAKE_CURRENT_SOURCE_DIR}/parser.yy ${BISON_DEBUG}
                    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/parser.yy
                    COMMENT "Generating parser"
                    VERBATIM)
