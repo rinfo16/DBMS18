@@ -1,6 +1,6 @@
 language: generic
 script:
-  - ./script/build.sh -coverage_debug -make
+  - ./script/build.sh
 sudo: false
 matrix:
   include:
