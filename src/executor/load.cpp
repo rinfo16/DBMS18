@@ -7,10 +7,11 @@
 
 namespace executor {
 
-Load::Load(const std::string & path, const std::string & rel_name)
+Load::Load(const std::string & path, const std::string & rel_name, int delimiter)
     : batch_(NULL),
       csv_(path),
-      rel_name_(rel_name) {
+      rel_name_(rel_name),
+      delimiter_(delimiter){
   store_ = storage::StorageServiceInterface::Instance();
   tuple_ = memory::CreateTuple(config::Setting::instance().page_size_);
 }
@@ -21,9 +22,9 @@ Load::~Load() {
 
 State Load::Prepare() {
   std::stringstream response;
-  is_.set_delimiter(',', "$$");
   try {
     is_.open(csv_.c_str());
+    is_.set_delimiter((char)delimiter_, "$$"); // call set_delimiter after open
     //is_.enable_trim_quote_on_str(true, '\"');
     if (!is_.is_open()) {
       response << "file is already open.";

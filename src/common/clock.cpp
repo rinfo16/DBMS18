@@ -30,5 +30,6 @@ std::string Clock::Format() const {
   std::cout << duration;
   std::cout << "ms" << std::endl;
 //  printf("elapsed time = %ld ms",duration);
+  return "";
 }
 }  // namespace utils

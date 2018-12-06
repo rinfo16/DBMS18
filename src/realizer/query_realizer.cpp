@@ -402,6 +402,23 @@ executor::ExecInterface* QueryRealizer::BuildProjection(
     } else {
     }
   }
+  if (select_list.empty()) { // select star
+    for (auto i = name2relation_.begin(); i != name2relation_.end(); i++) {
+      string name = i->first;
+      Relation *relation = i->second;
+      for (auto j = 0; relation->GetAttributeCount(); j++) {
+        int32_t tuple_idx = name2tuple_index_[name];
+        int32_t attr_idx = relation->GetAttribute(j).GetAttributeIndex();
+
+        executor::SlotReference *expr = new executor::SlotReference(tuple_idx, attr_idx);
+        projection_list_.push_back(expr);
+        const RowDesc & row_desc = all_tuple_desc_[tuple_idx];
+        output_row_desc_.PushColumnDesc(row_desc.GetColumnDesc(attr_idx));
+      }
+    }
+
+  }
+
   executor::ExecInterface *ret = NULL;
   int32_t tuple_count = name2relation_.size();
   ret = new executor::Project(top_exec_, projection_list_, tuple_count);
@@ -563,7 +580,7 @@ State QueryRealizer::ExecLoad(const ast::LoadStmt *load_stmt) {
     //remove(file_path.c_str());
     ofs.close();
   }
-  executor::CmdInterface *cmd = new executor::Load(file_path, table_name);
+  executor::CmdInterface *cmd = new executor::Load(file_path, table_name, load_stmt->Delimiter());
   all_exec_obj_.push_back(cmd);
   top_cmd_ = cmd;
   return ExecCmd();
@@ -644,6 +661,7 @@ State QueryRealizer::ExecExport(const ast::ExportStmt *export_stmt) {
 bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {
   TableSchema schema;
   schema.name_ = create_stmt->TableName();
+  int n = 0;
   const std::vector<ast::ColumnDefine*> &def_list = create_stmt
       ->ColumnDefineList();
   for (int i = 0; i < def_list.size(); i++) {
@@ -654,6 +672,14 @@ bool QueryRealizer::ExecCreate(ast::CreateStmt *create_stmt) {
     column_schema.length_ = column_define->DataLength();
     column_schema.is_null_ = false;
     schema.column_list_.push_back(column_schema);
+    if (column_define->IsPrimaryKey()) {
+      column_schema.is_primary_key_ = true;
+      n++;
+    }
+    if (n > 1) {
+      message_ = ("relation " + schema.name_ + " cannot have multiple keys.");
+      return false;
+    }
   }
   bool ok = storage_->CreateRelation(schema);
   if (ok) {

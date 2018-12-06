@@ -35,7 +35,7 @@ bool FileExists(const std::string& filename) {
 LevelStore::LevelStore() {
   db_attribute_ = NULL;
   db_class_ = NULL;
-  path_ = config::Setting::instance().data_directory_ + "/owl.data";
+  path_ = config::Setting::instance().data_directory_ + "/DBMS18_DATA";
 }
 
 LevelStore::~LevelStore() {
@@ -98,11 +98,11 @@ bool LevelStore::Start() {
 }
 
 void LevelStore::Stop() {
-  for (auto i = write_handler_map_.begin(); write_handler_map_.end(); i++) {
+  for (auto i = write_handler_map_.begin(); i != write_handler_map_.end(); i++) {
     delete i->second;
   }
 
-  for (auto i = iterator_handler_map_.begin(); iterator_handler_map_.end();
+  for (auto i = iterator_handler_map_.begin(); i != iterator_handler_map_.end();
       i++) {
     delete i->second;
   }
@@ -349,7 +349,7 @@ bool LevelStore::ReadSystemTable() {
     auto iter = id_rel_map_.find(attribute.GetRelationID());
     assert(iter != id_rel_map_.end());
     Relation *rel = iter->second;
-    rel->AddAttribute(attribute);
+    rel->AddAttribute(attribute, false);
   }
   assert(it_attr->status().ok());
   delete it_attr;

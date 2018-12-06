@@ -56,7 +56,7 @@ if [[ $MAKE -eq 1 ]] ; then
     nohup make owl_coverage &
     sleep 4
     bash $SCRIPT_DIR/test.sh > test_out.txt
-    pkill -3 Owl
+    pkill -3 DBMS18
   fi
   cd $CURRENT_DIR
 fi

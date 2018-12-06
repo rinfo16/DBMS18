@@ -24,10 +24,13 @@ class LoadStmt : public ASTBase {
   bool IsFromStdin() const {
     return from_stdin_;
   }
+
+  int Delimiter() const { return copy_delimiter_; }
  private:
   bool from_stdin_;
   std::string table_name_;
   std::string file_path_;
+  int copy_delimiter_;
   std::vector<std::string> opt_column_name_list_;
 };
 }

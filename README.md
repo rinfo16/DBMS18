@@ -1,7 +1,7 @@
 <img src="doc/owl.jpg" height=160></img>
 [![Build Status](https://travis-ci.org/rinfo16/owl.svg?branch=master)](https://travis-ci.org/rinfo16/owl)
 
-# Welcome to Owl
+# Welcome to DBMS18
 
 A database POC
  

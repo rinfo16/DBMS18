@@ -37,11 +37,12 @@ class ParserContext {
   ASTBase *NewCreateAsStmt(ASTBase *table_name, ASTBase * select_stmt);
 
   ASTBase *NewLoadStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
-                         ASTBase *file_path);
+                         ASTBase *file_path, const char *copy_delimiter);
 
   ASTBase *NewExportStmt(ASTBase *table_name,
                          ASTBase *opt_column_name_list,
-                         ASTBase *file_path);
+                         ASTBase *file_path,
+                         const char *delimiter);
 
   ASTBase *NewInsertStmt(ASTBase *table_name, ASTBase *opt_column_name_list,
                          ASTBase *value_list);
@@ -74,7 +75,7 @@ class ParserContext {
 
   ASTBase *NewConstValue(int64_t int_val);
 
-  ASTBase *NewColumnDefine(ASTBase *column_name, int32_t type_and_length);
+  ASTBase *NewColumnDefine(ASTBase *column_name, int32_t type_and_length, int32_t flag);
 
   /// type of the variable storage
   typedef std::map<std::string, double> variablemap_type;

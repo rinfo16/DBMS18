@@ -1,7 +1,7 @@
 aux_source_directory(./ SRC_LIST)
-add_executable (Owl ${SRC_LIST})
+add_executable (DBMS18 ${SRC_LIST})
 target_link_libraries (
-  Owl
+  DBMS18
   realizer
   storage
   executor
@@ -18,5 +18,5 @@ target_link_libraries (
 if (ENABLE_CODE_COVERAGE)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
   include(CodeCoverage)
-  setup_target_for_coverage(owl_coverage Owl owl_coverage)
+  setup_target_for_coverage(owl_coverage DBMS18 owl_coverage)
 endif()

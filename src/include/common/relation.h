@@ -65,9 +65,19 @@ class Relation {
     return attributes_[n];
   }
 
-  void AddAttribute(const Attribute & attribute) {
-    attributes_.push_back(attribute);
-    attributes_.back().SetRelationID(relation_id_);
+  void AddAttribute(Attribute & attribute, bool append = true) {
+
+    attribute.SetRelationID(relation_id_);
+    if (append) {
+      attributes_.push_back(attribute);
+      attributes_.back().SetAttributeIndex(attributes_.size() - 1);
+    } else {
+      for (auto i = attributes_.begin(); i < attributes_.end(); i++) {
+          if (i->GetAttributeIndex() > attribute.GetAttributeIndex()) {
+            attributes_.insert(i, attribute);
+          }
+      }
+    }
   }
 
   void SetFirstExtentPageID(PageID pageid) {

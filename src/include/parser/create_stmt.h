@@ -17,10 +17,19 @@ class ColumnDefine : public ASTBase {
       : column_name_(column_name),
         data_type_(column_type),
         data_length_(data_length),
-        ASTBase(kASTColumnDefine) {
+        ASTBase(kASTColumnDefine),
+        is_primary_key_(false){
 
   }
 
+    ColumnDefine(const std::string & column_name, DataType column_type, int32_t data_length, bool primary_key)
+            : column_name_(column_name),
+              data_type_(column_type),
+              data_length_(data_length),
+              ASTBase(kASTColumnDefine),
+              is_primary_key_(primary_key){
+
+    }
   DataType ColumnType() const {
     return data_type_;
   }
@@ -34,11 +43,14 @@ class ColumnDefine : public ASTBase {
   }
 
   virtual ptree ToPropertyTree() const;
+
+  bool IsPrimaryKey() { return is_primary_key_;}
  private:
   ColumnDefine();
   string column_name_;
   DataType data_type_;
   int32_t data_length_;
+  bool is_primary_key_;
  private:
 };
 
@@ -54,6 +66,10 @@ class CreateStmt : public ASTBase {
     return table_name_;
   }
 
+  std::string PrimaryKey() {
+    return primary_key_;
+  }
+
   const std::vector<ColumnDefine*> & ColumnDefineList() const {
     return column_define_list_;
   }
@@ -61,6 +77,7 @@ class CreateStmt : public ASTBase {
   virtual ptree ToPropertyTree() const;
  private:
   string table_name_;
+  string primary_key_;
   std::vector<ColumnDefine*> column_define_list_;
 };
 }

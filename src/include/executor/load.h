@@ -12,7 +12,7 @@ namespace executor {
 
 class Load : public CmdInterface {
  public:
-  Load(const std::string & path, const std::string & rel_name);
+  Load(const std::string & path, const std::string & rel_name, int delimiter);
   virtual State Prepare();
   virtual State Exec();
   virtual ~Load();
@@ -22,6 +22,7 @@ class Load : public CmdInterface {
   mini::csv::ifstream is_;
   std::string rel_name_;
   std::string csv_;
+  int delimiter_;
   Tuple tuple_;
 };
 

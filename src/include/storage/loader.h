@@ -9,7 +9,7 @@ namespace storage {
 
 class Loader {
  public:
-  Loader(const std::string & path, const std::string & rel_name);
+  Loader(const std::string & path, const std::string & rel_name, int delimiter);
   bool Prepare();
   bool Load();
   virtual ~Loader();
@@ -18,6 +18,7 @@ class Loader {
   mini::csv::ifstream is_;
   std::string rel_name_;
   std::string csv_;
+  int delimiter_;
   Tuple tuple_;
 };
 

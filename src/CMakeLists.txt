@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 2.7)
-project (owl)
-
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE DEBUG)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -42,6 +39,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(include)
 include_directories(storage/leveldb/include)
 include_directories(storage/leveldb)
+
+set(WITH_BOOST ${CMAKE_CURRENT_SOURCE_DIR}/third_party/)
+set(CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/third_party/)
+include(cmake/boost.cmake)
+include_directories(${CMAKE_PREFIX_PATH}/include)
+link_directories(${CMAKE_PREFIX_PATH}/lib)
 
 add_subdirectory(executor)
 add_subdirectory(common)

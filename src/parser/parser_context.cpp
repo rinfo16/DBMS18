@@ -19,6 +19,8 @@
 
 using namespace ast;
 
+#define PRIMARY_KEY 1
+
 ParserContext::~ParserContext() {
   size_t size = ast_node_list_.size();
   for (size_t i = 0; i < size; i++) {
@@ -60,12 +62,19 @@ ASTBase *ParserContext::NewCreateAsStmt(ASTBase *table_name,
 
 ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name,
                                     ASTBase *opt_column_name_list,
-                                    ASTBase *file_path) {
+                                    ASTBase *file_path,
+                                    const char *delimiter) {
   LoadStmt* load_stmt = new LoadStmt();
   ast_node_list_.push_back(load_stmt);
+  int copy_delimiter = ',';
+  if (delimiter!= nullptr && strlen(delimiter) == 1) {
+      copy_delimiter = delimiter[0];
+  }
+
   ReferenceName *name = dynamic_cast<ReferenceName*>(table_name);
   assert(name);
   load_stmt->table_name_ = name->String();
+  load_stmt->copy_delimiter_ = copy_delimiter;
   ASTBase *ast = opt_column_name_list;
   while (ast) {
     ReferenceName *column_name = dynamic_cast<ReferenceName*>(ast);
@@ -85,7 +94,8 @@ ASTBase *ParserContext::NewLoadStmt(ASTBase *table_name,
 
 ASTBase *ParserContext::NewExportStmt(ASTBase *table_name,
                                       ASTBase *opt_column_name_list,
-                                      ASTBase *file_path) {
+                                      ASTBase *file_path,
+                                      const char *delimiter) {
   ExportStmt* export_stmt = new ExportStmt();
   ast_node_list_.push_back(export_stmt);
   ReferenceName *name = dynamic_cast<ReferenceName*>(table_name);
@@ -139,6 +149,10 @@ ASTBase * ParserContext::NewSelectStmt(ASTBase* sel_list, ASTBase* tbl_ref_list,
                                        ASTBase* opt_have, ASTBase* opt_order) {
   SelectStmt *stmt = new SelectStmt;
   ast_node_list_.push_back(stmt);
+
+  if (sel_list == nullptr) { // select star
+
+  }
 
   ASTBase * ast = sel_list;
   while (ast) {
@@ -283,12 +297,14 @@ ASTBase * ParserContext::NewJoinClause(ASTBase *left, ASTBase *right,
 }
 
 ASTBase *ParserContext::NewColumnDefine(ASTBase *column_name,
-                                        int32_t type_and_length) {
+                                        int32_t type_and_length,
+                                        int32_t flag) {
   ReferenceName *ref_name = dynamic_cast<ReferenceName*>(column_name);
   assert(ref_name);
   ColumnDefine *col_def = new ColumnDefine(
       ref_name->String(), (DataType) LOW_INT16(type_and_length),
-      HIGH_INT16(type_and_length));
+      HIGH_INT16(type_and_length),
+      PRIMARY_KEY && flag);
   ast_node_list_.push_back(col_def);
   return col_def;
 }

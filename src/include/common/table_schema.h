@@ -10,6 +10,7 @@ struct ColumnSchema {
   DataType data_type_;
   int length_;
   bool is_null_;
+  bool is_primary_key_;
 };
 
 struct TableSchema {

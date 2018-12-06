@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     notify(vm);
 
     if (vm.count("help")) {
-      std::cout << "USAGE: Owl [options]" << std::endl;
+      std::cout << "USAGE: DBMS18 [options]" << std::endl;
       std::cout << desc << std::endl;
       return 0;
     }
@@ -55,14 +55,14 @@ int main(int argc, char* argv[]) {
       config::Setting::instance().port_ = vm["port"].as<uint32_t>();
     }
 
-    BOOST_LOG_TRIVIAL(info)<< "Owl startup .........";
+    BOOST_LOG_TRIVIAL(info)<< "DBMS18 startup .........";
     RegisterSignal();
     Server server(config::Setting::instance().port_);
     server.Start();
     while (true) {
       if (g_quit) {
         server.Stop();
-        BOOST_LOG_TRIVIAL(info)<< "Owl stop .........";
+        BOOST_LOG_TRIVIAL(info)<< "DBMS18 stop .........";
         break;
       }
       std::this_thread::sleep_for(std::chrono::seconds(1));

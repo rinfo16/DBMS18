@@ -22,6 +22,10 @@ void Attribute::FromTuple(const Tuple & tuple, uint32_t size) {
   // data size
   slot = tuple->GetSlot(4);
   max_length_ = tuple->GetInteger(slot->offset_);
+
+  // attributed index
+  slot = tuple->GetSlot(5);
+  attribute_index_ = tuple->GetInteger(slot->offset_);
 }
 
 void Attribute::ToTuple(Tuple *t, uint32_t *length) const {
@@ -65,6 +69,13 @@ void Attribute::ToTuple(Tuple *t, uint32_t *length) const {
   slot->offset_ = offset;
   slot->length_ = size;
   offset += size;
+
+  // attributed index
+  uint64_t index = attribute_index_;
+  tuple->SetValue(offset, &index, sizeof(index));
+  slot = tuple->GetSlot(5);
+  slot->offset_ = offset;
+  slot->length_ = size;
 
   *t = tuple;
   *length = offset;

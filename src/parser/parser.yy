@@ -15,6 +15,7 @@
 #define yyerror(s) (ctx.driver_.error(s))
 #define YYDEBUG 1
 
+#define PRIMARY_KEY 1
 
 %}
 
@@ -342,7 +343,7 @@
 %type <intval> index_list opt_for_join
 %type <intval> column_atts data_type 
 %type <intval> from_or_to
-
+%type <strval> copy_delimiter
 %type <astbase_ptr> table_name column_name opt_as_alias alias_name
 %type <astbase_ptr> select_stmt opt_where opt_groupby opt_having opt_orderby 
 %type <astbase_ptr> groupby_list orderby_list
@@ -840,23 +841,23 @@ create_col_list:
 
 create_definition:
   column_name data_type column_atts
-  { $$ = ctx.NewColumnDefine($1, $2); }
+  { $$ = ctx.NewColumnDefine($1, $2, $3); }
 ;
 
 column_atts:
   /* nil */ { $$ = 0; }
-  | column_atts NOT NULLX {}
-  | column_atts NULLX {}
-  | column_atts DEFAULT STRING {}
-  | column_atts DEFAULT INTNUM {}
-  | column_atts DEFAULT APPROXNUM {}
-  | column_atts DEFAULT BOOL {}
-  | column_atts AUTO_INCREMENT {}
-  | column_atts UNIQUE PAREN_LEFT column_list PAREN_RIGHT {}
-  | column_atts UNIQUE KEY {}
-  | column_atts PRIMARY KEY {}
-  | column_atts KEY {}
-  | column_atts COMMENT STRING {}
+  | column_atts NOT NULLX { $$ = 0;}
+  | column_atts NULLX { $$ = 0; }
+  | column_atts DEFAULT STRING { $$ = 0; }
+  | column_atts DEFAULT INTNUM { $$ = 0; }
+  | column_atts DEFAULT APPROXNUM { $$ = 0; }
+  | column_atts DEFAULT BOOL { $$ = 0; }
+  | column_atts AUTO_INCREMENT { $$ = 0; }
+  | column_atts UNIQUE PAREN_LEFT column_list PAREN_RIGHT { $$ = 0; }
+  | column_atts UNIQUE KEY { $$ = 0; }
+  | column_atts PRIMARY KEY { $$ = PRIMARY_KEY; }
+  | column_atts KEY { $$ = 0; }
+  | column_atts COMMENT STRING { $$ = 0; }
 ;
 
 
@@ -864,6 +865,8 @@ data_type:
   INTEGER { $$ = MAKE_INT32(8, kDTInteger); }
   | FLOAT { $$ = MAKE_INT32(8, kDTFloat); }
   | VARCHAR PAREN_LEFT INTNUM PAREN_RIGHT { $$ = MAKE_INT32($3, kDTVarchar); }
+  | CHAR PAREN_LEFT INTNUM PAREN_RIGHT { $$ = MAKE_INT32($3, kDTVarchar); }
+  | DATE { $$ = MAKE_INT32(32, kDTVarchar); }
 ;
 
 table_name:
@@ -907,9 +910,9 @@ stmt: load_stmt { $$ = $1; };
 load_stmt:
     COPY table_name opt_column_name_list from_or_to stdin_or_file_path copy_delimiter opt_copy_options { 
         if ($4 == kFrom)
-            $$ = ctx.NewLoadStmt($2, $3, $5); 
+            $$ = ctx.NewLoadStmt($2, $3, $5, $6);
         else if ($4 == kTo)
-            $$ = ctx.NewExportStmt($2, $3, $5);
+            $$ = ctx.NewExportStmt($2, $3, $5, $6);
     }
     ;
     
@@ -942,9 +945,13 @@ opt_quote_as:
 
 copy_delimiter:
     opt_using DELIMITER opt_as STRING
-                {
-                }
-    | /*EMPTY*/ { }
+    {
+        $$ = $4;
+    }
+    | /*EMPTY*/
+    {
+        $$ = ",";
+    }
     ;
 
 opt_using:
