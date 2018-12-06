@@ -77,6 +77,7 @@ class Relation {
       for (auto i = attributes_.begin(); i < attributes_.end(); i++) {
           if (i->GetAttributeIndex() > attribute.GetAttributeIndex()) {
             attributes_.insert(i, attribute);
+            return;
           }
       }
     }
