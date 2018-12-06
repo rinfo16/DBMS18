@@ -406,7 +406,7 @@ executor::ExecInterface* QueryRealizer::BuildProjection(
     for (auto i = name2relation_.begin(); i != name2relation_.end(); i++) {
       string name = i->first;
       Relation *relation = i->second;
-      for (auto j = 0; relation->GetAttributeCount(); j++) {
+      for (auto j = 0; j < relation->GetAttributeCount(); j++) {
         int32_t tuple_idx = name2tuple_index_[name];
         int32_t attr_idx = relation->GetAttribute(j).GetAttributeIndex();
 

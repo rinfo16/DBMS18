@@ -67,15 +67,16 @@ void Attribute::ToTuple(Tuple *t, uint32_t *length) const {
   tuple->SetValue(offset, &size, sizeof(size));
   slot = tuple->GetSlot(4);
   slot->offset_ = offset;
-  slot->length_ = size;
-  offset += size;
+  slot->length_ = sizeof(size);
+  offset += sizeof(size);
 
   // attributed index
   uint64_t index = attribute_index_;
   tuple->SetValue(offset, &index, sizeof(index));
   slot = tuple->GetSlot(5);
   slot->offset_ = offset;
-  slot->length_ = size;
+  slot->length_ = sizeof(index);
+  offset += sizeof(index);
 
   *t = tuple;
   *length = offset;

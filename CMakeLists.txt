@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project (DBMS16)
+project (DBMS18)
 add_subdirectory(src)
 
 
